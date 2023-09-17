@@ -196,6 +196,7 @@ namespace FLogS
                 HelpText3.Foreground = brushCombos[0][reversePalette];
                 WarningLabel.Foreground = brushCombos[4][brushPalette];
                 DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
+                ADLWarning.Foreground = brushCombos[4][brushPalette];
             }
             catch (Exception ex)
             {
