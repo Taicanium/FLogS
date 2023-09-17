@@ -125,6 +125,7 @@ namespace FLogS
                 // Grids
                 FileGrid.Background = brushCombos[3][brushPalette];
                 DirectoryGrid.Background = brushCombos[3][brushPalette];
+                HelpGrid.Background = brushCombos[3][brushPalette];
 
                 // TabControl
                 TabMenu.Background = brushCombos[3][brushPalette];
@@ -170,10 +171,17 @@ namespace FLogS
                 // Labels
                 FileSourceLabel.Foreground = brushCombos[0][reversePalette];
                 FileOutputLabel.Foreground = brushCombos[0][reversePalette];
-                VersionNumber.Foreground = brushCombos[0][reversePalette];
+                FileVersionNumber.Foreground = brushCombos[0][reversePalette];
                 DirectorySourceLabel.Foreground = brushCombos[0][reversePalette];
                 DirectoryOutputLabel.Foreground = brushCombos[0][reversePalette];
                 DirectoryVersionNumber.Foreground = brushCombos[0][reversePalette];
+                HelpVersionNumber.Foreground = brushCombos[0][reversePalette];
+                HelpHeader1.Foreground = brushCombos[0][reversePalette];
+                HelpHeader2.Foreground = brushCombos[0][reversePalette];
+                HelpHeader3.Foreground = brushCombos[0][reversePalette];
+                HelpText1.Foreground = brushCombos[0][reversePalette];
+                HelpText2.Foreground = brushCombos[0][reversePalette];
+                HelpText3.Foreground = brushCombos[0][reversePalette];
                 WarningLabel.Foreground = brushCombos[4][brushPalette];
                 DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
             }

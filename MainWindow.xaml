@@ -68,7 +68,7 @@
                                 <ProgressBar x:Name="FileProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="VersionNumber" Content="FLogS - Version 1.0.4" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="FileVersionNumber" Content="FLogS - Version 1.0.5 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -131,7 +131,49 @@
                                 <ProgressBar x:Name="DirectoryProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="DirectoryVersionNumber" Content="FLogS - Version 1.0.4" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="DirectoryVersionNumber" Content="FLogS - Version 1.0.5 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="TabHelp" Header="Help">
+                <Grid x:Name="HelpGrid" Background="LightGray">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Grid.Column="0" Grid.RowSpan="2">
+                        <Label x:Name="HelpHeader1" HorizontalAlignment="Center" FontSize="24" FontFamily="Century" FontWeight="Bold" Margin="0,10" Content="What is this program for?"/>
+                        <TextBlock x:Name="HelpText1" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" FontSize="16" FontFamily="Calibri" Margin="10,20">
+                            In brief, <Bold>FLogS</Bold> is designed for the salvaging of data from F-Chat™ binary log files that have been corrupted or damaged.<LineBreak/>
+                            Many F-Chat users accrue very large log files over the course of years of tenure on F-Chat.
+                            As file sizes increase, so too does the sentimenal value of those logs.
+                            As technology evolves, computers are bought and replaced, and files make the transition from drive to drive, corruption is bound to happen sooner or later.<LineBreak/>
+                            Oftentimes the corruption is severe enough that F-Chat's native clients cannot read the logs, and since the client can't export logs it can't read, the data is lost.<LineBreak/>
+                            <Bold>FLogS</Bold> cannot repair log corruption, but is capable of scanning a user's logs and picking out messages that remain intact, saving them elsewhere in plaintext format.
+                        </TextBlock>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="1">
+                        <Label x:Name="HelpHeader2" HorizontalAlignment="Center" FontSize="24" FontFamily="Century" FontWeight="Bold" Margin="0,10" Content="How do I use this program?"/>
+                        <TextBlock x:Name="HelpText2" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" FontSize="16" FontFamily="Calibri" Margin="10,20">
+                            It's as simple as one, two, three, four!<LineBreak/>
+                            Click on the <Bold>File</Bold> tab at the top to export a single log file, or <Bold>Directory</Bold> to export many files at once.<LineBreak/>
+                            Select one or more F-Chat log files by clicking the first button labelled "..." and following the prompt - or, you may enter a single path manually.<LineBreak/>
+                            Select a destination file or folder by clicking the second "..." button or entering a manual path.<LineBreak/>
+                            Finally, hit the Run button!
+                        </TextBlock>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="1">
+                        <Label x:Name="HelpHeader3" HorizontalAlignment="Center" FontSize="24" FontFamily="Century" FontWeight="Bold" Margin="0,10" Content="What are the limits?"/>
+                        <TextBlock x:Name="HelpText3" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" FontSize="16" FontFamily="Calibri" Margin="10,20">
+                            <Bold>FLogS</Bold> does not distinguish partially from fully corrupted data.
+                            An option is provided to save corrupted data in case it contains something readable, but by default, <Bold>FLogS</Bold> will only save what is entirely clean.<LineBreak/>
+                            The program will note in its output where some data could not be read - typically, it's only a few bytes at a time.
+                        </TextBlock>
+                        <Label x:Name="HelpVersionNumber" Content="FLogS - Version 1.0.5 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
