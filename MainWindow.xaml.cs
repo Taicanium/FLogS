@@ -35,6 +35,7 @@ namespace FLogS
         private uint lastPosition;
         private bool intact;
         private bool saveTruncated;
+        private bool destAlreadyExists;
 
         private uint intactMessages;
         private uint intactBytes;
@@ -263,7 +264,12 @@ namespace FLogS
 
                 long totalSize = 0;
                 foreach (string logfile in files)
+                {
                     totalSize += new FileInfo(logfile).Length;
+                    destFile = Path.Join(destDir, Path.GetFileNameWithoutExtension(srcFile) + ".txt");
+                    if (File.Exists(destFile))
+                        File.Delete(destFile);
+                }
                 DirectoryProgress.Maximum = totalSize;
 
                 BackgroundWorker worker = new BackgroundWorker();
@@ -292,13 +298,16 @@ namespace FLogS
                 {
                     srcFile = logfile;
                     destFile = Path.Join(destDir, Path.GetFileNameWithoutExtension(srcFile) + ".txt");
-                    result = 0;
-                    idBuffer = new byte[4];
-                    nextByte = 255;
-                    lastPosition = 0U;
+                    if (File.Exists(destFile) == false)
+                    {
+                        result = 0;
+                        idBuffer = new byte[4];
+                        nextByte = 255;
+                        lastPosition = 0U;
 
-                    worker_DoWork(sender, e);
-                    bytesRead += (uint)(new FileInfo(logfile).Length);
+                        worker_DoWork(sender, e);
+                        bytesRead += (uint)(new FileInfo(logfile).Length);
+                    }
                 }
             }
             catch (Exception ex)
@@ -314,11 +323,10 @@ namespace FLogS
             FileStream srcFS;
             try
             {
-                srcFS = File.OpenRead(srcFile);
                 if (File.Exists(destFile))
-                {
                     File.Delete(destFile);
-                }
+
+                srcFS = File.OpenRead(srcFile);
             }
             catch (Exception ex)
             {
@@ -349,6 +357,13 @@ namespace FLogS
                     if (discrepancy > 0)
                         File.AppendAllText(destFile, string.Format("({0:#,0} bytes missing here)\n", discrepancy));
                     result = srcFS.Read(idBuffer, 0, 4); // Read the timestamp.
+                    if (result < 4)
+                    {
+                        intact = false;
+                        emptyMessages++;
+                        messageOut += "[EMPTY MESSAGE]";
+                        return;
+                    }
                     timestamp = BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
                     if (timestamp < 1) // If it came before Jan. 1, 1970, there's probably a problem.
                     {
@@ -381,8 +396,22 @@ namespace FLogS
                         lastTimestamp = timestamp;
                     }
                     nextByte = srcFS.ReadByte(); // Read the delimiter.
+                    if (nextByte == -1)
+                    {
+                        intact = false;
+                        emptyMessages++;
+                        messageOut += "[EMPTY MESSAGE]";
+                        return;
+                    }
                     msId = (MessageType)(int)nextByte;
                     nextByte = srcFS.ReadByte(); // 1-byte length of profile name.
+                    if (nextByte == -1)
+                    {
+                        intact = false;
+                        emptyMessages++;
+                        messageOut += "[EMPTY MESSAGE]";
+                        return;
+                    }
                     streamBuffer = new byte[nextByte];
                     result = srcFS.Read(streamBuffer, 0, nextByte); // Read the profile name.
                     if (result < nextByte)
