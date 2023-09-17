@@ -68,7 +68,7 @@
                                 <ProgressBar x:Name="FileProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="VersionNumber" Content="FLogS - Version 1.0.3" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="VersionNumber" Content="FLogS - Version 1.0.4" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -131,7 +131,7 @@
                                 <ProgressBar x:Name="DirectoryProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="DirectoryVersionNumber" Content="FLogS - Version 1.0.3" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="DirectoryVersionNumber" Content="FLogS - Version 1.0.4" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

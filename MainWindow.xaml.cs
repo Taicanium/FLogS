@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
+using System.Windows.Forms;
 using System.Windows.Media;
 
 namespace FLogS
@@ -70,6 +71,13 @@ namespace FLogS
         {
             DateTime dtout = new DateTime(1970, 1, 1, 0, 0, 0);
             return dtout.AddSeconds(stamp);
+        }
+
+        private void LogException(Exception e)
+        {
+            File.AppendAllText("FLogS_ERROR.txt", DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + " - " + e.Message + "\n");
+            if (e.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", e.StackTrace + "\n");
+            return;
         }
 
         private void MainGrid_Loaded(object sender, RoutedEventArgs e)
@@ -171,8 +179,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
+                LogException(ex);
                 return;
             }
         }
@@ -224,8 +231,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
+                LogException(ex);
                 return;
             }
         }
@@ -282,8 +288,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
+                LogException(ex);
                 return;
             }
         }
@@ -312,8 +317,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
+                LogException(ex);
                 return;
             }
         }
@@ -330,8 +334,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
+                LogException(ex);
                 return;
             }
 
@@ -487,6 +490,8 @@ namespace FLogS
                         srcFS.ReadByte();
                         srcFS.Read(idBuffer, 0, 4);
                         nextByte = srcFS.ReadByte();
+                        if (nextByte == -1)
+                            return;
                         srcFS.Seek(-6, SeekOrigin.Current);
                         if (nextByte < 5)
                         {
@@ -504,6 +509,8 @@ namespace FLogS
                             srcFS.ReadByte();
                             srcFS.Read(idBuffer, 0, 4);
                             nextByte = srcFS.ReadByte();
+                            if (nextByte == -1)
+                                return;
                             srcFS.Seek(-7, SeekOrigin.Current);
                             srcFS.ReadByte();
                             srcFS.ReadByte();
@@ -522,8 +529,7 @@ namespace FLogS
                 }
                 catch (Exception ex)
                 {
-                    File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                    if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
+                    LogException(ex);
                     return;
                 }
             }
@@ -550,9 +556,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
-                return;
+                LogException(ex);
             }
         }
 
@@ -594,8 +598,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
+                LogException(ex);
                 return;
             }
         }
@@ -658,8 +661,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
+                LogException(ex);
                 return;
             }
         }
@@ -668,7 +670,7 @@ namespace FLogS
         {
             try
             {
-                OpenFileDialog openFileDialog = new OpenFileDialog();
+                Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
                 if (openFileDialog.ShowDialog() == true)
                     FileSource.Text = openFileDialog.FileName;
                 else
@@ -676,8 +678,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
+                LogException(ex);
                 return;
             }
         }
@@ -686,7 +687,7 @@ namespace FLogS
         {
             try
             {
-                OpenFileDialog openFileDialog = new OpenFileDialog();
+                Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
                 openFileDialog.CheckFileExists = false;
                 if (openFileDialog.ShowDialog() == true)
                     FileOutput.Text = openFileDialog.FileName;
@@ -695,8 +696,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
+                LogException(ex);
                 return;
             }
         }
@@ -705,7 +705,7 @@ namespace FLogS
         {
             try
             {
-                OpenFileDialog openFileDialog = new OpenFileDialog();
+                Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
                 openFileDialog.Multiselect = true;
                 if (openFileDialog.ShowDialog() == true)
                 {
@@ -719,8 +719,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
+                LogException(ex);
                 return;
             }
         }
@@ -729,18 +728,16 @@ namespace FLogS
         {
             try
             {
-                OpenFileDialog openFileDialog = new OpenFileDialog();
-                openFileDialog.ValidateNames = false;
-                openFileDialog.CheckFileExists = false;
-                if (openFileDialog.ShowDialog() == true)
-                    DirectoryOutput.Text = openFileDialog.FileName;
+                FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
+                folderBrowserDialog.ShowNewFolderButton = true;
+                if (folderBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                    DirectoryOutput.Text = folderBrowserDialog.SelectedPath;
                 else
                     DirectoryOutput.Text = "";
             }
             catch (Exception ex)
             {
-                File.AppendAllText("FLogS_ERROR.txt", ex.Message + "\n");
-                if (ex.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", ex.StackTrace + "\n");
+                LogException(ex);
                 return;
             }
         }
