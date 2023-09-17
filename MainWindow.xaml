@@ -1,0 +1,140 @@
+﻿<Window x:Class="FLogS.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FLogS"
+        mc:Ignorable="d"
+        Loaded="MainGrid_Loaded"
+        Title="FLogS" Height="600" Width="800">
+    <Grid x:Name="MainGrid" Background="Gray">
+        <TabControl x:Name="TabMenu">
+            <TabItem Header="File" x:Name="TabFile">
+                <Grid x:Name="FileGrid" Background="LightGray">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="3*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <ListBox x:Name="LogWindow" Width="350" Height="350" HorizontalAlignment="Center" Margin="0,30" FontSize="14" BorderBrush="Black" BorderThickness="4">
+                            <ListBoxItem x:Name="headerBox">Ready to receive data.</ListBoxItem>
+                            <ListBoxItem Margin="10" Visibility="Hidden" IsHitTestVisible="False"></ListBoxItem>
+                            <ListBoxItem x:Name="imBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
+                            <ListBoxItem x:Name="ctBox">Corrupted Timestamps:</ListBoxItem>
+                            <ListBoxItem x:Name="tmBox">Truncated Messages:</ListBoxItem>
+                            <ListBoxItem x:Name="emBox">Empty Messages:</ListBoxItem>
+                            <ListBoxItem x:Name="ubBox">Unread Bytes:</ListBoxItem>
+                        </ListBox>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="1">
+                        <Button x:Name="ThemeSelector" Height="25" Width="40" HorizontalAlignment="Right" Margin="20,20" Background="Beige" Content="Dark" Click="ThemeSelector_Click"/>
+                        <Label x:Name="FileSourceLabel" FontFamily="Arial" FontSize="14" Width="160" Height="25" HorizontalAlignment="Center" Margin="0,10,0,0" Content="Path to Source Log File"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="SrcFileButton" Width="25" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Background="Beige" IsEnabled="True" Click="SrcFileButton_Click" Content="..."/>
+                            <TextBox x:Name="FileSource" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="3" TextChanged="TextboxUpdated"/>
+                        </StackPanel>
+                        <Label x:Name="FileOutputLabel" FontFamily="Arial" FontSize="14" Width="190" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Content="Path to Destination Log File"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="DstFileButton" Width="25" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Background="Beige" IsEnabled="True" Click="DstFileButton_Click" Content="..."/>
+                            <TextBox x:Name="FileOutput" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="3" TextChanged="TextboxUpdated"/>
+                        </StackPanel>
+                        <ComboBox x:Name="SaveTruncated" Width="300" Height="25" HorizontalAlignment="Center" Margin="35,90,0,0" Background="White" IsEnabled="True">
+                            <ComboBoxItem x:Name="DNSNonIntact" IsSelected="True">Do not save non-intact messages</ComboBoxItem>
+                            <ComboBoxItem x:Name="SNonIntact">Save non-intact messages</ComboBoxItem>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Label x:Name="WarningLabel" VerticalAlignment="Center" Foreground="Red" FontSize="14" FontStyle="Italic" Content="No source log file selected."/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="1">
+                                <Button x:Name="RunButton" Width="100" Height="25" HorizontalAlignment="Center"  Margin="0,20" Background="Beige" IsEnabled="True" Click="RunButton_Click" Content="Run"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3">
+                                <ProgressBar x:Name="FileProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
+                            </StackPanel>
+                        </Grid>
+                        <Label x:Name="VersionNumber" Content="FLogS - Version 1.0.3" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Directory" x:Name="TabDirectory">
+                <Grid x:Name="DirectoryGrid" Background="LightGray">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="3*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <ListBox x:Name="DirectoryLogWindow" Width="350" Height="350" HorizontalAlignment="Center" Margin="0,30" FontSize="14" BorderBrush="Black" BorderThickness="4">
+                            <ListBoxItem x:Name="DirectoryheaderBox">Ready to receive data.</ListBoxItem>
+                            <ListBoxItem Margin="10" Visibility="Hidden" IsHitTestVisible="False"></ListBoxItem>
+                            <ListBoxItem x:Name="DirectoryimBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
+                            <ListBoxItem x:Name="DirectoryctBox">Corrupted Timestamps:</ListBoxItem>
+                            <ListBoxItem x:Name="DirectorytmBox">Truncated Messages:</ListBoxItem>
+                            <ListBoxItem x:Name="DirectoryemBox">Empty Messages:</ListBoxItem>
+                            <ListBoxItem x:Name="DirectoryubBox">Unread Bytes:</ListBoxItem>
+                        </ListBox>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="1">
+                        <Button x:Name="DirectoryThemeSelector" Height="25" Width="40" HorizontalAlignment="Right" Margin="20,20" Background="Beige" Content="Dark" Click="ThemeSelector_Click"/>
+                        <Label x:Name="DirectorySourceLabel" FontFamily="Arial" FontSize="14" Width="165" Height="25" HorizontalAlignment="Center" Margin="0,10,0,0" Content="Path to Source Log Files"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="SrcDirectoryButton" Width="25" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Background="Beige" IsEnabled="True" Click="SrcDirectoryButton_Click" Content="..."/>
+                            <TextBox x:Name="DirectorySource" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="3" TextChanged="TextboxUpdated" IsReadOnly="True"/>
+                        </StackPanel>
+                        <Label x:Name="DirectoryOutputLabel" FontFamily="Arial" FontSize="14" Width="220" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Content="Path to Destination Log Directory"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="DstDirectoryButton" Width="25" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Background="Beige" IsEnabled="True" Click="DstDirectoryButton_Click" Content="..."/>
+                            <TextBox x:Name="DirectoryOutput" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="3" TextChanged="TextboxUpdated"/>
+                        </StackPanel>
+                        <ComboBox x:Name="DirectorySaveTruncated" Width="300" Height="25" HorizontalAlignment="Center" Margin="35,90,0,0" Background="White" IsEnabled="True">
+                            <ComboBoxItem x:Name="DirectoryDNSNonIntact" IsSelected="True">Do not save non-intact messages</ComboBoxItem>
+                            <ComboBoxItem x:Name="DirectorySNonIntact">Save non-intact messages</ComboBoxItem>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Label x:Name="DirectoryWarningLabel" VerticalAlignment="Center" Foreground="Red" FontSize="14" FontStyle="Italic" Content="No source log files selected."/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="1">
+                                <Button x:Name="DirectoryRunButton" Width="100" Height="25" HorizontalAlignment="Center"  Margin="0,20" Background="Beige" IsEnabled="True" Click="DirectoryRunButton_Click" Content="Run"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3">
+                                <ProgressBar x:Name="DirectoryProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
+                            </StackPanel>
+                        </Grid>
+                        <Label x:Name="DirectoryVersionNumber" Content="FLogS - Version 1.0.3" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
