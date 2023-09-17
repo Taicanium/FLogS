@@ -62,13 +62,13 @@
                                 <Label x:Name="WarningLabel" VerticalAlignment="Center" Foreground="Red" FontSize="14" FontStyle="Italic" Content="No source log file selected."/>
                             </StackPanel>
                             <StackPanel Grid.Row="0" Grid.Column="1">
-                                <Button x:Name="RunButton" Width="100" Height="25" HorizontalAlignment="Center"  Margin="0,20" Background="Beige" IsEnabled="True" Click="RunButton_Click" Content="Run"/>
+                                <Button x:Name="RunButton" Width="100" Height="25" HorizontalAlignment="Center"  Margin="0,20" Background="Beige" IsEnabled="False" Click="RunButton_Click" Content="Run"/>
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3">
                                 <ProgressBar x:Name="FileProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="FileVersionNumber" Content="FLogS - Version 1.0.5 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="FileVersionNumber" Content="FLogS - Version 1.0.5.1 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -125,13 +125,13 @@
                                 <Label x:Name="DirectoryWarningLabel" VerticalAlignment="Center" Foreground="Red" FontSize="14" FontStyle="Italic" Content="No source log files selected."/>
                             </StackPanel>
                             <StackPanel Grid.Row="0" Grid.Column="1">
-                                <Button x:Name="DirectoryRunButton" Width="100" Height="25" HorizontalAlignment="Center"  Margin="0,20" Background="Beige" IsEnabled="True" Click="DirectoryRunButton_Click" Content="Run"/>
+                                <Button x:Name="DirectoryRunButton" Width="100" Height="25" HorizontalAlignment="Center"  Margin="0,20" Background="Beige" IsEnabled="False" Click="DirectoryRunButton_Click" Content="Run"/>
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3">
                                 <ProgressBar x:Name="DirectoryProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="DirectoryVersionNumber" Content="FLogS - Version 1.0.5 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="DirectoryVersionNumber" Content="FLogS - Version 1.0.5.1 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -173,7 +173,7 @@
                             An option is provided to save corrupted data in case it contains something readable, but by default, <Bold>FLogS</Bold> will only save what is entirely clean.<LineBreak/>
                             The program will note in its output where some data could not be read - typically, it's only a few bytes at a time.
                         </TextBlock>
-                        <Label x:Name="HelpVersionNumber" Content="FLogS - Version 1.0.5 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
+                        <Label x:Name="HelpVersionNumber" Content="FLogS - Version 1.0.5.1 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

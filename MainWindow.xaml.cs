@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Forms;
 using System.Windows.Media;
 
@@ -16,7 +17,7 @@ namespace FLogS
     public partial class MainWindow : Window
     {
         [DllImport("UXTheme.dll", SetLastError = true, EntryPoint = "#138")]
-        public static extern bool ShouldSystemUseDarkMode();
+        private static extern bool ShouldSystemUseDarkMode();
 
         public MainWindow()
         {
@@ -36,7 +37,6 @@ namespace FLogS
         private uint lastPosition;
         private bool intact;
         private bool saveTruncated;
-        private bool destAlreadyExists;
 
         private uint intactMessages;
         private uint intactBytes;
@@ -63,17 +63,17 @@ namespace FLogS
 
         private static uint UNIXTimestamp()
         {
-            DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0);
+            DateTime epoch = new(1970, 1, 1, 0, 0, 0);
             return (uint)(Math.Floor(DateTime.UtcNow.Subtract(epoch).TotalSeconds));
         }
 
         private static DateTime DTFromStamp(uint stamp)
         {
-            DateTime dtout = new DateTime(1970, 1, 1, 0, 0, 0);
+            DateTime dtout = new(1970, 1, 1, 0, 0, 0);
             return dtout.AddSeconds(stamp);
         }
 
-        private void LogException(Exception e)
+        private static void LogException(Exception e)
         {
             File.AppendAllText("FLogS_ERROR.txt", DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + " - " + e.Message + "\n");
             if (e.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", e.StackTrace + "\n");
@@ -87,7 +87,7 @@ namespace FLogS
                 if (ShouldSystemUseDarkMode())
                     ThemeSelector_Click(sender, e);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Do nothing; default to light mode.
             }
@@ -144,7 +144,7 @@ namespace FLogS
                 DirectorySource.Foreground = brushCombos[0][reversePalette];
                 DirectoryOutput.Foreground = brushCombos[0][reversePalette];
 
-                //ListBoxItems
+                // ListBoxItems
                 headerBox.Foreground = brushCombos[0][reversePalette];
                 imBox.Foreground = brushCombos[0][reversePalette];
                 ctBox.Foreground = brushCombos[0][reversePalette];
@@ -157,6 +157,18 @@ namespace FLogS
                 DirectorytmBox.Foreground = brushCombos[0][reversePalette];
                 DirectoryemBox.Foreground = brushCombos[0][reversePalette];
                 DirectoryubBox.Foreground = brushCombos[0][reversePalette];
+                headerBox.Background = brushCombos[0][brushPalette];
+                imBox.Background = brushCombos[0][brushPalette];
+                ctBox.Background = brushCombos[0][brushPalette];
+                tmBox.Background = brushCombos[0][brushPalette];
+                emBox.Background = brushCombos[0][brushPalette];
+                ubBox.Background = brushCombos[0][brushPalette];
+                DirectoryheaderBox.Background = brushCombos[0][brushPalette];
+                DirectoryimBox.Background = brushCombos[0][brushPalette];
+                DirectoryctBox.Background = brushCombos[0][brushPalette];
+                DirectorytmBox.Background = brushCombos[0][brushPalette];
+                DirectoryemBox.Background = brushCombos[0][brushPalette];
+                DirectoryubBox.Background = brushCombos[0][brushPalette];
 
                 // Buttons
                 ThemeSelector.Background = brushCombos[2][brushPalette];
@@ -192,21 +204,66 @@ namespace FLogS
             }
         }
 
+        private void TransitionMenus(bool isProcessing)
+        {
+            if (isProcessing)
+            {
+                RunButton.IsEnabled = false;
+                RunButton.Content = "Scanning...";
+                headerBox.Content = "Scanning " + Path.GetFileName(FileSource.Text) + "...";
+                FileSource.IsEnabled = false;
+                FileOutput.IsEnabled = false;
+                SrcFileButton.IsEnabled = false;
+                DstFileButton.IsEnabled = false;
+                DirectoryRunButton.IsEnabled = false;
+                DirectoryRunButton.Content = "Scanning...";
+                DirectoryheaderBox.Content = "Scanning " + Path.GetFileName(FileSource.Text) + "...";
+                DirectorySource.IsEnabled = false;
+                DirectoryOutput.IsEnabled = false;
+                SrcDirectoryButton.IsEnabled = false;
+                DstDirectoryButton.IsEnabled = false;
+                return;
+            }
+
+            RunButton.IsEnabled = true;
+            RunButton.Content = "Run";
+            FileSource.IsEnabled = true;
+            FileOutput.IsEnabled = true;
+            SrcFileButton.IsEnabled = true;
+            DstFileButton.IsEnabled = true;
+            DirectoryRunButton.IsEnabled = true;
+            DirectoryRunButton.Content = "Run";
+            DirectorySource.IsEnabled = true;
+            DirectoryOutput.IsEnabled = true;
+            SrcDirectoryButton.IsEnabled = true;
+            DstDirectoryButton.IsEnabled = true;
+            double timeTaken = DateTime.Now.Subtract(timeBegin).TotalSeconds;
+            if (filesProcessed == 1)
+            {
+                headerBox.Content = string.Format("Processed {0} in {1:#,0.0} seconds.", Path.GetFileName(srcFile), timeTaken);
+                DirectoryheaderBox.Content = string.Format("Processed {0} in {1:#,0.0} seconds.", Path.GetFileName(srcFile), timeTaken);
+            }
+            else
+            {
+                headerBox.Content = string.Format("Processed {0} files in {1:#,0.0} seconds.", filesProcessed, timeTaken);
+                DirectoryheaderBox.Content = string.Format("Processed {0} files in {1:#,0.0} seconds.", filesProcessed, timeTaken);
+            }
+            return;
+        }
+
         private void RunButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                RunButton.IsEnabled = false;
-                TabMenu.IsEnabled = false;
-                LogWindow.IsEnabled = true;
-                RunButton.Content = "Scanning...";
-                headerBox.Content = "Scanning " + Path.GetFileName(FileSource.Text) + "...";
+                TransitionMenus(true);
 
-                BackgroundWorker worker = new BackgroundWorker();
-                worker.WorkerReportsProgress = true;
-                worker.DoWork += worker_DoWork;
-                worker.ProgressChanged += worker_ProgressChanged;
-                worker.RunWorkerCompleted += worker_Completed;
+                BackgroundWorker worker = new()
+                {
+                    WorkerReportsProgress = true
+                };
+                worker.DoWork += Worker_DoWork;
+                worker.ProgressChanged += Worker_ProgressChanged;
+                worker.RunWorkerCompleted += Worker_Completed;
 
                 srcFile = FileSource.Text;
                 destFile = FileOutput.Text;
@@ -251,11 +308,8 @@ namespace FLogS
                 string[] files = DirectorySource.Text.Split(';');
                 filesProcessed = (uint)(files.Length);
 
-                DirectoryRunButton.IsEnabled = false;
-                TabMenu.IsEnabled = false;
-                DirectoryLogWindow.IsEnabled = true;
-                DirectoryRunButton.Content = "Scanning...";
-                DirectoryheaderBox.Content = "Batch processing " + filesProcessed + " files...";
+                TransitionMenus(true);
+
                 timeBegin = DateTime.Now;
 
                 intactMessages = 0U;
@@ -286,11 +340,13 @@ namespace FLogS
                 }
                 DirectoryProgress.Maximum = totalSize;
 
-                BackgroundWorker worker = new BackgroundWorker();
-                worker.WorkerReportsProgress = true;
-                worker.DoWork += worker_BatchProcess;
-                worker.ProgressChanged += worker_ProgressChanged;
-                worker.RunWorkerCompleted += worker_Completed;
+                BackgroundWorker worker = new()
+                {
+                    WorkerReportsProgress = true
+                };
+                worker.DoWork += Worker_BatchProcess;
+                worker.ProgressChanged += Worker_ProgressChanged;
+                worker.RunWorkerCompleted += Worker_Completed;
 
                 worker.RunWorkerAsync(files);
             }
@@ -301,7 +357,7 @@ namespace FLogS
             }
         }
 
-        void worker_BatchProcess(object sender, DoWorkEventArgs e)
+        void Worker_BatchProcess(object sender, DoWorkEventArgs e)
         {
             try
             {
@@ -318,7 +374,7 @@ namespace FLogS
                         nextByte = 255;
                         lastPosition = 0U;
 
-                        worker_DoWork(sender, e);
+                        Worker_DoWork(sender, e);
                         bytesRead += (uint)(new FileInfo(logfile).Length);
                     }
                 }
@@ -330,7 +386,7 @@ namespace FLogS
             }
         }
 
-        void worker_DoWork(object sender, DoWorkEventArgs e)
+        void Worker_DoWork(object sender, DoWorkEventArgs e)
         {
             FileStream srcFS;
             try
@@ -355,7 +411,6 @@ namespace FLogS
                 int discrepancy;
                 uint messageLength;
                 string messageData;
-                uint messageFooter;
                 uint timestamp;
                 bool nextTimestamp = false;
                 string messageOut = "";
@@ -369,12 +424,7 @@ namespace FLogS
                         File.AppendAllText(destFile, string.Format("({0:#,0} bytes missing here)\n", discrepancy));
                     result = srcFS.Read(idBuffer, 0, 4); // Read the timestamp.
                     if (result < 4)
-                    {
-                        intact = false;
-                        emptyMessages++;
-                        messageOut += "[EMPTY MESSAGE]";
                         return;
-                    }
                     timestamp = BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
                     if (timestamp < 1) // If it came before Jan. 1, 1970, there's probably a problem.
                     {
@@ -408,21 +458,11 @@ namespace FLogS
                     }
                     nextByte = srcFS.ReadByte(); // Read the delimiter.
                     if (nextByte == -1)
-                    {
-                        intact = false;
-                        emptyMessages++;
-                        messageOut += "[EMPTY MESSAGE]";
                         return;
-                    }
                     msId = (MessageType)(int)nextByte;
                     nextByte = srcFS.ReadByte(); // 1-byte length of profile name.
                     if (nextByte == -1)
-                    {
-                        intact = false;
-                        emptyMessages++;
-                        messageOut += "[EMPTY MESSAGE]";
                         return;
-                    }
                     streamBuffer = new byte[nextByte];
                     result = srcFS.Read(streamBuffer, 0, nextByte); // Read the profile name.
                     if (result < nextByte)
@@ -437,18 +477,17 @@ namespace FLogS
                     {
                         case MessageType.EOF:
                             return;
-                            break;
                         case MessageType.Regular:
                             messageOut += ": ";
                             break;
                         case MessageType.Me:
-                            messageOut += " ";
+                            messageOut += "";
                             break;
                         case MessageType.BottleSpin:
-                            messageOut += " ";
+                            messageOut += "";
                             break;
                         case MessageType.DiceRoll:
-                            messageOut += " ";
+                            messageOut += "";
                             break;
                         case MessageType.Warning:
                             messageOut += " (warning): ";
@@ -544,7 +583,7 @@ namespace FLogS
             srcFS.Close();
         }
 
-        void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        void Worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             try
             {
@@ -565,10 +604,11 @@ namespace FLogS
             catch (Exception ex)
             {
                 LogException(ex);
+                return;
             }
         }
 
-        void worker_Completed(object sender, EventArgs e)
+        void Worker_Completed(object sender, EventArgs e)
         {
             try
             {
@@ -586,23 +626,7 @@ namespace FLogS
                 DirectoryemBox.Content = emBox.Content;
                 DirectoryubBox.Content = ubBox.Content;
 
-                RunButton.Content = "Run";
-                RunButton.IsEnabled = true;
-                DirectoryRunButton.Content = "Run";
-                DirectoryRunButton.IsEnabled = true;
-                TabMenu.IsEnabled = true;
-
-                double timeTaken = DateTime.Now.Subtract(timeBegin).TotalSeconds;
-                if (filesProcessed == 1)
-                {
-                    headerBox.Content = string.Format("Processed {0} in {1:#,0.0} seconds.", Path.GetFileName(srcFile), timeTaken);
-                    DirectoryheaderBox.Content = string.Format("Processed {0} in {1:#,0.0} seconds.", Path.GetFileName(srcFile), timeTaken);
-                }
-                else
-                {
-                    headerBox.Content = string.Format("Processed {0} files in {1:#,0.0} seconds.", filesProcessed, timeTaken);
-                    DirectoryheaderBox.Content = string.Format("Processed {0} files in {1:#,0.0} seconds.", filesProcessed, timeTaken);
-                }
+                TransitionMenus(false);
             }
             catch (Exception ex)
             {
@@ -678,7 +702,7 @@ namespace FLogS
         {
             try
             {
-                Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
+                Microsoft.Win32.OpenFileDialog openFileDialog = new();
                 if (openFileDialog.ShowDialog() == true)
                     FileSource.Text = openFileDialog.FileName;
                 else
@@ -695,8 +719,10 @@ namespace FLogS
         {
             try
             {
-                Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
-                openFileDialog.CheckFileExists = false;
+                Microsoft.Win32.OpenFileDialog openFileDialog = new()
+                {
+                    CheckFileExists = false
+                };
                 if (openFileDialog.ShowDialog() == true)
                     FileOutput.Text = openFileDialog.FileName;
                 else
@@ -713,8 +739,10 @@ namespace FLogS
         {
             try
             {
-                Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
-                openFileDialog.Multiselect = true;
+                Microsoft.Win32.OpenFileDialog openFileDialog = new()
+                {
+                    Multiselect = true
+                };
                 if (openFileDialog.ShowDialog() == true)
                 {
                     DirectorySource.Text = "";
@@ -736,8 +764,10 @@ namespace FLogS
         {
             try
             {
-                FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
-                folderBrowserDialog.ShowNewFolderButton = true;
+                FolderBrowserDialog folderBrowserDialog = new()
+                {
+                    ShowNewFolderButton = true
+                };
                 if (folderBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                     DirectoryOutput.Text = folderBrowserDialog.SelectedPath;
                 else
