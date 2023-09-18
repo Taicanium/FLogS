@@ -1,5 +1,7 @@
 # FLogS
- Experimental WPF application that accepts corrupted F-Chat log files as input and extracts any messages which are still intact.
 
- This application does not manipulate or alter log files, nor can it be used for that purpose. Its output is plaintext, and cannot be accepted by F-Chat staff during a dispute.
- 
+An experimental WPF application intended to salvage data from heavily corrupted F-Chat log files.
+
+This application does not alter or modify a user's log files in any fashion. Its output cannot be accepted by F-List staff in case of a dispute.
+
+This application is not affiliated with F-List, F-Chat, or Bad Dragon Enterprises.

@@ -21,3 +21,8 @@
 # 1.0.5.3 - 17/09/2023
 - Streamlined empty message handling.
 - Minor fix: Cease pre-emptively ending the salvage routine if an empty message is encountered at a very specific point in the process.
+
+# 1.0.5.4 - 18/09/2023
+- Additional compatibility for earlier versions of Windows; previously, we had supported only the most recent version of Windows 10 and later.
+- Additional error messages and some warnings.
+- The program now refuses to overwrite files it intends to read from, which for several reasons is just good practice.

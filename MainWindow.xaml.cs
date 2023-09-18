@@ -26,10 +26,15 @@ namespace FLogS
 
         private uint bytesRead;
         private uint filesProcessed;
+
+        // 0 if we are ready to process files; all other values indicate the nature of an error.
+        private uint fileReadyToRun = 1;
+        private uint directoryReadyToRun = 1;
+
         DateTime timeBegin;
-        private string? srcFile;
-        private string? destFile;
-        private string? destDir;
+        private string? srcFile = "";
+        private string? destFile = "";
+        private string? destDir = "";
         private int result;
         private byte[]? idBuffer;
         private byte[]? streamBuffer;
@@ -98,13 +103,14 @@ namespace FLogS
             try
             {
                 SolidColorBrush[][] brushCombos =
-                {
-                new SolidColorBrush[] { Brushes.Black, Brushes.White },
-                new SolidColorBrush[] { Brushes.DarkGray, Brushes.LightGray },
-                new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige },
-                new SolidColorBrush[] { new SolidColorBrush(new System.Windows.Media.Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray },
-                new SolidColorBrush[] { Brushes.Pink, Brushes.Red },
-            };
+                   {
+                    new SolidColorBrush[] { Brushes.Black, Brushes.White },
+                    new SolidColorBrush[] { Brushes.DarkGray, Brushes.LightGray },
+                    new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige },
+                    new SolidColorBrush[] { new SolidColorBrush(new System.Windows.Media.Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray },
+                    new SolidColorBrush[] { Brushes.Pink, Brushes.Red },
+                    new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkOrange },
+                };
 
                 int brushPalette = 1;
                 int reversePalette = 0;
@@ -194,9 +200,13 @@ namespace FLogS
                 HelpText1.Foreground = brushCombos[0][reversePalette];
                 HelpText2.Foreground = brushCombos[0][reversePalette];
                 HelpText3.Foreground = brushCombos[0][reversePalette];
+                ADLWarning.Foreground = brushCombos[4][brushPalette];
                 WarningLabel.Foreground = brushCombos[4][brushPalette];
                 DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
-                ADLWarning.Foreground = brushCombos[4][brushPalette];
+                if (fileReadyToRun == 0)
+                    WarningLabel.Foreground = brushCombos[5][brushPalette];
+                if (directoryReadyToRun == 0)
+                    DirectoryWarningLabel.Foreground = brushCombos[5][brushPalette];
             }
             catch (Exception ex)
             {
@@ -287,12 +297,7 @@ namespace FLogS
                 unreadBytes = 0;
                 filesProcessed = 1;
 
-                imBox.Content = "Intact Messages: 0";
-                ctBox.Content = "Corrupted Timestamps: 0";
-                tmBox.Content = "Truncated Messages: 0";
-                emBox.Content = "Empty Messages: 0";
-                ubBox.Content = "Unread Bytes: 0";
-
+                UpdateLogs();
                 worker.RunWorkerAsync();
             }
             catch (Exception ex)
@@ -322,11 +327,7 @@ namespace FLogS
                 unreadBytes = 0;
                 bytesRead = 0;
 
-                DirectoryimBox.Content = "Intact Messages: 0";
-                DirectoryctBox.Content = "Corrupted Timestamps: 0";
-                DirectorytmBox.Content = "Truncated Messages: 0";
-                DirectoryemBox.Content = "Empty Messages: 0";
-                DirectoryubBox.Content = "Unread Bytes: 0";
+                UpdateLogs();
 
                 destDir = DirectoryOutput.Text;
                 saveTruncated = DirectorySaveTruncated.SelectedIndex != 0;
@@ -592,6 +593,22 @@ namespace FLogS
             srcFS.Close();
         }
 
+        void UpdateLogs()
+        {
+            imBox.Content = string.Format("Intact Messages: {0:#,0} ({1:#,0.0 kB})", intactMessages, (double)(intactBytes) / 1000.0);
+            ctBox.Content = string.Format("Corrupted Timestamps: {0:#,0}", corruptTimestamps);
+            tmBox.Content = string.Format("Truncated Messages: {0:#,0} ({1:#,0.0 kB})", truncatedMessages, (double)(truncatedBytes) / 1000.0);
+            emBox.Content = string.Format("Empty Messages: {0:#,0}", emptyMessages);
+            ubBox.Content = string.Format("Unread Bytes: {0:#,0} ({1:#,0.0 kB})", unreadBytes, (double)(unreadBytes) / 1000.0);
+            DirectoryimBox.Content = imBox.Content;
+            DirectoryctBox.Content = ctBox.Content;
+            DirectorytmBox.Content = tmBox.Content;
+            DirectoryemBox.Content = emBox.Content;
+            DirectoryubBox.Content = ubBox.Content;
+
+            return;
+        }
+
         void Worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             try
@@ -599,16 +616,7 @@ namespace FLogS
                 FileProgress.Value = e.ProgressPercentage;
                 DirectoryProgress.Value = e.ProgressPercentage;
 
-                imBox.Content = string.Format("Intact Messages: {0:#,0} ({1:#,0.0 kB})", intactMessages, (double)(intactBytes) / 1000.0);
-                ctBox.Content = string.Format("Corrupted Timestamps: {0:#,0}", corruptTimestamps);
-                tmBox.Content = string.Format("Truncated Messages: {0:#,0} ({1:#,0.0 kB})", truncatedMessages, (double)(truncatedBytes) / 1000.0);
-                emBox.Content = string.Format("Empty Messages: {0:#,0}", emptyMessages);
-                ubBox.Content = string.Format("Unread Bytes: {0:#,0} ({1:#,0.0 kB})", unreadBytes, (double)(unreadBytes) / 1000.0);
-                DirectoryimBox.Content = imBox.Content;
-                DirectoryctBox.Content = ctBox.Content;
-                DirectorytmBox.Content = tmBox.Content;
-                DirectoryemBox.Content = emBox.Content;
-                DirectoryubBox.Content = ubBox.Content;
+                UpdateLogs();
             }
             catch (Exception ex)
             {
@@ -624,17 +632,7 @@ namespace FLogS
                 FileProgress.Value = FileProgress.Maximum;
                 DirectoryProgress.Value = DirectoryProgress.Maximum;
 
-                imBox.Content = string.Format("Intact Messages: {0:#,0} ({1:#,0.0 kB})", intactMessages, (double)(intactBytes) / 1000.0);
-                ctBox.Content = string.Format("Corrupted Timestamps: {0:#,0}", corruptTimestamps);
-                tmBox.Content = string.Format("Truncated Messages: {0:#,0} ({1:#,0.0 kB})", truncatedMessages, (double)(truncatedBytes) / 1000.0);
-                emBox.Content = string.Format("Empty Messages: {0:#,0}", emptyMessages);
-                ubBox.Content = string.Format("Unread Bytes: {0:#,0} ({1:#,0.0 kB})", unreadBytes, (double)(unreadBytes) / 1000.0);
-                DirectoryimBox.Content = imBox.Content;
-                DirectoryctBox.Content = ctBox.Content;
-                DirectorytmBox.Content = tmBox.Content;
-                DirectoryemBox.Content = emBox.Content;
-                DirectoryubBox.Content = ubBox.Content;
-
+                UpdateLogs();
                 TransitionMenus(false);
             }
             catch (Exception ex)
@@ -644,61 +642,114 @@ namespace FLogS
             }
         }
 
+        private void ProcessWarnings()
+        {
+            switch (fileReadyToRun)
+            {
+                case 0:
+                    RunButton.IsEnabled = true;
+                    break;
+                case 1:
+                    WarningLabel.Content = "No source log file selected.";
+                    break;
+                case 2:
+                    WarningLabel.Content = "Source log file does not exist.";
+                    break;
+                case 3:
+                    WarningLabel.Content = "No destination file selected.";
+                    break;
+                case 4:
+                    WarningLabel.Content = "Destination is not a file.";
+                    break;
+                case 5:
+                    WarningLabel.Content = "Destination directory does not exist.";
+                    break;
+                case 6:
+                    WarningLabel.Content = "Source and destination files are identical.";
+                    break;
+                default:
+                    WarningLabel.Content = "An unknown error has occurred.";
+                    break;
+            }
+
+            switch (directoryReadyToRun)
+            {
+                case 0:
+                    DirectoryRunButton.IsEnabled = true;
+                    break;
+                case 1:
+                    DirectoryWarningLabel.Content = "No source log files selected.";
+                    break;
+                case 2:
+                    DirectoryWarningLabel.Content = "No destination directory selected.";
+                    break;
+                case 3:
+                    DirectoryWarningLabel.Content = "Destination directory does not exist.";
+                    break;
+                case 4:
+                    DirectoryWarningLabel.Content = "One or more source files do not exist.";
+                    break;
+                case 5:
+                    DirectoryWarningLabel.Content = "One or more source files exist in the destination.";
+                    break;
+                default:
+                    DirectoryWarningLabel.Content = "An unknown error has occurred.";
+                    break;
+            }
+
+            return;
+        }
+
         private void TextboxUpdated(object sender, EventArgs e)
         {
             try
             {
-                bool fileReadyToRun = true;
-                bool directoryReadyToRun = true;
-                WarningLabel.Content = "";
-                DirectoryWarningLabel.Content = "";
+                fileReadyToRun = directoryReadyToRun = 0;
+                WarningLabel.Content = DirectoryWarningLabel.Content = "";
+                WarningLabel.Foreground = DirectoryWarningLabel.Foreground = (ThemeSelector.Content as string) == "Light" ? Brushes.Pink : Brushes.Red;
+                RunButton.IsEnabled = DirectoryRunButton.IsEnabled = false;
 
                 if (FileSource.Text.Length == 0)
-                {
-                    WarningLabel.Content = "No source log file selected.";
-                    fileReadyToRun = false;
-                }
+                    fileReadyToRun = 1;
                 else if (File.Exists(FileSource.Text) == false)
-                {
-                    WarningLabel.Content = "Source log file does not exist.";
-                    fileReadyToRun = false;
-                }
+                    fileReadyToRun = 2;
                 else if (FileOutput.Text.Length == 0)
-                {
-                    WarningLabel.Content = "No destination file selected.";
-                    fileReadyToRun = false;
-                }
+                    fileReadyToRun = 3;
+                else if (Directory.Exists(FileOutput.Text))
+                    fileReadyToRun = 4;
                 else if (Directory.Exists(Path.GetDirectoryName(FileOutput.Text)) == false)
+                    fileReadyToRun = 5;
+                else if (FileSource.Text.Equals(FileOutput.Text))
+                    fileReadyToRun = 6;
+                else if (File.Exists(FileOutput.Text))
                 {
-                    WarningLabel.Content = "Destination directory does not exist.";
-                    fileReadyToRun = false;
+                    WarningLabel.Foreground = (ThemeSelector.Content as string) == "Light" ? Brushes.Yellow : Brushes.DarkOrange;
+                    WarningLabel.Content = "Destination file will be overwritten.";
                 }
 
                 if (DirectorySource.Text.Length == 0)
-                {
-                    DirectoryWarningLabel.Content = "No source log files selected.";
-                    directoryReadyToRun = false;
-                }
+                    directoryReadyToRun = 1;
                 else if (DirectoryOutput.Text.Length == 0)
-                {
-                    DirectoryWarningLabel.Content = "No destination directory selected.";
-                    directoryReadyToRun = false;
-                }
+                    directoryReadyToRun = 2;
                 else if (Directory.Exists(DirectoryOutput.Text) == false)
+                    directoryReadyToRun = 3;
+                else
                 {
-                    DirectoryWarningLabel.Content = "Destination directory does not exist.";
-                    directoryReadyToRun = false;
+                    foreach (string file in DirectorySource.Text.Split(';'))
+                    {
+                        if (File.Exists(file) == false)
+                            directoryReadyToRun = 4;
+                        else if (file.Equals(Path.Join(DirectoryOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
+                            directoryReadyToRun = 5;
+                        else if (directoryReadyToRun == 0 && File.Exists(Path.Join(DirectoryOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
+                        {
+                            DirectoryWarningLabel.Foreground = (ThemeSelector.Content as string) == "Light" ? Brushes.Yellow : Brushes.DarkOrange;
+                            DirectoryWarningLabel.Content = "One or more files will be overwritten.";
+                        }
+                    }
                 }
 
-                if (fileReadyToRun)
-                    RunButton.IsEnabled = true;
-                else
-                    RunButton.IsEnabled = false;
-
-                if (directoryReadyToRun)
-                    DirectoryRunButton.IsEnabled = true;
-                else
-                    DirectoryRunButton.IsEnabled = false;
+                ProcessWarnings();
             }
             catch (Exception ex)
             {

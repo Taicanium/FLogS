@@ -54,6 +54,7 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
@@ -64,11 +65,11 @@
                             <StackPanel Grid.Row="0" Grid.Column="1">
                                 <Button x:Name="RunButton" Width="100" Height="25" HorizontalAlignment="Center"  Margin="0,20" Background="Beige" IsEnabled="False" Click="RunButton_Click" Content="Run"/>
                             </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3">
+                            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4">
                                 <ProgressBar x:Name="FileProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="FileVersionNumber" Content="FLogS - Version 1.0.5.3 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="FileVersionNumber" Content="FLogS - Version 1.0.5.4 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -98,7 +99,7 @@
                         <Label x:Name="DirectorySourceLabel" FontFamily="Arial" FontSize="14" Width="165" Height="25" HorizontalAlignment="Center" Margin="0,10,0,0" Content="Path to Source Log Files"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button x:Name="SrcDirectoryButton" Width="25" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Background="Beige" IsEnabled="True" Click="SrcDirectoryButton_Click" Content="..."/>
-                            <TextBox x:Name="DirectorySource" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="3" TextChanged="TextboxUpdated" IsReadOnly="True"/>
+                            <TextBox x:Name="DirectorySource" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="3" TextChanged="TextboxUpdated"/>
                         </StackPanel>
                         <Label x:Name="DirectoryOutputLabel" FontFamily="Arial" FontSize="14" Width="220" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Content="Path to Destination Log Directory"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -117,6 +118,7 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
@@ -127,11 +129,11 @@
                             <StackPanel Grid.Row="0" Grid.Column="1">
                                 <Button x:Name="DirectoryRunButton" Width="100" Height="25" HorizontalAlignment="Center"  Margin="0,20" Background="Beige" IsEnabled="False" Click="DirectoryRunButton_Click" Content="Run"/>
                             </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3">
+                            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5">
                                 <ProgressBar x:Name="DirectoryProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="DirectoryVersionNumber" Content="FLogS - Version 1.0.5.3 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="DirectoryVersionNumber" Content="FLogS - Version 1.0.5.4 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -152,7 +154,7 @@
                             Many F-Chat users accrue very large log files over the course of years of tenure on F-Chat.
                             As file sizes increase, so too does the sentimenal value of those logs.
                             As technology evolves, computers are bought and replaced, and files make the transition from drive to drive, corruption is bound to happen sooner or later.<LineBreak/>
-                            Oftentimes the corruption is severe enough that F-Chat's native clients cannot read the logs, and since the client can't export logs it can't read, the data is lost.<LineBreak/>
+                            Oftentimes the corruption is severe enough that F-Chat's native clients cannot read the logs, and since a client can't export logs it can't read, the data is lost.<LineBreak/>
                             <Bold>FLogS</Bold> cannot repair log corruption, but is capable of scanning a user's logs and picking out messages that remain intact, saving them elsewhere in plaintext format.
                         </TextBlock>
                     </StackPanel>
@@ -161,7 +163,7 @@
                         <TextBlock x:Name="HelpText2" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" FontSize="14" FontFamily="Calibri" Margin="10,20">
                             It's as simple as one, two, three, four!<LineBreak/>
                             Click on the <Bold>File</Bold> tab at the top to export a single log file, or <Bold>Directory</Bold> to export many files at once.<LineBreak/>
-                            Select one or more F-Chat log files by clicking the first button labelled "..." and following the prompt - or, you may enter a single path manually.<LineBreak/>
+                            Select one or more F-Chat log files by clicking the first button labelled "..." and following the prompt. Or, you may enter a path manually.<LineBreak/>
                             Select a destination file or folder by clicking the second "..." button or entering a manual path.<LineBreak/>
                             Finally, hit the Run button!
                         </TextBlock>
@@ -174,7 +176,7 @@
                             The program will note in its output where some data could not be read - typically, it's only a few bytes at a time.<LineBreak/>
                             <Span x:Name="ADLWarning" Foreground="Red"><Bold>FLogS</Bold> is not a substitute for ADL</Span>: Plaintext logs generated by this program <Italic>cannot</Italic> be accepted by F-List staff in case of a dispute, even if the source file is completely intact.
                         </TextBlock>
-                        <Label x:Name="HelpVersionNumber" Content="FLogS - Version 1.0.5.3 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,-14" FontWeight="Thin"/>
+                        <Label x:Name="HelpVersionNumber" Content="FLogS - Version 1.0.5.4 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,-14" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
