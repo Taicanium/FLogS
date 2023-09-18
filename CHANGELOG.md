@@ -17,3 +17,7 @@
 
 # 1.0.5.2 - 17/09/2023
 - Added a disclaimer to the Help tab advising the user that F-List staff cannot accept logs processed by third-party apps such as FLogS.
+
+# 1.0.5.3 - 17/09/2023
+- Streamlined empty message handling.
+- Minor fix: Cease pre-emptively ending the salvage routine if an empty message is encountered at a very specific point in the process.

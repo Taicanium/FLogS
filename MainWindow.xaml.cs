@@ -408,10 +408,10 @@ namespace FLogS
             while (srcFS.Position < srcFS.Length - 1)
             {
                 MessageType msId;
-                string profileName;
+                string profileName = "";
                 int discrepancy;
-                uint messageLength;
-                string messageData;
+                uint messageLength = 0U;
+                string messageData = "";
                 uint timestamp;
                 bool nextTimestamp = false;
                 string messageOut = "";
@@ -472,54 +472,62 @@ namespace FLogS
                         emptyMessages++;
                         messageOut += "[EMPTY MESSAGE]";
                     }
-                    profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
-                    messageOut += profileName;
-                    switch (msId)
+                    else
                     {
-                        case MessageType.EOF:
-                            return;
-                        case MessageType.Regular:
-                            messageOut += ": ";
-                            break;
-                        case MessageType.Me:
-                            messageOut += "";
-                            break;
-                        case MessageType.BottleSpin:
-                            messageOut += "";
-                            break;
-                        case MessageType.DiceRoll:
-                            messageOut += "";
-                            break;
-                        case MessageType.Warning:
-                            messageOut += " (warning): ";
-                            break;
+                        profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
+                        messageOut += profileName;
+                        switch (msId)
+                        {
+                            case MessageType.EOF:
+                                return;
+                            case MessageType.Regular:
+                                messageOut += ": ";
+                                break;
+                            case MessageType.Me:
+                                messageOut += "";
+                                break;
+                            case MessageType.BottleSpin:
+                                messageOut += "";
+                                break;
+                            case MessageType.DiceRoll:
+                                messageOut += "";
+                                break;
+                            case MessageType.Warning:
+                                messageOut += " (warning): ";
+                                break;
+                        }
+                        result = srcFS.Read(idBuffer, 0, 2);
+                        if (result < 2)
+                            result = 0;
+                        else
+                        {
+                            idBuffer[2] = 0;
+                            idBuffer[3] = 0;
+                            messageLength = BEInt(idBuffer);
+                            if (messageLength < 1)
+                                result = 0;
+                            else
+                            {
+                                streamBuffer = new byte[messageLength];
+                                result = srcFS.Read(streamBuffer, 0, (int)(messageLength));
+                            }
+                        }
+                        if (result == 0)
+                        {
+                            intact = false;
+                            emptyMessages++;
+                            messageOut += "[EMPTY MESSAGE]";
+                        }
+                        else if (result < messageLength)
+                        {
+                            intact = false;
+                            truncatedMessages++;
+                            truncatedBytes += (uint)result;
+                            messageOut += "[TRUNCATED MESSAGE] ";
+                        }
+                        if (result > 0)
+                            messageData = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
                     }
-                    result = srcFS.Read(idBuffer, 0, 2);
-                    if (result < 2)
-                    {
-                        intact = false;
-                        emptyMessages++;
-                        messageOut += "[EMPTY MESSAGE]";
-                    }
-                    idBuffer[2] = 0;
-                    idBuffer[3] = 0;
-                    messageLength = BEInt(idBuffer);
-                    streamBuffer = new byte[messageLength];
-                    result = srcFS.Read(streamBuffer, 0, (int)(messageLength));
-                    if (result == 0)
-                    {
-                        intact = false;
-                        emptyMessages++;
-                        messageOut += "[EMPTY MESSAGE]";
-                    }
-                    else if (result < messageLength)
-                    {
-                        intact = false;
-                        truncatedMessages++;
-                        truncatedBytes += (uint)result;
-                        messageOut += "[TRUNCATED MESSAGE] ";
-                    }
-                    messageData = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
                     if (intact)
                     {
                         messageOut += messageData;
