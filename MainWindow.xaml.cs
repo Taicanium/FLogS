@@ -66,7 +66,7 @@ namespace FLogS
             EOF = -1,
             Regular = 0,
             Me = 1,
-            BottleSpin = 2,
+            Ad = 2,
             DiceRoll = 3,
             Warning = 4,
         }
@@ -96,6 +96,8 @@ namespace FLogS
         private static void LogException(Exception e)
         {
             File.AppendAllText("FLogS_ERROR.txt", DateTime.Now.ToString(dateFormat) + " - " + e.Message + "\n");
+            if (e.StackTrace != null)
+                File.AppendAllText("FLogS_ERROR.txt", e.StackTrace + "\n");
             return;
         }
 
@@ -445,14 +447,12 @@ namespace FLogS
         private void Worker_DoWork(object sender, DoWorkEventArgs e)
         {
             FileStream srcFS;
-            FileStream dstFS;
             try
             {
                 if (File.Exists(destFile))
                     File.Delete(destFile);
 
                 srcFS = File.OpenRead(srcFile);
-                dstFS = File.OpenWrite(destFile);
             }
             catch (Exception ex)
             {
@@ -464,193 +464,194 @@ namespace FLogS
             DateTime thisDT;
             DateTime lastUpdate = DateTime.Now;
 
-            while (srcFS.Position < srcFS.Length - 1)
+            using (StreamWriter dstFS = new StreamWriter(destFile, false))
             {
-                MessageType msId;
-                string profileName;
-                int discrepancy;
-                uint messageLength = 0U;
-                string messageData = "";
-                uint timestamp;
-                bool nextTimestamp = false;
-                bool withinRange = true;
-                string messageOut = "";
-                intact = true;
-
-                try
+                while (srcFS.Position < srcFS.Length - 1)
                 {
-                    discrepancy = (int)(srcFS.Position - lastPosition); // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
-                    unreadBytes += discrepancy;
-                    if (discrepancy > 0)
-                        dstFS.Write(Encoding.UTF8.GetBytes(string.Format("({0:#,0} missing bytes)\n", discrepancy)));
-                    result = srcFS.Read(idBuffer, 0, 4); // Read the timestamp.
-                    if (result < 4)
-                        return;
-                    timestamp = BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
-                    thisDT = DTFromStamp(timestamp);
-                    if (timestamp < 1                              // If it came before Jan. 1, 1970, there's probably a problem.
-                        || timestamp > UNIXTimestamp()             // If it's in the future, also a problem.
-                        || thisDT.ToString(dateFormat).Length == 0 // If it can't be translated to a date, also a problem.
-                        || timestamp < lastTimestamp)              /* If it isn't sequential, also a problem, because F-Chat would never save it that way.
+                    MessageType msId;
+                    string profileName;
+                    int discrepancy;
+                    uint messageLength = 0U;
+                    string messageData = "";
+                    uint timestamp;
+                    bool nextTimestamp = false;
+                    bool withinRange = true;
+                    string messageOut = "";
+                    intact = true;
+
+                    try
+                    {
+                        discrepancy = (int)(srcFS.Position - lastPosition); // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
+                        unreadBytes += discrepancy;
+                        if (discrepancy > 0)
+                            dstFS.Write(string.Format("({0:#,0} missing bytes)\n", discrepancy));
+                        result = srcFS.Read(idBuffer, 0, 4); // Read the timestamp.
+                        if (result < 4)
+                            return;
+                        timestamp = BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
+                        thisDT = DTFromStamp(timestamp);
+                        if (timestamp < 1                              // If it came before Jan. 1, 1970, there's probably a problem.
+                            || timestamp > UNIXTimestamp()             // If it's in the future, also a problem.
+                            || thisDT.ToString(dateFormat).Length == 0 // If it can't be translated to a date, also a problem.
+                            || timestamp < lastTimestamp)              /* If it isn't sequential, also a problem, because F-Chat would never save it that way.
                                                                     * In this case specifically, there's an extremely high chance we're about to produce garbage data in the output. */
-                    {
-                        intact = false;
-                        corruptTimestamps++;
-                        messageOut = "[BAD TIMESTAMP] ";
-                    }
-                    else
-                    {
-                        if ((dtBefore != null && thisDT.CompareTo(dtBefore) > 0) || (dtAfter != null && thisDT.CompareTo(dtAfter) < 0))
-                            withinRange = false;
-                        messageOut += "[" + thisDT.ToString(dateFormat) + "] ";
-                        lastTimestamp = timestamp;
-                    }
-                    nextByte = srcFS.ReadByte(); // Read the delimiter.
-                    if (nextByte == -1)
-                        return;
-                    msId = (MessageType)(int)nextByte;
-                    nextByte = srcFS.ReadByte(); // 1-byte length of profile name.
-                    if (nextByte == -1)
-                        return;
-                    streamBuffer = new byte[nextByte];
-                    result = srcFS.Read(streamBuffer, 0, nextByte); // Read the profile name.
-                    if (result < nextByte)
-                    {
-                        intact = false;
-                        emptyMessages++;
-                        messageOut += "[EMPTY MESSAGE]";
-                    }
-                    else
-                    {
-                        profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
-                        messageOut += profileName;
-                        switch (msId)
                         {
-                            case MessageType.EOF:
-                                return;
-                            case MessageType.Regular:
-                                messageOut += ": ";
-                                break;
-                            case MessageType.Me:
-                                messageOut += "";
-                                break;
-                            case MessageType.BottleSpin:
-                                messageOut += "";
-                                break;
-                            case MessageType.DiceRoll:
-                                messageOut += "";
-                                break;
-                            case MessageType.Warning:
-                                messageOut += " (warning): ";
-                                break;
+                            intact = false;
+                            corruptTimestamps++;
+                            messageOut = "[BAD TIMESTAMP] ";
                         }
-                        result = srcFS.Read(idBuffer, 0, 2);
-                        if (result < 2)
-                            result = 0;
                         else
                         {
-                            idBuffer[2] = 0;
-                            idBuffer[3] = 0;
-                            messageLength = BEInt(idBuffer);
-                            if (messageLength < 1)
-                                result = 0;
-                            else
-                            {
-                                streamBuffer = new byte[messageLength];
-                                result = srcFS.Read(streamBuffer, 0, (int)(messageLength));
-                            }
+                            if ((dtBefore != null && thisDT.CompareTo(dtBefore) > 0) || (dtAfter != null && thisDT.CompareTo(dtAfter) < 0))
+                                withinRange = false;
+                            messageOut += "[" + thisDT.ToString(dateFormat) + "] ";
+                            lastTimestamp = timestamp;
                         }
-                        if (result == 0)
+                        nextByte = srcFS.ReadByte(); // Read the delimiter.
+                        if (nextByte == -1)
+                            return;
+                        msId = (MessageType)(int)nextByte;
+                        nextByte = srcFS.ReadByte(); // 1-byte length of profile name.
+                        if (nextByte == -1)
+                            return;
+                        streamBuffer = new byte[nextByte];
+                        result = srcFS.Read(streamBuffer, 0, nextByte); // Read the profile name.
+                        if (result < nextByte)
                         {
                             intact = false;
                             emptyMessages++;
                             messageOut += "[EMPTY MESSAGE]";
                         }
-                        else if (result < messageLength)
-                        {
-                            intact = false;
-                            truncatedMessages++;
-                            truncatedBytes += (uint)result;
-                            messageOut += "[TRUNCATED MESSAGE] ";
-                        }
-                        if (result > 0)
-                            messageData = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
-                    }
-                    if (intact)
-                    {
-                        messageOut += messageData;
-                        intactMessages++;
-                        intactBytes += (uint)messageOut.Length;
-                        if (withinRange)
-                            dstFS.Write(Encoding.UTF8.GetBytes(messageOut + "\n"));
                         else
                         {
-                            discardedMessages++;
-                            discardedBytes += (uint)messageOut.Length;
+                            profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
+                            messageOut += profileName;
+                            switch (msId)
+                            {
+                                case MessageType.EOF:
+                                    return;
+                                case MessageType.Regular:
+                                    messageOut += ": ";
+                                    break;
+                                case MessageType.Me:
+                                    messageOut += "";
+                                    break;
+                                case MessageType.Ad:
+                                    messageOut += " (ad): ";
+                                    break;
+                                case MessageType.DiceRoll:
+                                    messageOut += "";
+                                    break;
+                                case MessageType.Warning:
+                                    messageOut += " (warning): ";
+                                    break;
+                            }
+                            result = srcFS.Read(idBuffer, 0, 2);
+                            if (result < 2)
+                                result = 0;
+                            else
+                            {
+                                idBuffer[2] = 0;
+                                idBuffer[3] = 0;
+                                messageLength = BEInt(idBuffer);
+                                if (messageLength < 1)
+                                    result = 0;
+                                else
+                                {
+                                    streamBuffer = new byte[messageLength];
+                                    result = srcFS.Read(streamBuffer, 0, (int)(messageLength));
+                                }
+                            }
+                            if (result == 0)
+                            {
+                                intact = false;
+                                emptyMessages++;
+                                messageOut += "[EMPTY MESSAGE]";
+                            }
+                            else if (result < messageLength)
+                            {
+                                intact = false;
+                                truncatedMessages++;
+                                truncatedBytes += (uint)result;
+                                messageOut += "[TRUNCATED MESSAGE] ";
+                            }
+                            if (result > 0)
+                                messageData = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
                         }
-                    }
-                    else if (saveTruncated)
-                    {
-                        messageOut += messageData;
-                        if (withinRange)
-                            dstFS.Write(Encoding.UTF8.GetBytes(messageOut + "\n"));
-                    }
-                    lastPosition = (uint)(srcFS.Position);
-                    while (!nextTimestamp)
-                    {
-                        srcFS.ReadByte();
-                        srcFS.Read(idBuffer, 0, 4);
-                        nextByte = srcFS.ReadByte();
-                        if (nextByte == -1)
-                            return;
-                        srcFS.Seek(-6, SeekOrigin.Current);
-                        if (nextByte < 5)
+                        if (intact)
                         {
-                            discrepancy = (int)(srcFS.Position - lastPosition);
-                            unreadBytes += discrepancy;
-                            if (discrepancy > 0)
-                                dstFS.Write(Encoding.UTF8.GetBytes(string.Format("({0:#,0} missing bytes)\n", discrepancy)));
-                            lastPosition = (uint)(srcFS.Position);
-                            srcFS.ReadByte();
-                            nextTimestamp = true;
+                            messageOut += messageData;
+                            intactMessages++;
+                            intactBytes += (uint)messageOut.Length;
+                            if (withinRange)
+                                dstFS.Write(messageOut + "\n");
+                            else
+                            {
+                                discardedMessages++;
+                                discardedBytes += (uint)messageOut.Length;
+                            }
                         }
-                        else
+                        else if (saveTruncated)
                         {
-                            srcFS.ReadByte();
+                            messageOut += messageData;
+                            if (withinRange)
+                                dstFS.Write(messageOut + "\n");
+                        }
+                        lastPosition = (uint)(srcFS.Position);
+                        while (!nextTimestamp)
+                        {
                             srcFS.ReadByte();
                             srcFS.Read(idBuffer, 0, 4);
                             nextByte = srcFS.ReadByte();
                             if (nextByte == -1)
                                 return;
-                            srcFS.Seek(-7, SeekOrigin.Current);
-                            srcFS.ReadByte();
-                            srcFS.ReadByte();
+                            srcFS.Seek(-6, SeekOrigin.Current);
                             if (nextByte < 5)
                             {
-                                discrepancy = (int)(srcFS.Position - lastPosition) - 2;
+                                discrepancy = (int)(srcFS.Position - lastPosition);
                                 unreadBytes += discrepancy;
                                 if (discrepancy > 0)
-                                    dstFS.Write(Encoding.UTF8.GetBytes(string.Format("({0:#,0} missing bytes)\n", discrepancy)));
-                                lastPosition = (uint)srcFS.Position;
+                                    dstFS.Write(string.Format("({0:#,0} missing bytes)\n", discrepancy));
+                                lastPosition = (uint)(srcFS.Position);
+                                srcFS.ReadByte();
                                 nextTimestamp = true;
                             }
+                            else
+                            {
+                                srcFS.ReadByte();
+                                srcFS.ReadByte();
+                                srcFS.Read(idBuffer, 0, 4);
+                                nextByte = srcFS.ReadByte();
+                                if (nextByte == -1)
+                                    return;
+                                srcFS.Seek(-7, SeekOrigin.Current);
+                                srcFS.ReadByte();
+                                srcFS.ReadByte();
+                                if (nextByte < 5)
+                                {
+                                    discrepancy = (int)(srcFS.Position - lastPosition) - 2;
+                                    unreadBytes += discrepancy;
+                                    if (discrepancy > 0)
+                                        dstFS.Write(string.Format("({0:#,0} missing bytes)\n", discrepancy));
+                                    lastPosition = (uint)srcFS.Position;
+                                    nextTimestamp = true;
+                                }
+                            }
+                        }
+                        if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 10)
+                        {
+                            (sender as BackgroundWorker).ReportProgress((int)(bytesRead + srcFS.Position));
+                            lastUpdate = DateTime.Now;
                         }
                     }
-                    if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 10)
+                    catch (Exception ex)
                     {
-                        (sender as BackgroundWorker).ReportProgress((int)(bytesRead + srcFS.Position));
-                        lastUpdate = DateTime.Now;
+                        LogException(ex);
+                        return;
                     }
-                }
-                catch (Exception ex)
-                {
-                    LogException(ex);
-                    return;
                 }
             }
             srcFS.Close();
-            dstFS.Flush();
-            dstFS.Close();
         }
 
         private string ByteSizeString(double bytes)
