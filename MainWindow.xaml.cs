@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Forms;
 using System.Windows.Media;
 
 namespace FLogS
@@ -31,7 +30,16 @@ namespace FLogS
         private uint fileReadyToRun = 1;
         private uint directoryReadyToRun = 1;
 
-        DateTime timeBegin;
+        private readonly static DateTime epoch = new(1970, 1, 1, 0, 0, 0);
+        private DateTime timeBegin;
+        private DateTime? dtBefore;
+        private DateTime? dtAfter;
+
+        private readonly string[] prefixes = { "", "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q" }; // Always futureproof...
+        private int prefixIndex = 0;
+        double finalBytes;
+
+        private readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
         private string? srcFile = "";
         private string? destFile = "";
         private string? destDir = "";
@@ -44,14 +52,16 @@ namespace FLogS
         private bool saveTruncated;
 
         private uint intactMessages;
+        private uint discardedMessages;
         private uint intactBytes;
+        private uint discardedBytes;
         private uint corruptTimestamps;
         private uint truncatedMessages;
         private uint truncatedBytes;
         private uint emptyMessages;
         private int unreadBytes;
 
-        enum MessageType
+        private enum MessageType
         {
             EOF = -1,
             Regular = 0,
@@ -68,20 +78,24 @@ namespace FLogS
 
         private static uint UNIXTimestamp()
         {
-            DateTime epoch = new(1970, 1, 1, 0, 0, 0);
             return (uint)(Math.Floor(DateTime.UtcNow.Subtract(epoch).TotalSeconds));
         }
 
         private static DateTime DTFromStamp(uint stamp)
         {
-            DateTime dtout = new(1970, 1, 1, 0, 0, 0);
-            return dtout.AddSeconds(stamp);
+            try
+            {
+                return epoch.AddSeconds(stamp);
+            }
+            catch (Exception)
+            {
+                return epoch;
+            }
         }
 
         private static void LogException(Exception e)
         {
-            File.AppendAllText("FLogS_ERROR.txt", DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + " - " + e.Message + "\n");
-            if (e.StackTrace != null) File.AppendAllText("FLogS_ERROR.txt", e.StackTrace + "\n");
+            File.AppendAllText("FLogS_ERROR.txt", DateTime.Now.ToString(dateFormat) + " - " + e.Message + "\n");
             return;
         }
 
@@ -103,7 +117,7 @@ namespace FLogS
             try
             {
                 SolidColorBrush[][] brushCombos =
-                   {
+                {
                     new SolidColorBrush[] { Brushes.Black, Brushes.White },
                     new SolidColorBrush[] { Brushes.DarkGray, Brushes.LightGray },
                     new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige },
@@ -190,9 +204,13 @@ namespace FLogS
                 FileSourceLabel.Foreground = brushCombos[0][reversePalette];
                 FileOutputLabel.Foreground = brushCombos[0][reversePalette];
                 FileVersionNumber.Foreground = brushCombos[0][reversePalette];
+                BeforeDateLabel.Foreground = brushCombos[0][reversePalette];
+                AfterDateLabel.Foreground = brushCombos[0][reversePalette];
                 DirectorySourceLabel.Foreground = brushCombos[0][reversePalette];
                 DirectoryOutputLabel.Foreground = brushCombos[0][reversePalette];
                 DirectoryVersionNumber.Foreground = brushCombos[0][reversePalette];
+                DirectoryBeforeDateLabel.Foreground = brushCombos[0][reversePalette];
+                DirectoryAfterDateLabel.Foreground = brushCombos[0][reversePalette];
                 HelpVersionNumber.Foreground = brushCombos[0][reversePalette];
                 HelpHeader1.Foreground = brushCombos[0][reversePalette];
                 HelpHeader2.Foreground = brushCombos[0][reversePalette];
@@ -251,15 +269,44 @@ namespace FLogS
             double timeTaken = DateTime.Now.Subtract(timeBegin).TotalSeconds;
             if (filesProcessed == 1)
             {
-                headerBox.Content = string.Format("Processed {0} in {1:#,0.0} seconds.", Path.GetFileName(srcFile), timeTaken);
-                DirectoryheaderBox.Content = string.Format("Processed {0} in {1:#,0.0} seconds.", Path.GetFileName(srcFile), timeTaken);
+                headerBox.Content = string.Format("Processed {0} in {1:#,0.00} seconds.", Path.GetFileName(srcFile), timeTaken);
+                DirectoryheaderBox.Content = string.Format("Processed {0} in {1:#,0.00} seconds.", Path.GetFileName(srcFile), timeTaken);
             }
             else
             {
-                headerBox.Content = string.Format("Processed {0} files in {1:#,0.0} seconds.", filesProcessed, timeTaken);
-                DirectoryheaderBox.Content = string.Format("Processed {0} files in {1:#,0.0} seconds.", filesProcessed, timeTaken);
+                headerBox.Content = string.Format("Processed {0} files in {1:#,0.00} seconds.", filesProcessed, timeTaken);
+                DirectoryheaderBox.Content = string.Format("Processed {0} files in {1:#,0.00} seconds.", filesProcessed, timeTaken);
             }
             return;
+        }
+
+        private void ComboBox_Update(object sender, RoutedEventArgs e)
+        {
+            if (SaveTruncated == null || DirectorySaveTruncated == null)
+                return;
+
+            if ((sender as ComboBox).SelectedIndex == 0)
+            {
+                SaveTruncated.SelectedIndex = 0;
+                DirectorySaveTruncated.SelectedIndex = 0;
+                return;
+            }
+
+            SaveTruncated.SelectedIndex = 1;
+            DirectorySaveTruncated.SelectedIndex = 1;
+        }
+
+        private void DatePicker_Update(object sender, RoutedEventArgs e)
+        {
+            if ((sender as DatePicker).Name.Contains("BeforeDate"))
+            {
+                BeforeDate.SelectedDate = (sender as DatePicker).SelectedDate;
+                DirectoryBeforeDate.SelectedDate = (sender as DatePicker).SelectedDate;
+                return;
+            }
+
+            AfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
+            DirectoryAfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
         }
 
         private void RunButton_Click(object sender, RoutedEventArgs e)
@@ -284,12 +331,15 @@ namespace FLogS
                 lastPosition = 0U;
                 saveTruncated = SaveTruncated.SelectedIndex != 0;
                 timeBegin = DateTime.Now;
+                dtBefore = BeforeDate.SelectedDate;
+                dtAfter = AfterDate.SelectedDate;
 
-                string data = File.ReadAllText(srcFile);
-                FileProgress.Maximum = data.Length;
+                FileProgress.Maximum = new FileInfo(srcFile).Length;
 
                 intactMessages = 0U;
+                discardedMessages = 0U;
                 intactBytes = 0U;
+                discardedBytes = 0U;
                 corruptTimestamps = 0U;
                 truncatedMessages = 0U;
                 truncatedBytes = 0U;
@@ -317,9 +367,13 @@ namespace FLogS
                 TransitionMenus(true);
 
                 timeBegin = DateTime.Now;
+                dtBefore = DirectoryBeforeDate.SelectedDate;
+                dtAfter = DirectoryAfterDate.SelectedDate;
 
                 intactMessages = 0U;
+                discardedMessages = 0U;
                 intactBytes = 0U;
+                discardedBytes = 0U;
                 corruptTimestamps = 0U;
                 truncatedMessages = 0U;
                 truncatedBytes = 0U;
@@ -336,7 +390,7 @@ namespace FLogS
                 foreach (string logfile in files)
                 {
                     totalSize += new FileInfo(logfile).Length;
-                    destFile = Path.Join(destDir, Path.GetFileNameWithoutExtension(srcFile) + ".txt");
+                    destFile = Path.Join(destDir, Path.GetFileNameWithoutExtension(logfile) + ".txt");
                     if (File.Exists(destFile))
                         File.Delete(destFile);
                 }
@@ -359,7 +413,7 @@ namespace FLogS
             }
         }
 
-        void Worker_BatchProcess(object sender, DoWorkEventArgs e)
+        private void Worker_BatchProcess(object sender, DoWorkEventArgs e)
         {
             try
             {
@@ -388,15 +442,17 @@ namespace FLogS
             }
         }
 
-        void Worker_DoWork(object sender, DoWorkEventArgs e)
+        private void Worker_DoWork(object sender, DoWorkEventArgs e)
         {
             FileStream srcFS;
+            FileStream dstFS;
             try
             {
                 if (File.Exists(destFile))
                     File.Delete(destFile);
 
                 srcFS = File.OpenRead(srcFile);
+                dstFS = File.OpenWrite(destFile);
             }
             catch (Exception ex)
             {
@@ -405,16 +461,19 @@ namespace FLogS
             }
 
             uint lastTimestamp = 0;
+            DateTime thisDT;
+            DateTime lastUpdate = DateTime.Now;
 
             while (srcFS.Position < srcFS.Length - 1)
             {
                 MessageType msId;
-                string profileName = "";
+                string profileName;
                 int discrepancy;
                 uint messageLength = 0U;
                 string messageData = "";
                 uint timestamp;
                 bool nextTimestamp = false;
+                bool withinRange = true;
                 string messageOut = "";
                 intact = true;
 
@@ -423,31 +482,17 @@ namespace FLogS
                     discrepancy = (int)(srcFS.Position - lastPosition); // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
                     unreadBytes += discrepancy;
                     if (discrepancy > 0)
-                        File.AppendAllText(destFile, string.Format("({0:#,0} bytes missing here)\n", discrepancy));
+                        dstFS.Write(Encoding.UTF8.GetBytes(string.Format("({0:#,0} missing bytes)\n", discrepancy)));
                     result = srcFS.Read(idBuffer, 0, 4); // Read the timestamp.
                     if (result < 4)
                         return;
                     timestamp = BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
-                    if (timestamp < 1) // If it came before Jan. 1, 1970, there's probably a problem.
-                    {
-                        intact = false;
-                        corruptTimestamps++;
-                        messageOut = "[BAD TIMESTAMP] ";
-                    }
-                    else if (timestamp > UNIXTimestamp()) // If it's in the future, also a problem.
-                    {
-                        intact = false;
-                        corruptTimestamps++;
-                        messageOut = "[BAD TIMESTAMP] ";
-                    }
-                    else if (DTFromStamp(timestamp).ToString("dd/MM/yyyy HH:mm:ss").Length == 0) // If it can't be translated to a date, also a problem.
-                    {
-                        intact = false;
-                        corruptTimestamps++;
-                        messageOut = "[BAD TIMESTAMP] ";
-                    }
-                    else if (timestamp < lastTimestamp) // If it isn't sequential, also a problem, because F-Chat would never save it that way.
-                                                        // In this case specifically, there's an extremely high chance we're about to produce garbage data in the output.
+                    thisDT = DTFromStamp(timestamp);
+                    if (timestamp < 1                              // If it came before Jan. 1, 1970, there's probably a problem.
+                        || timestamp > UNIXTimestamp()             // If it's in the future, also a problem.
+                        || thisDT.ToString(dateFormat).Length == 0 // If it can't be translated to a date, also a problem.
+                        || timestamp < lastTimestamp)              /* If it isn't sequential, also a problem, because F-Chat would never save it that way.
+                                                                    * In this case specifically, there's an extremely high chance we're about to produce garbage data in the output. */
                     {
                         intact = false;
                         corruptTimestamps++;
@@ -455,7 +500,9 @@ namespace FLogS
                     }
                     else
                     {
-                        messageOut += "[" + DTFromStamp(timestamp).ToString("dd/MM/yyyy HH:mm:ss") + "] ";
+                        if ((dtBefore != null && thisDT.CompareTo(dtBefore) > 0) || (dtAfter != null && thisDT.CompareTo(dtAfter) < 0))
+                            withinRange = false;
+                        messageOut += "[" + thisDT.ToString(dateFormat) + "] ";
                         lastTimestamp = timestamp;
                     }
                     nextByte = srcFS.ReadByte(); // Read the delimiter.
@@ -534,12 +581,19 @@ namespace FLogS
                         messageOut += messageData;
                         intactMessages++;
                         intactBytes += (uint)messageOut.Length;
-                        File.AppendAllText(destFile, messageOut + "\n");
+                        if (withinRange)
+                            dstFS.Write(Encoding.UTF8.GetBytes(messageOut + "\n"));
+                        else
+                        {
+                            discardedMessages++;
+                            discardedBytes += (uint)messageOut.Length;
+                        }
                     }
                     else if (saveTruncated)
                     {
                         messageOut += messageData;
-                        File.AppendAllText(destFile, messageOut + "\n");
+                        if (withinRange)
+                            dstFS.Write(Encoding.UTF8.GetBytes(messageOut + "\n"));
                     }
                     lastPosition = (uint)(srcFS.Position);
                     while (!nextTimestamp)
@@ -555,7 +609,7 @@ namespace FLogS
                             discrepancy = (int)(srcFS.Position - lastPosition);
                             unreadBytes += discrepancy;
                             if (discrepancy > 0)
-                                File.AppendAllText(destFile, string.Format("({0:#,0} bytes missing here)\n", discrepancy));
+                                dstFS.Write(Encoding.UTF8.GetBytes(string.Format("({0:#,0} missing bytes)\n", discrepancy)));
                             lastPosition = (uint)(srcFS.Position);
                             srcFS.ReadByte();
                             nextTimestamp = true;
@@ -576,13 +630,17 @@ namespace FLogS
                                 discrepancy = (int)(srcFS.Position - lastPosition) - 2;
                                 unreadBytes += discrepancy;
                                 if (discrepancy > 0)
-                                    File.AppendAllText(destFile, string.Format("({0:#,0} bytes missing here)\n", discrepancy));
-                                lastPosition = (uint)(srcFS.Position);
+                                    dstFS.Write(Encoding.UTF8.GetBytes(string.Format("({0:#,0} missing bytes)\n", discrepancy)));
+                                lastPosition = (uint)srcFS.Position;
                                 nextTimestamp = true;
                             }
                         }
                     }
-                    (sender as BackgroundWorker).ReportProgress((int)(bytesRead + srcFS.Position));
+                    if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 10)
+                    {
+                        (sender as BackgroundWorker).ReportProgress((int)(bytesRead + srcFS.Position));
+                        lastUpdate = DateTime.Now;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -591,15 +649,35 @@ namespace FLogS
                 }
             }
             srcFS.Close();
+            dstFS.Flush();
+            dstFS.Close();
         }
 
-        void UpdateLogs()
+        private string ByteSizeString(double bytes)
         {
-            imBox.Content = string.Format("Intact Messages: {0:#,0} ({1:#,0.0 kB})", intactMessages, (double)(intactBytes) / 1000.0);
-            ctBox.Content = string.Format("Corrupted Timestamps: {0:#,0}", corruptTimestamps);
-            tmBox.Content = string.Format("Truncated Messages: {0:#,0} ({1:#,0.0 kB})", truncatedMessages, (double)(truncatedBytes) / 1000.0);
-            emBox.Content = string.Format("Empty Messages: {0:#,0}", emptyMessages);
-            ubBox.Content = string.Format("Unread Bytes: {0:#,0} ({1:#,0.0 kB})", unreadBytes, (double)(unreadBytes) / 1000.0);
+            finalBytes = bytes;
+            prefixIndex = 0;
+            while (finalBytes >= 921.6 && prefixIndex < 10)
+            {
+                finalBytes *= 0.0009765625; // 1/1024
+                prefixIndex++;
+            }
+
+            return string.Format("{0:#,0.0} {1}B", finalBytes, prefixes[prefixIndex]);
+        }
+
+        private void UpdateLogs()
+        {
+            int intactCount = (int)intactMessages - (int)discardedMessages;
+            int byteCount = (int)intactBytes - (int)discardedBytes;
+            string byteString = ByteSizeString(byteCount);
+            imBox.Content = $"Intact Messages: {intactCount} ({byteString})";
+            ctBox.Content = $"Corrupted Timestamps: {corruptTimestamps}";
+            byteString = ByteSizeString(truncatedBytes);
+            tmBox.Content = $"Truncated Messages: {truncatedMessages} ({byteString})";
+            emBox.Content = $"Empty Messages: {emptyMessages}";
+            byteString = ByteSizeString(unreadBytes);
+            ubBox.Content = $"Unread Bytes: {unreadBytes} ({byteString})";
             DirectoryimBox.Content = imBox.Content;
             DirectoryctBox.Content = ctBox.Content;
             DirectorytmBox.Content = tmBox.Content;
@@ -609,7 +687,7 @@ namespace FLogS
             return;
         }
 
-        void Worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        private void Worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             try
             {
@@ -625,7 +703,7 @@ namespace FLogS
             }
         }
 
-        void Worker_Completed(object sender, EventArgs e)
+        private void Worker_Completed(object sender, EventArgs e)
         {
             try
             {
@@ -762,7 +840,7 @@ namespace FLogS
         {
             try
             {
-                Microsoft.Win32.OpenFileDialog openFileDialog = new();
+                OpenFileDialog openFileDialog = new();
                 if (openFileDialog.ShowDialog() == true)
                     FileSource.Text = openFileDialog.FileName;
                 else
@@ -779,7 +857,7 @@ namespace FLogS
         {
             try
             {
-                Microsoft.Win32.OpenFileDialog openFileDialog = new()
+                OpenFileDialog openFileDialog = new()
                 {
                     CheckFileExists = false
                 };
@@ -799,7 +877,7 @@ namespace FLogS
         {
             try
             {
-                Microsoft.Win32.OpenFileDialog openFileDialog = new()
+                OpenFileDialog openFileDialog = new()
                 {
                     Multiselect = true
                 };
@@ -807,7 +885,8 @@ namespace FLogS
                 {
                     DirectorySource.Text = "";
                     foreach (string logfile in openFileDialog.FileNames)
-                        DirectorySource.Text += logfile + ";";
+                        if (logfile.Contains(".idx") == false)
+                            DirectorySource.Text += logfile + ";";
                     DirectorySource.Text = DirectorySource.Text.Remove(DirectorySource.Text.Length - 1);
                 }
                 else
@@ -824,7 +903,7 @@ namespace FLogS
         {
             try
             {
-                FolderBrowserDialog folderBrowserDialog = new()
+                System.Windows.Forms.FolderBrowserDialog folderBrowserDialog = new()
                 {
                     ShowNewFolderButton = true
                 };

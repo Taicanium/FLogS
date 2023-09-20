@@ -26,3 +26,10 @@
 - Additional compatibility for earlier versions of Windows; previously, we had supported only the most recent version of Windows 10 and later.
 - Additional error messages and some warnings.
 - The program now refuses to overwrite files it intends to read from, which for several reasons is just good practice.
+
+# 1.0.6 - 19/09/2023
+- Users can now select a range of dates to scan for messages. Messages outside this range are discarded and not counted as intact messages.
+- We now stream the plaintext output instead of appending it line-by-line. The resulting speed improvement is a factor of a hundred. It was stupidly inefficient.
+- Exclude IDX files if they're selected with the batch process dialog. Those are metadata files and will never contain log data. It's a matter of convenience to users who want to Ctrl+A their entire log directory.
+- Major fix: Possible OutOfMemory exception when working with very large files, as a result of the one time we'd open the source file in its entirety. We now never do that. The source is exclusively streamed.
+- Major fix: Refusal to overwrite files during a batch process, as a result of a misused variable.
