@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -29,6 +30,7 @@ namespace FLogS
         // 0 if we are ready to process files; all other values indicate the nature of an error.
         private uint fileReadyToRun = 1;
         private uint directoryReadyToRun = 1;
+        private uint phraseReadyToRun = 1;
 
         private readonly static DateTime epoch = new(1970, 1, 1, 0, 0, 0);
         private DateTime timeBegin;
@@ -43,11 +45,14 @@ namespace FLogS
         private string? srcFile = "";
         private string? destFile = "";
         private string? destDir = "";
+        private string? phrase = "";
         private int result;
         private byte[]? idBuffer;
         private byte[]? streamBuffer;
         private int nextByte;
         private uint lastPosition;
+        private uint lastTimestamp;
+        private int lastDiscrepancy;
         private bool intact;
         private bool saveTruncated;
 
@@ -69,6 +74,7 @@ namespace FLogS
             Ad = 2,
             DiceRoll = 3,
             Warning = 4,
+            Headless = 5,
         }
 
         private static uint BEInt(byte[] buffer)
@@ -96,8 +102,6 @@ namespace FLogS
         private static void LogException(Exception e)
         {
             File.AppendAllText("FLogS_ERROR.txt", DateTime.Now.ToString(dateFormat) + " - " + e.Message + "\n");
-            if (e.StackTrace != null)
-                File.AppendAllText("FLogS_ERROR.txt", e.StackTrace + "\n");
             return;
         }
 
@@ -137,16 +141,19 @@ namespace FLogS
                     reversePalette = 1;
                     ThemeSelector.Content = "Light";
                     DirectoryThemeSelector.Content = "Light";
+                    PhraseThemeSelector.Content = "Light";
                 }
                 else
                 {
                     ThemeSelector.Content = "Dark";
                     DirectoryThemeSelector.Content = "Dark";
+                    PhraseThemeSelector.Content = "Dark";
                 }
 
                 // Grids
                 FileGrid.Background = brushCombos[3][brushPalette];
                 DirectoryGrid.Background = brushCombos[3][brushPalette];
+                PhraseGrid.Background = brushCombos[3][brushPalette];
                 HelpGrid.Background = brushCombos[3][brushPalette];
 
                 // TabControl
@@ -154,43 +161,42 @@ namespace FLogS
 
                 // Textboxes
                 LogWindow.Background = brushCombos[0][brushPalette];
-                DirectoryLogWindow.Background = brushCombos[0][brushPalette];
-                FileSource.Background = brushCombos[0][brushPalette];
-                FileOutput.Background = brushCombos[0][brushPalette];
-                DirectorySource.Background = brushCombos[0][brushPalette];
-                DirectoryOutput.Background = brushCombos[0][brushPalette];
                 LogWindow.Foreground = brushCombos[0][reversePalette];
-                DirectoryLogWindow.Foreground = brushCombos[0][reversePalette];
+                LogWindow.BorderBrush = brushCombos[3][reversePalette];
+                FileSource.Background = brushCombos[0][brushPalette];
                 FileSource.Foreground = brushCombos[0][reversePalette];
+                FileSource.BorderBrush = brushCombos[3][reversePalette];
+                FileOutput.Background = brushCombos[0][brushPalette];
                 FileOutput.Foreground = brushCombos[0][reversePalette];
+                FileOutput.BorderBrush = brushCombos[3][reversePalette];
+                DirectoryLogWindow.Background = brushCombos[0][brushPalette];
+                DirectoryLogWindow.Foreground = brushCombos[0][reversePalette];
+                DirectoryLogWindow.BorderBrush = brushCombos[3][reversePalette];
+                DirectorySource.Background = brushCombos[0][brushPalette];
                 DirectorySource.Foreground = brushCombos[0][reversePalette];
+                DirectorySource.BorderBrush = brushCombos[3][reversePalette];
+                DirectoryOutput.Background = brushCombos[0][brushPalette];
                 DirectoryOutput.Foreground = brushCombos[0][reversePalette];
+                DirectoryOutput.BorderBrush = brushCombos[3][reversePalette];
+                PhraseLogWindow.Background = brushCombos[0][brushPalette];
+                PhraseLogWindow.Foreground = brushCombos[0][reversePalette];
+                PhraseLogWindow.BorderBrush = brushCombos[3][reversePalette];
+                PhraseSource.Background = brushCombos[0][brushPalette];
+                PhraseSource.Foreground = brushCombos[0][reversePalette];
+                PhraseSource.BorderBrush = brushCombos[3][reversePalette];
+                PhraseOutput.Background = brushCombos[0][brushPalette];
+                PhraseOutput.Foreground = brushCombos[0][reversePalette];
+                PhraseOutput.BorderBrush = brushCombos[3][reversePalette];
+                PhraseSearch.Background = brushCombos[0][brushPalette];
+                PhraseSearch.Foreground = brushCombos[0][reversePalette];
+                PhraseSearch.BorderBrush = brushCombos[3][reversePalette];
 
                 // ListBoxItems
-                headerBox.Foreground = brushCombos[0][reversePalette];
-                imBox.Foreground = brushCombos[0][reversePalette];
-                ctBox.Foreground = brushCombos[0][reversePalette];
-                tmBox.Foreground = brushCombos[0][reversePalette];
-                emBox.Foreground = brushCombos[0][reversePalette];
-                ubBox.Foreground = brushCombos[0][reversePalette];
-                DirectoryheaderBox.Foreground = brushCombos[0][reversePalette];
-                DirectoryimBox.Foreground = brushCombos[0][reversePalette];
-                DirectoryctBox.Foreground = brushCombos[0][reversePalette];
-                DirectorytmBox.Foreground = brushCombos[0][reversePalette];
-                DirectoryemBox.Foreground = brushCombos[0][reversePalette];
-                DirectoryubBox.Foreground = brushCombos[0][reversePalette];
-                headerBox.Background = brushCombos[0][brushPalette];
-                imBox.Background = brushCombos[0][brushPalette];
-                ctBox.Background = brushCombos[0][brushPalette];
-                tmBox.Background = brushCombos[0][brushPalette];
-                emBox.Background = brushCombos[0][brushPalette];
-                ubBox.Background = brushCombos[0][brushPalette];
-                DirectoryheaderBox.Background = brushCombos[0][brushPalette];
-                DirectoryimBox.Background = brushCombos[0][brushPalette];
-                DirectoryctBox.Background = brushCombos[0][brushPalette];
-                DirectorytmBox.Background = brushCombos[0][brushPalette];
-                DirectoryemBox.Background = brushCombos[0][brushPalette];
-                DirectoryubBox.Background = brushCombos[0][brushPalette];
+                foreach (ListBoxItem lbItem in LogWindow.Items)
+                {
+                    lbItem.Foreground = brushCombos[0][reversePalette];
+                    lbItem.Background = brushCombos[0][brushPalette];
+                }
 
                 // Buttons
                 ThemeSelector.Background = brushCombos[2][brushPalette];
@@ -201,6 +207,10 @@ namespace FLogS
                 SrcDirectoryButton.Background = brushCombos[2][brushPalette];
                 DstDirectoryButton.Background = brushCombos[2][brushPalette];
                 DirectoryRunButton.Background = brushCombos[2][brushPalette];
+                PhraseThemeSelector.Background = brushCombos[2][brushPalette];
+                SrcPhraseButton.Background = brushCombos[2][brushPalette];
+                DstPhraseButton.Background = brushCombos[2][brushPalette];
+                PhraseRunButton.Background = brushCombos[2][brushPalette];
 
                 // Labels
                 FileSourceLabel.Foreground = brushCombos[0][reversePalette];
@@ -213,20 +223,27 @@ namespace FLogS
                 DirectoryVersionNumber.Foreground = brushCombos[0][reversePalette];
                 DirectoryBeforeDateLabel.Foreground = brushCombos[0][reversePalette];
                 DirectoryAfterDateLabel.Foreground = brushCombos[0][reversePalette];
+                PhraseSourceLabel.Foreground = brushCombos[0][reversePalette];
+                PhraseOutputLabel.Foreground = brushCombos[0][reversePalette];
+                PhraseSearchLabel.Foreground = brushCombos[0][reversePalette];
+                PhraseVersionNumber.Foreground = brushCombos[0][reversePalette];
+                PhraseBeforeDateLabel.Foreground = brushCombos[0][reversePalette];
+                PhraseAfterDateLabel.Foreground = brushCombos[0][reversePalette];
                 HelpVersionNumber.Foreground = brushCombos[0][reversePalette];
                 HelpHeader1.Foreground = brushCombos[0][reversePalette];
                 HelpHeader2.Foreground = brushCombos[0][reversePalette];
-                HelpHeader3.Foreground = brushCombos[0][reversePalette];
                 HelpText1.Foreground = brushCombos[0][reversePalette];
                 HelpText2.Foreground = brushCombos[0][reversePalette];
-                HelpText3.Foreground = brushCombos[0][reversePalette];
                 ADLWarning.Foreground = brushCombos[4][brushPalette];
                 WarningLabel.Foreground = brushCombos[4][brushPalette];
                 DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
+                PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
                 if (fileReadyToRun == 0)
                     WarningLabel.Foreground = brushCombos[5][brushPalette];
                 if (directoryReadyToRun == 0)
                     DirectoryWarningLabel.Foreground = brushCombos[5][brushPalette];
+                if (phraseReadyToRun == 0)
+                    PhraseWarningLabel.Foreground = brushCombos[5][brushPalette];
             }
             catch (Exception ex)
             {
@@ -241,18 +258,34 @@ namespace FLogS
             {
                 RunButton.IsEnabled = false;
                 RunButton.Content = "Scanning...";
-                headerBox.Content = "Scanning " + Path.GetFileName(FileSource.Text) + "...";
                 FileSource.IsEnabled = false;
                 FileOutput.IsEnabled = false;
                 SrcFileButton.IsEnabled = false;
                 DstFileButton.IsEnabled = false;
                 DirectoryRunButton.IsEnabled = false;
                 DirectoryRunButton.Content = "Scanning...";
-                DirectoryheaderBox.Content = "Scanning " + Path.GetFileName(FileSource.Text) + "...";
                 DirectorySource.IsEnabled = false;
                 DirectoryOutput.IsEnabled = false;
                 SrcDirectoryButton.IsEnabled = false;
                 DstDirectoryButton.IsEnabled = false;
+                PhraseRunButton.IsEnabled = false;
+                PhraseRunButton.Content = "Scanning...";
+                PhraseSource.IsEnabled = false;
+                PhraseOutput.IsEnabled = false;
+                SrcPhraseButton.IsEnabled = false;
+                DstPhraseButton.IsEnabled = false;
+                if (filesProcessed == 1)
+                {
+                    headerBox.Content = "Scanning " + Path.GetFileName(srcFile) + "...";
+                    DirectoryheaderBox.Content = "Scanning " + Path.GetFileName(srcFile) + "...";
+                    PhraseheaderBox.Content = "Scanning " + Path.GetFileName(srcFile) + "...";
+                }
+                else
+                {
+                    headerBox.Content = $"Scanning {filesProcessed:N0} files...";
+                    DirectoryheaderBox.Content = $"Scanning {filesProcessed:N0} files...";
+                    PhraseheaderBox.Content = $"Scanning {filesProcessed:N0} files...";
+                }
                 return;
             }
 
@@ -268,34 +301,44 @@ namespace FLogS
             DirectoryOutput.IsEnabled = true;
             SrcDirectoryButton.IsEnabled = true;
             DstDirectoryButton.IsEnabled = true;
+            PhraseRunButton.IsEnabled = true;
+            PhraseRunButton.Content = "Run";
+            PhraseSource.IsEnabled = true;
+            PhraseOutput.IsEnabled = true;
+            SrcPhraseButton.IsEnabled = true;
+            DstPhraseButton.IsEnabled = true;
             double timeTaken = DateTime.Now.Subtract(timeBegin).TotalSeconds;
             if (filesProcessed == 1)
             {
                 headerBox.Content = string.Format("Processed {0} in {1:#,0.00} seconds.", Path.GetFileName(srcFile), timeTaken);
                 DirectoryheaderBox.Content = string.Format("Processed {0} in {1:#,0.00} seconds.", Path.GetFileName(srcFile), timeTaken);
+                PhraseheaderBox.Content = string.Format("Processed {0} in {1:#,0.00} seconds.", Path.GetFileName(srcFile), timeTaken);
             }
             else
             {
                 headerBox.Content = string.Format("Processed {0} files in {1:#,0.00} seconds.", filesProcessed, timeTaken);
                 DirectoryheaderBox.Content = string.Format("Processed {0} files in {1:#,0.00} seconds.", filesProcessed, timeTaken);
+                PhraseheaderBox.Content = string.Format("Processed {0} files in {1:#,0.00} seconds.", filesProcessed, timeTaken);
             }
             return;
         }
 
         private void ComboBox_Update(object sender, RoutedEventArgs e)
         {
-            if (SaveTruncated == null || DirectorySaveTruncated == null)
+            if (SaveTruncated == null || DirectorySaveTruncated == null || PhraseSaveTruncated == null)
                 return;
 
             if ((sender as ComboBox).SelectedIndex == 0)
             {
                 SaveTruncated.SelectedIndex = 0;
                 DirectorySaveTruncated.SelectedIndex = 0;
+                PhraseSaveTruncated.SelectedIndex = 0;
                 return;
             }
 
             SaveTruncated.SelectedIndex = 1;
             DirectorySaveTruncated.SelectedIndex = 1;
+            PhraseSaveTruncated.SelectedIndex = 1;
         }
 
         private void DatePicker_Update(object sender, RoutedEventArgs e)
@@ -304,17 +347,21 @@ namespace FLogS
             {
                 BeforeDate.SelectedDate = (sender as DatePicker).SelectedDate;
                 DirectoryBeforeDate.SelectedDate = (sender as DatePicker).SelectedDate;
+                PhraseBeforeDate.SelectedDate = (sender as DatePicker).SelectedDate;
                 return;
             }
 
             AfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
             DirectoryAfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
+            PhraseAfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
         }
 
         private void RunButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
+                srcFile = FileSource.Text;
+                filesProcessed = 1;
                 TransitionMenus(true);
 
                 BackgroundWorker worker = new()
@@ -325,7 +372,6 @@ namespace FLogS
                 worker.ProgressChanged += Worker_ProgressChanged;
                 worker.RunWorkerCompleted += Worker_Completed;
 
-                srcFile = FileSource.Text;
                 destFile = FileOutput.Text;
                 result = 0;
                 idBuffer = new byte[4];
@@ -335,8 +381,12 @@ namespace FLogS
                 timeBegin = DateTime.Now;
                 dtBefore = BeforeDate.SelectedDate;
                 dtAfter = AfterDate.SelectedDate;
+                if (dtBefore < dtAfter)
+                    (dtAfter, dtBefore) = (dtBefore, dtAfter);
 
                 FileProgress.Maximum = new FileInfo(srcFile).Length;
+                DirectoryProgress.Maximum = new FileInfo(srcFile).Length;
+                PhraseProgress.Maximum = new FileInfo(srcFile).Length;
 
                 intactMessages = 0U;
                 discardedMessages = 0U;
@@ -365,12 +415,16 @@ namespace FLogS
             {
                 string[] files = DirectorySource.Text.Split(';');
                 filesProcessed = (uint)(files.Length);
+                if (filesProcessed == 1)
+                    srcFile = files[0];
 
                 TransitionMenus(true);
 
                 timeBegin = DateTime.Now;
                 dtBefore = DirectoryBeforeDate.SelectedDate;
                 dtAfter = DirectoryAfterDate.SelectedDate;
+                if (dtBefore < dtAfter)
+                    (dtAfter, dtBefore) = (dtBefore, dtAfter);
 
                 intactMessages = 0U;
                 discardedMessages = 0U;
@@ -396,7 +450,72 @@ namespace FLogS
                     if (File.Exists(destFile))
                         File.Delete(destFile);
                 }
+                FileProgress.Maximum = totalSize;
                 DirectoryProgress.Maximum = totalSize;
+                PhraseProgress.Maximum = totalSize;
+
+                BackgroundWorker worker = new()
+                {
+                    WorkerReportsProgress = true
+                };
+                worker.DoWork += Worker_BatchProcess;
+                worker.ProgressChanged += Worker_ProgressChanged;
+                worker.RunWorkerCompleted += Worker_Completed;
+
+                worker.RunWorkerAsync(files);
+            }
+            catch (Exception ex)
+            {
+                LogException(ex);
+                return;
+            }
+        }
+
+        private void PhraseRunButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string[] files = PhraseSource.Text.Split(';');
+                filesProcessed = (uint)(files.Length);
+                if (filesProcessed == 1)
+                    srcFile = files[0];
+
+                TransitionMenus(true);
+
+                timeBegin = DateTime.Now;
+                dtBefore = PhraseBeforeDate.SelectedDate;
+                dtAfter = PhraseAfterDate.SelectedDate;
+                if (dtBefore < dtAfter)
+                    (dtAfter, dtBefore) = (dtBefore, dtAfter);
+
+                intactMessages = 0U;
+                discardedMessages = 0U;
+                intactBytes = 0U;
+                discardedBytes = 0U;
+                corruptTimestamps = 0U;
+                truncatedMessages = 0U;
+                truncatedBytes = 0U;
+                emptyMessages = 0U;
+                unreadBytes = 0;
+                bytesRead = 0;
+
+                UpdateLogs();
+
+                destDir = PhraseOutput.Text;
+                phrase = PhraseSearch.Text;
+                saveTruncated = PhraseSaveTruncated.SelectedIndex != 0;
+
+                long totalSize = 0;
+                foreach (string logfile in files)
+                {
+                    totalSize += new FileInfo(logfile).Length;
+                    destFile = Path.Join(destDir, Path.GetFileNameWithoutExtension(logfile) + ".txt");
+                    if (File.Exists(destFile))
+                        File.Delete(destFile);
+                }
+                FileProgress.Maximum = totalSize;
+                DirectoryProgress.Maximum = totalSize;
+                PhraseProgress.Maximum = totalSize;
 
                 BackgroundWorker worker = new()
                 {
@@ -440,8 +559,225 @@ namespace FLogS
             catch (Exception ex)
             {
                 LogException(ex);
-                return;
             }
+
+            return;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="srcFS">A FileStream opened to the source log file.</param>
+        /// <param name="dstFS">A StreamWriter opened to the destination file.</param>
+        /// <returns>'true' if a message was written to file; 'false' if, for any reason, that did not occur.</returns>
+        private bool Worker_TranslateMessage(FileStream srcFS, StreamWriter dstFS)
+        {
+            MessageType msId;
+            string profileName;
+            int discrepancy;
+            uint messageLength = 0U;
+            string messageData = "";
+            uint timestamp;
+            bool nextTimestamp = false;
+            bool withinRange = true;
+            bool matchPhrase = false;
+            string messageOut = "";
+            bool written = false;
+            intact = true;
+            idBuffer = new byte[4];
+            DateTime thisDT;
+
+            try
+            {
+                discrepancy = (int)srcFS.Position - (int)lastPosition; // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
+                unreadBytes += discrepancy;
+                lastDiscrepancy += discrepancy;
+                result = srcFS.Read(idBuffer, 0, 4); // Read the timestamp.
+                if (result < 4)
+                    return written;
+                timestamp = BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
+                thisDT = DTFromStamp(timestamp);
+                if (timestamp < 1                              // If it came before Jan. 1, 1970, there's probably a problem.
+                    || timestamp > UNIXTimestamp()             // If it's in the future, also a problem.
+                    || thisDT.ToString(dateFormat).Length == 0 // If it can't be translated to a date, also a problem.
+                    || timestamp < lastTimestamp)              /* If it isn't sequential, also a problem, because F-Chat would never save it that way.
+                                                                * In this case specifically, there's an extremely high chance we're about to produce garbage data in the output. */
+                {
+                    intact = false;
+                    corruptTimestamps++;
+                    messageOut = "[BAD TIMESTAMP] ";
+                }
+                else
+                {
+                    if ((dtBefore != null && thisDT.CompareTo(dtBefore) > 0) || (dtAfter != null && thisDT.CompareTo(dtAfter) < 0))
+                        withinRange = false;
+                    messageOut += "[" + thisDT.ToString(dateFormat) + "] ";
+                    lastTimestamp = timestamp;
+                }
+                nextByte = srcFS.ReadByte(); // Read the delimiter.
+                if (nextByte == -1)
+                    return written;
+                msId = (MessageType)(int)nextByte;
+                if (msId != MessageType.Headless)
+                {
+                    nextByte = srcFS.ReadByte(); // 1-byte length of profile name.
+                    if (nextByte == -1)
+                        return written;
+                    streamBuffer = new byte[nextByte];
+                    result = srcFS.Read(streamBuffer, 0, nextByte); // Read the profile name.
+                    if (result < nextByte)
+                    {
+                        intact = false;
+                        emptyMessages++;
+                        messageOut += "[EMPTY MESSAGE]";
+                    }
+                    else
+                    {
+                        profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
+                        messageOut += profileName;
+                        switch (msId)
+                        {
+                            case MessageType.EOF:
+                                return written;
+                            case MessageType.Regular:
+                                messageOut += ": ";
+                                break;
+                            case MessageType.Me:
+                                messageOut += "";
+                                break;
+                            case MessageType.Ad:
+                                messageOut += " (ad): ";
+                                break;
+                            case MessageType.DiceRoll:
+                                messageOut += "";
+                                break;
+                            case MessageType.Warning:
+                                messageOut += " (warning): ";
+                                break;
+                        }
+                    }
+                }
+                else
+                    nextByte = srcFS.ReadByte();
+                result = srcFS.Read(idBuffer, 0, 2);
+                if (result < 2)
+                    result = 0;
+                else
+                {
+                    idBuffer[2] = 0;
+                    idBuffer[3] = 0;
+                    messageLength = BEInt(idBuffer);
+                    if (messageLength < 1)
+                        result = 0;
+                    else
+                    {
+                        streamBuffer = new byte[messageLength];
+                        result = srcFS.Read(streamBuffer, 0, (int)messageLength);
+                    }
+                }
+                if (result == 0)
+                {
+                    intact = false;
+                    emptyMessages++;
+                    messageOut += "[EMPTY MESSAGE]";
+                }
+                else if (result < messageLength)
+                {
+                    intact = false;
+                    truncatedMessages++;
+                    truncatedBytes += (uint)result;
+                    messageOut += "[TRUNCATED MESSAGE] ";
+                }
+                if (result > 0)
+                    messageData = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
+                messageData = Regex.Replace(messageData, @"[^\u0009\u000A\u000D\u0020-\u007E]", ""); // Remove everything that's not a printable or newline character.
+                if (phrase == null || (messageOut + messageData).Contains(phrase, StringComparison.OrdinalIgnoreCase))
+                    matchPhrase = true;
+                if (intact)
+                {
+                    intactMessages++;
+                    intactBytes += (uint)messageOut.Length + (uint)messageData.Length;
+                    if (withinRange && matchPhrase)
+                    {
+                        if (lastDiscrepancy > 0)
+                        {
+                            dstFS.Write(string.Format("({0:#,0} missing bytes)", lastDiscrepancy));
+                            dstFS.Write(dstFS.NewLine);
+                        }
+                        dstFS.Write(messageOut);
+                        dstFS.Write(messageData);
+                        dstFS.Write(dstFS.NewLine);
+                        lastDiscrepancy = 0;
+                        written = true;
+                    }
+                    else
+                    {
+                        discardedMessages++;
+                        discardedBytes += (uint)messageOut.Length + (uint)messageData.Length;
+                    }
+                }
+                else if (saveTruncated)
+                {
+                    if (withinRange && matchPhrase)
+                    {
+                        if (lastDiscrepancy > 0)
+                        {
+                            dstFS.Write(string.Format("({0:#,0} missing bytes)", lastDiscrepancy));
+                            dstFS.Write(dstFS.NewLine);
+                        }
+                        dstFS.Write(messageOut);
+                        dstFS.Write(messageData);
+                        dstFS.Write(dstFS.NewLine);
+                        lastDiscrepancy = 0;
+                        written = true;
+                    }
+                }
+                lastPosition = (uint)(srcFS.Position);
+                while (!nextTimestamp)
+                {
+                    srcFS.ReadByte();
+                    srcFS.Read(idBuffer, 0, 4);
+                    nextByte = srcFS.ReadByte();
+                    if (nextByte == -1)
+                        return written;
+                    srcFS.Seek(-6, SeekOrigin.Current);
+                    if (nextByte < 6)
+                    {
+                        discrepancy = (int)srcFS.Position - (int)lastPosition;
+                        unreadBytes += discrepancy;
+                        lastDiscrepancy += discrepancy;
+                        lastPosition = (uint)srcFS.Position;
+                        srcFS.ReadByte();
+                        nextTimestamp = true;
+                    }
+                    else
+                    {
+                        srcFS.ReadByte();
+                        srcFS.ReadByte();
+                        srcFS.Read(idBuffer, 0, 4);
+                        nextByte = srcFS.ReadByte();
+                        if (nextByte == -1)
+                            return written;
+                        srcFS.Seek(-7, SeekOrigin.Current);
+                        srcFS.ReadByte();
+                        srcFS.ReadByte();
+                        if (nextByte < 6)
+                        {
+                            discrepancy = (int)srcFS.Position - (int)lastPosition - 2;
+                            unreadBytes += discrepancy;
+                            lastDiscrepancy += discrepancy;
+                            lastPosition = (uint)srcFS.Position;
+                            nextTimestamp = true;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException(ex);
+            }
+
+            return written;
         }
 
         private void Worker_DoWork(object sender, DoWorkEventArgs e)
@@ -460,198 +796,27 @@ namespace FLogS
                 return;
             }
 
-            uint lastTimestamp = 0;
-            DateTime thisDT;
-            DateTime lastUpdate = DateTime.Now;
-
-            using (StreamWriter dstFS = new StreamWriter(destFile, false))
+            using (StreamWriter dstFS = new(destFile, false))
             {
+                DateTime lastUpdate = DateTime.Now;
+                lastPosition = 0U;
+                lastTimestamp = 0;
+
                 while (srcFS.Position < srcFS.Length - 1)
                 {
-                    MessageType msId;
-                    string profileName;
-                    int discrepancy;
-                    uint messageLength = 0U;
-                    string messageData = "";
-                    uint timestamp;
-                    bool nextTimestamp = false;
-                    bool withinRange = true;
-                    string messageOut = "";
-                    intact = true;
+                    Worker_TranslateMessage(srcFS, dstFS);
 
-                    try
+                    if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 10)
                     {
-                        discrepancy = (int)(srcFS.Position - lastPosition); // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
-                        unreadBytes += discrepancy;
-                        if (discrepancy > 0)
-                            dstFS.Write(string.Format("({0:#,0} missing bytes)\n", discrepancy));
-                        result = srcFS.Read(idBuffer, 0, 4); // Read the timestamp.
-                        if (result < 4)
-                            return;
-                        timestamp = BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
-                        thisDT = DTFromStamp(timestamp);
-                        if (timestamp < 1                              // If it came before Jan. 1, 1970, there's probably a problem.
-                            || timestamp > UNIXTimestamp()             // If it's in the future, also a problem.
-                            || thisDT.ToString(dateFormat).Length == 0 // If it can't be translated to a date, also a problem.
-                            || timestamp < lastTimestamp)              /* If it isn't sequential, also a problem, because F-Chat would never save it that way.
-                                                                    * In this case specifically, there's an extremely high chance we're about to produce garbage data in the output. */
-                        {
-                            intact = false;
-                            corruptTimestamps++;
-                            messageOut = "[BAD TIMESTAMP] ";
-                        }
-                        else
-                        {
-                            if ((dtBefore != null && thisDT.CompareTo(dtBefore) > 0) || (dtAfter != null && thisDT.CompareTo(dtAfter) < 0))
-                                withinRange = false;
-                            messageOut += "[" + thisDT.ToString(dateFormat) + "] ";
-                            lastTimestamp = timestamp;
-                        }
-                        nextByte = srcFS.ReadByte(); // Read the delimiter.
-                        if (nextByte == -1)
-                            return;
-                        msId = (MessageType)(int)nextByte;
-                        nextByte = srcFS.ReadByte(); // 1-byte length of profile name.
-                        if (nextByte == -1)
-                            return;
-                        streamBuffer = new byte[nextByte];
-                        result = srcFS.Read(streamBuffer, 0, nextByte); // Read the profile name.
-                        if (result < nextByte)
-                        {
-                            intact = false;
-                            emptyMessages++;
-                            messageOut += "[EMPTY MESSAGE]";
-                        }
-                        else
-                        {
-                            profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
-                            messageOut += profileName;
-                            switch (msId)
-                            {
-                                case MessageType.EOF:
-                                    return;
-                                case MessageType.Regular:
-                                    messageOut += ": ";
-                                    break;
-                                case MessageType.Me:
-                                    messageOut += "";
-                                    break;
-                                case MessageType.Ad:
-                                    messageOut += " (ad): ";
-                                    break;
-                                case MessageType.DiceRoll:
-                                    messageOut += "";
-                                    break;
-                                case MessageType.Warning:
-                                    messageOut += " (warning): ";
-                                    break;
-                            }
-                            result = srcFS.Read(idBuffer, 0, 2);
-                            if (result < 2)
-                                result = 0;
-                            else
-                            {
-                                idBuffer[2] = 0;
-                                idBuffer[3] = 0;
-                                messageLength = BEInt(idBuffer);
-                                if (messageLength < 1)
-                                    result = 0;
-                                else
-                                {
-                                    streamBuffer = new byte[messageLength];
-                                    result = srcFS.Read(streamBuffer, 0, (int)(messageLength));
-                                }
-                            }
-                            if (result == 0)
-                            {
-                                intact = false;
-                                emptyMessages++;
-                                messageOut += "[EMPTY MESSAGE]";
-                            }
-                            else if (result < messageLength)
-                            {
-                                intact = false;
-                                truncatedMessages++;
-                                truncatedBytes += (uint)result;
-                                messageOut += "[TRUNCATED MESSAGE] ";
-                            }
-                            if (result > 0)
-                                messageData = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
-                        }
-                        if (intact)
-                        {
-                            messageOut += messageData;
-                            intactMessages++;
-                            intactBytes += (uint)messageOut.Length;
-                            if (withinRange)
-                                dstFS.Write(messageOut + "\n");
-                            else
-                            {
-                                discardedMessages++;
-                                discardedBytes += (uint)messageOut.Length;
-                            }
-                        }
-                        else if (saveTruncated)
-                        {
-                            messageOut += messageData;
-                            if (withinRange)
-                                dstFS.Write(messageOut + "\n");
-                        }
-                        lastPosition = (uint)(srcFS.Position);
-                        while (!nextTimestamp)
-                        {
-                            srcFS.ReadByte();
-                            srcFS.Read(idBuffer, 0, 4);
-                            nextByte = srcFS.ReadByte();
-                            if (nextByte == -1)
-                                return;
-                            srcFS.Seek(-6, SeekOrigin.Current);
-                            if (nextByte < 5)
-                            {
-                                discrepancy = (int)(srcFS.Position - lastPosition);
-                                unreadBytes += discrepancy;
-                                if (discrepancy > 0)
-                                    dstFS.Write(string.Format("({0:#,0} missing bytes)\n", discrepancy));
-                                lastPosition = (uint)(srcFS.Position);
-                                srcFS.ReadByte();
-                                nextTimestamp = true;
-                            }
-                            else
-                            {
-                                srcFS.ReadByte();
-                                srcFS.ReadByte();
-                                srcFS.Read(idBuffer, 0, 4);
-                                nextByte = srcFS.ReadByte();
-                                if (nextByte == -1)
-                                    return;
-                                srcFS.Seek(-7, SeekOrigin.Current);
-                                srcFS.ReadByte();
-                                srcFS.ReadByte();
-                                if (nextByte < 5)
-                                {
-                                    discrepancy = (int)(srcFS.Position - lastPosition) - 2;
-                                    unreadBytes += discrepancy;
-                                    if (discrepancy > 0)
-                                        dstFS.Write(string.Format("({0:#,0} missing bytes)\n", discrepancy));
-                                    lastPosition = (uint)srcFS.Position;
-                                    nextTimestamp = true;
-                                }
-                            }
-                        }
-                        if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 10)
-                        {
-                            (sender as BackgroundWorker).ReportProgress((int)(bytesRead + srcFS.Position));
-                            lastUpdate = DateTime.Now;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException(ex);
-                        return;
+                        (sender as BackgroundWorker).ReportProgress((int)(bytesRead + srcFS.Position));
+                        lastUpdate = DateTime.Now;
                     }
                 }
             }
+
             srcFS.Close();
+
+            return;
         }
 
         private string ByteSizeString(double bytes)
@@ -664,26 +829,32 @@ namespace FLogS
                 prefixIndex++;
             }
 
+            if (prefixIndex == 0)
+                return string.Format("{0:#,0} B", finalBytes);
             return string.Format("{0:#,0.0} {1}B", finalBytes, prefixes[prefixIndex]);
         }
 
         private void UpdateLogs()
         {
-            int intactCount = (int)intactMessages - (int)discardedMessages;
-            int byteCount = (int)intactBytes - (int)discardedBytes;
-            string byteString = ByteSizeString(byteCount);
-            imBox.Content = $"Intact Messages: {intactCount} ({byteString})";
-            ctBox.Content = $"Corrupted Timestamps: {corruptTimestamps}";
+            int intactCount;
+            int byteCount;
+            string byteString;
+
+            intactCount = (int)intactMessages - (int)discardedMessages;
+            byteCount = (int)intactBytes - (int)discardedBytes;
+            byteString = ByteSizeString(byteCount);
+            imBox.Content = $"Intact Messages: {intactCount:N0} ({byteString})";
+            ctBox.Content = $"Corrupted Timestamps: {corruptTimestamps:N0}";
             byteString = ByteSizeString(truncatedBytes);
-            tmBox.Content = $"Truncated Messages: {truncatedMessages} ({byteString})";
-            emBox.Content = $"Empty Messages: {emptyMessages}";
+            tmBox.Content = $"Truncated Messages: {truncatedMessages:N0} ({byteString})";
+            emBox.Content = $"Empty Messages: {emptyMessages:N0}";
             byteString = ByteSizeString(unreadBytes);
-            ubBox.Content = $"Unread Bytes: {unreadBytes} ({byteString})";
-            DirectoryimBox.Content = imBox.Content;
-            DirectoryctBox.Content = ctBox.Content;
-            DirectorytmBox.Content = tmBox.Content;
-            DirectoryemBox.Content = emBox.Content;
-            DirectoryubBox.Content = ubBox.Content;
+            ubBox.Content = $"Unread Bytes: {unreadBytes:N0} ({byteString})";
+            PhraseimBox.Content = DirectoryimBox.Content = imBox.Content;
+            PhrasectBox.Content = DirectoryctBox.Content = ctBox.Content;
+            PhrasetmBox.Content = DirectorytmBox.Content = tmBox.Content;
+            PhraseemBox.Content = DirectoryemBox.Content = emBox.Content;
+            PhraseubBox.Content = DirectoryubBox.Content = ubBox.Content;
 
             return;
         }
@@ -694,6 +865,7 @@ namespace FLogS
             {
                 FileProgress.Value = e.ProgressPercentage;
                 DirectoryProgress.Value = e.ProgressPercentage;
+                PhraseProgress.Value = e.ProgressPercentage;
 
                 UpdateLogs();
             }
@@ -710,6 +882,7 @@ namespace FLogS
             {
                 FileProgress.Value = FileProgress.Maximum;
                 DirectoryProgress.Value = DirectoryProgress.Maximum;
+                PhraseProgress.Value = PhraseProgress.Maximum;
 
                 UpdateLogs();
                 TransitionMenus(false);
@@ -776,6 +949,34 @@ namespace FLogS
                     break;
             }
 
+            switch (phraseReadyToRun)
+            {
+                case 0:
+                    PhraseRunButton.IsEnabled = true;
+                    break;
+                case 1:
+                    PhraseWarningLabel.Content = "No source log files selected.";
+                    break;
+                case 2:
+                    PhraseWarningLabel.Content = "No destination directory selected.";
+                    break;
+                case 3:
+                    PhraseWarningLabel.Content = "Destination directory does not exist.";
+                    break;
+                case 4:
+                    PhraseWarningLabel.Content = "No search text entered.";
+                    break;
+                case 5:
+                    PhraseWarningLabel.Content = "One or more source files do not exist.";
+                    break;
+                case 6:
+                    PhraseWarningLabel.Content = "One or more source files exist in the destination.";
+                    break;
+                default:
+                    PhraseWarningLabel.Content = "An unknown error has occurred.";
+                    break;
+            }
+
             return;
         }
 
@@ -783,10 +984,10 @@ namespace FLogS
         {
             try
             {
-                fileReadyToRun = directoryReadyToRun = 0;
-                WarningLabel.Content = DirectoryWarningLabel.Content = "";
-                WarningLabel.Foreground = DirectoryWarningLabel.Foreground = (ThemeSelector.Content as string) == "Light" ? Brushes.Pink : Brushes.Red;
-                RunButton.IsEnabled = DirectoryRunButton.IsEnabled = false;
+                fileReadyToRun = directoryReadyToRun = phraseReadyToRun = 0;
+                WarningLabel.Content = DirectoryWarningLabel.Content = PhraseWarningLabel.Content = "";
+                WarningLabel.Foreground = DirectoryWarningLabel.Foreground = PhraseWarningLabel.Foreground = (ThemeSelector.Content as string) == "Light" ? Brushes.Pink : Brushes.Red;
+                RunButton.IsEnabled = DirectoryRunButton.IsEnabled = PhraseRunButton.IsEnabled = false;
 
                 if (FileSource.Text.Length == 0)
                     fileReadyToRun = 1;
@@ -824,6 +1025,30 @@ namespace FLogS
                         {
                             DirectoryWarningLabel.Foreground = (ThemeSelector.Content as string) == "Light" ? Brushes.Yellow : Brushes.DarkOrange;
                             DirectoryWarningLabel.Content = "One or more files will be overwritten.";
+                        }
+                    }
+                }
+
+                if (PhraseSource.Text.Length == 0)
+                    phraseReadyToRun = 1;
+                else if (PhraseOutput.Text.Length == 0)
+                    phraseReadyToRun = 2;
+                else if (Directory.Exists(PhraseOutput.Text) == false)
+                    phraseReadyToRun = 3;
+                else if (PhraseSearch.Text.Length == 0)
+                    phraseReadyToRun = 4;
+                else
+                {
+                    foreach (string file in PhraseSource.Text.Split(';'))
+                    {
+                        if (File.Exists(file) == false)
+                            phraseReadyToRun = 5;
+                        else if (file.Equals(Path.Join(PhraseOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
+                            phraseReadyToRun = 6;
+                        else if (phraseReadyToRun == 0 && File.Exists(Path.Join(PhraseOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
+                        {
+                            PhraseWarningLabel.Foreground = (ThemeSelector.Content as string) == "Light" ? Brushes.Yellow : Brushes.DarkOrange;
+                            PhraseWarningLabel.Content = "One or more files will be overwritten.";
                         }
                     }
                 }
@@ -912,6 +1137,52 @@ namespace FLogS
                     DirectoryOutput.Text = folderBrowserDialog.SelectedPath;
                 else
                     DirectoryOutput.Text = "";
+            }
+            catch (Exception ex)
+            {
+                LogException(ex);
+                return;
+            }
+        }
+
+        private void SrcPhraseButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                OpenFileDialog openFileDialog = new()
+                {
+                    Multiselect = true
+                };
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    PhraseSource.Text = "";
+                    foreach (string logfile in openFileDialog.FileNames)
+                        if (logfile.Contains(".idx") == false)
+                            PhraseSource.Text += logfile + ";";
+                    PhraseSource.Text = PhraseSource.Text.Remove(PhraseSource.Text.Length - 1);
+                }
+                else
+                    PhraseSource.Text = "";
+            }
+            catch (Exception ex)
+            {
+                LogException(ex);
+                return;
+            }
+        }
+
+        private void DstPhraseButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Windows.Forms.FolderBrowserDialog folderBrowserDialog = new()
+                {
+                    ShowNewFolderButton = true
+                };
+                if (folderBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                    PhraseOutput.Text = folderBrowserDialog.SelectedPath;
+                else
+                    PhraseOutput.Text = "";
             }
             catch (Exception ex)
             {

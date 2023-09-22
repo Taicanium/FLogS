@@ -37,3 +37,10 @@
 # 1.0.6.1 - 19/09/2023
 - Major fix: Swap to a different stream method for output. The one we implemented in the last version has a tendency to not flush correctly after millions of bytes written.
 - Minor fix: Logged ads are now read correctly as uniquely typed messages. Previously, they hadn't been treated differently by the app, and the binary ID they are given had been assigned to bottle spins. This probably hadn't been breaking anything, but now we can label them properly.
+
+# 1.0.7 - 22/09/2023
+- Phrase search function. Users can now enter one or more words to search for in the logs, and output only messages containing that text.
+- Output messages are now stripped of non-printing characters. If they exist, something's gone wrong anyways...
+- Major fix: Headless messages (i.e. "(user) has logged in." and other console updates) are now processed correctly.
+- Minor fix: Group separators in numbers again. Those were mistakenly removed when we moved to stream-based output.
+

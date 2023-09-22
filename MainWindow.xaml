@@ -20,7 +20,7 @@
                         <RowDefinition Height="*"></RowDefinition>
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Grid.Column="0">
-                        <ListBox x:Name="LogWindow" Width="350" Height="350" HorizontalAlignment="Center" Margin="0,30" FontSize="14" BorderBrush="Black" BorderThickness="4">
+                        <ListBox x:Name="LogWindow" Width="350" Height="350" HorizontalAlignment="Center" Margin="0,30" Padding="3" FontSize="14" BorderBrush="Black" BorderThickness="2">
                             <ListBoxItem x:Name="headerBox">Ready to receive data.</ListBoxItem>
                             <ListBoxItem Margin="10" Visibility="Hidden" IsHitTestVisible="False"></ListBoxItem>
                             <ListBoxItem x:Name="imBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
@@ -35,14 +35,14 @@
                         <Label x:Name="FileSourceLabel" FontFamily="Arial" FontSize="14" Width="160" Height="25" HorizontalAlignment="Center" Margin="0,10,0,0" Content="Path to Source Log File"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button x:Name="SrcFileButton" Width="25" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Background="Beige" IsEnabled="True" Click="SrcFileButton_Click" Content="..."/>
-                            <TextBox x:Name="FileSource" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="3" TextChanged="TextboxUpdated"/>
+                            <TextBox x:Name="FileSource" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="2" TextChanged="TextboxUpdated"/>
                         </StackPanel>
-                        <Label x:Name="FileOutputLabel" FontFamily="Arial" FontSize="14" Width="190" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Content="Path to Destination Log File"/>
+                        <Label x:Name="FileOutputLabel" FontFamily="Arial" FontSize="14" Width="190" Height="25" HorizontalAlignment="Center" Margin="0,20,0,0" Content="Path to Destination Log File"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button x:Name="DstFileButton" Width="25" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Background="Beige" IsEnabled="True" Click="DstFileButton_Click" Content="..."/>
-                            <TextBox x:Name="FileOutput" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="3" TextChanged="TextboxUpdated"/>
+                            <TextBox x:Name="FileOutput" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="2" TextChanged="TextboxUpdated"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="45,20,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="45,10,0,0">
                             <Label x:Name="AfterDateLabel" FontFamily="Arial" FontSize="12" Width="160" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages after..."/>
                             <Label x:Name="BeforeDateLabel" FontFamily="Arial" FontSize="12" Width="160" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages before..."/>
                         </StackPanel>
@@ -77,7 +77,7 @@
                                 <ProgressBar x:Name="FileProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="FileVersionNumber" Content="FLogS - Version 1.0.6.1 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="FileVersionNumber" Content="FLogS — Version 1.0.7 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -92,7 +92,7 @@
                         <RowDefinition Height="*"></RowDefinition>
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Grid.Column="0">
-                        <ListBox x:Name="DirectoryLogWindow" Width="350" Height="350" HorizontalAlignment="Center" Margin="0,30" FontSize="14" BorderBrush="Black" BorderThickness="4">
+                        <ListBox x:Name="DirectoryLogWindow" Width="350" Height="350" HorizontalAlignment="Center" Margin="0,30" Padding="3" FontSize="14" BorderBrush="Black" BorderThickness="2">
                             <ListBoxItem x:Name="DirectoryheaderBox">Ready to receive data.</ListBoxItem>
                             <ListBoxItem Margin="10" Visibility="Hidden" IsHitTestVisible="False"></ListBoxItem>
                             <ListBoxItem x:Name="DirectoryimBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
@@ -107,14 +107,14 @@
                         <Label x:Name="DirectorySourceLabel" FontFamily="Arial" FontSize="14" Width="165" Height="25" HorizontalAlignment="Center" Margin="0,10,0,0" Content="Path to Source Log Files"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button x:Name="SrcDirectoryButton" Width="25" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Background="Beige" IsEnabled="True" Click="SrcDirectoryButton_Click" Content="..."/>
-                            <TextBox x:Name="DirectorySource" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="3" TextChanged="TextboxUpdated"/>
+                            <TextBox x:Name="DirectorySource" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="2" TextChanged="TextboxUpdated"/>
                         </StackPanel>
-                        <Label x:Name="DirectoryOutputLabel" FontFamily="Arial" FontSize="14" Width="220" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Content="Path to Destination Log Directory"/>
+                        <Label x:Name="DirectoryOutputLabel" FontFamily="Arial" FontSize="14" Width="220" Height="25" HorizontalAlignment="Center" Margin="0,20,0,0" Content="Path to Destination Log Directory"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button x:Name="DstDirectoryButton" Width="25" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Background="Beige" IsEnabled="True" Click="DstDirectoryButton_Click" Content="..."/>
-                            <TextBox x:Name="DirectoryOutput" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="3" TextChanged="TextboxUpdated"/>
+                            <TextBox x:Name="DirectoryOutput" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="2" TextChanged="TextboxUpdated"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="45,20,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="45,10,0,0">
                             <Label x:Name="DirectoryAfterDateLabel" FontFamily="Arial" FontSize="12" Width="160" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages after..."/>
                             <Label x:Name="DirectoryBeforeDateLabel" FontFamily="Arial" FontSize="12" Width="160" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages before..."/>
                         </StackPanel>
@@ -149,7 +149,81 @@
                                 <ProgressBar x:Name="DirectoryProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="DirectoryVersionNumber" Content="FLogS - Version 1.0.6.1 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="DirectoryVersionNumber" Content="FLogS — Version 1.0.7 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="TabPhrase" Header="Phrase">
+                <Grid x:Name="PhraseGrid" Background="LightGray">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="3*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <ListBox x:Name="PhraseLogWindow" Width="350" Height="350" HorizontalAlignment="Center" Margin="0,30" Padding="3" FontSize="14" BorderBrush="Black" BorderThickness="2">
+                            <ListBoxItem x:Name="PhraseheaderBox">Ready to receive data.</ListBoxItem>
+                            <ListBoxItem Margin="10" Visibility="Hidden" IsHitTestVisible="False"></ListBoxItem>
+                            <ListBoxItem x:Name="PhraseimBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
+                            <ListBoxItem x:Name="PhrasectBox">Corrupted Timestamps:</ListBoxItem>
+                            <ListBoxItem x:Name="PhrasetmBox">Truncated Messages:</ListBoxItem>
+                            <ListBoxItem x:Name="PhraseemBox">Empty Messages:</ListBoxItem>
+                            <ListBoxItem x:Name="PhraseubBox">Unread Bytes:</ListBoxItem>
+                        </ListBox>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center">
+                        <Button x:Name="PhraseThemeSelector" Height="25" Width="40" HorizontalAlignment="Right" Margin="20,20" Background="Beige" Content="Dark" Click="ThemeSelector_Click"/>
+                        <Label x:Name="PhraseSourceLabel" FontFamily="Arial" FontSize="14" Width="165" Height="25" HorizontalAlignment="Center" Margin="0,10,0,0" Content="Path to Source Log Files"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="SrcPhraseButton" Width="25" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Background="Beige" IsEnabled="True" Click="SrcPhraseButton_Click" Content="..."/>
+                            <TextBox x:Name="PhraseSource" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="2" TextChanged="TextboxUpdated"/>
+                        </StackPanel>
+                        <Label x:Name="PhraseOutputLabel" FontFamily="Arial" FontSize="14" Width="220" Height="25" HorizontalAlignment="Center" Margin="0,20,0,0" Content="Path to Destination Log Directory"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button x:Name="DstPhraseButton" Width="25" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Background="Beige" IsEnabled="True" Click="DstPhraseButton_Click" Content="..."/>
+                            <TextBox x:Name="PhraseOutput" Width="300" Height="25" HorizontalAlignment="Center" BorderBrush="Black" BorderThickness="2" TextChanged="TextboxUpdated"/>
+                        </StackPanel>
+                        <Label x:Name="PhraseSearchLabel" FontFamily="Arial" FontSize="14" Width="220" Height="25" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Margin="0,20,0,0" Content="Target Word or Phrase"/>
+                        <TextBox x:Name="PhraseSearch" Width="300" Height="25" HorizontalAlignment="Center" Margin="35,0,0,0" BorderBrush="Black" BorderThickness="2" TextChanged="TextboxUpdated"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="45,0,0,0">
+                            <Label x:Name="PhraseAfterDateLabel" FontFamily="Arial" FontSize="12" Width="160" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages after..."/>
+                            <Label x:Name="PhraseBeforeDateLabel" FontFamily="Arial" FontSize="12" Width="160" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages before..."/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="20,0,0,0">
+                            <DatePicker x:Name="PhraseAfterDate" Width="120" Margin="25,0" SelectedDateChanged="DatePicker_Update"/>
+                            <DatePicker x:Name="PhraseBeforeDate" Width="120" Margin="20,0" SelectedDateChanged="DatePicker_Update"/>
+                        </StackPanel>
+                        <ComboBox x:Name="PhraseSaveTruncated" Width="300" Height="25" HorizontalAlignment="Center" Margin="35,30,0,0" Background="White" IsEnabled="True" SelectionChanged="ComboBox_Update">
+                            <ComboBoxItem x:Name="PhraseDNSNonIntact" IsSelected="True">Do not save non-intact messages</ComboBoxItem>
+                            <ComboBoxItem x:Name="PhraseSNonIntact">Save non-intact messages</ComboBoxItem>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Label x:Name="PhraseWarningLabel" VerticalAlignment="Center" Foreground="Red" FontSize="14" FontStyle="Italic" Content="No source log files selected."/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="1">
+                                <Button x:Name="PhraseRunButton" Width="100" Height="25" HorizontalAlignment="Center"  Margin="0,20" Background="Beige" IsEnabled="False" Click="PhraseRunButton_Click" Content="Run"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5">
+                                <ProgressBar x:Name="PhraseProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
+                            </StackPanel>
+                        </Grid>
+                        <Label x:Name="PhraseVersionNumber" Content="FLogS — Version 1.0.7 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
@@ -171,29 +245,33 @@
                             As file sizes increase, so too does the sentimenal value of those logs.
                             As technology evolves, computers are bought and replaced, and files make the transition from drive to drive, corruption is bound to happen sooner or later.<LineBreak/>
                             Oftentimes the corruption is severe enough that F-Chat's native clients cannot read the logs, and since a client can't export logs it can't read, the data is lost.<LineBreak/>
-                            <Bold>FLogS</Bold> cannot repair log corruption, but is capable of scanning a user's logs and picking out messages that remain intact, saving them elsewhere in plaintext format.
-                        </TextBlock>
-                    </StackPanel>
-                    <StackPanel Grid.Row="0" Grid.Column="1">
-                        <Label x:Name="HelpHeader2" HorizontalAlignment="Center" FontSize="24" FontFamily="Century" FontWeight="Bold" Margin="0,10" Content="How do I use this program?"/>
-                        <TextBlock x:Name="HelpText2" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" FontSize="14" FontFamily="Calibri" Margin="10,20">
-                            It's as simple as one, two, three, four!<LineBreak/>
-                            Click on the <Bold>File</Bold> tab at the top to export a single log file, or <Bold>Directory</Bold> to export many files at once.<LineBreak/>
-                            Select one or more F-Chat log files by clicking the first button labelled "..." and following the prompt. Or, you may enter a path manually.<LineBreak/>
-                            Select a destination file or folder by clicking the second "..." button or entering a manual path.<LineBreak/>
-                            You may optionally enter an inclusive range of dates to scan for messages - <Bold>FLogS</Bold> will discard messages outside this range.<LineBreak/>
-                            Finally, hit the Run button!
-                        </TextBlock>
-                    </StackPanel>
-                    <StackPanel Grid.Row="1" Grid.Column="1">
-                        <Label x:Name="HelpHeader3" HorizontalAlignment="Center" FontSize="24" FontFamily="Century" FontWeight="Bold" Margin="0,10" Content="What are the limits?"/>
-                        <TextBlock x:Name="HelpText3" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" FontSize="14" FontFamily="Calibri" Margin="10,20">
+                            <Bold>FLogS</Bold> cannot repair log corruption, but is capable of scanning a user's logs and picking out messages that remain intact, saving them elsewhere in plaintext format.<LineBreak/><LineBreak/>
                             <Bold>FLogS</Bold> does not distinguish partially from fully corrupted data.
                             An option is provided to save corrupted data in case it contains something readable, but by default, <Bold>FLogS</Bold> will only save what is entirely clean.<LineBreak/>
                             The program will note in its output where some data could not be read - typically, it's only a few bytes at a time.<LineBreak/>
                             <Span x:Name="ADLWarning" Foreground="Red"><Bold>FLogS</Bold> is not a substitute for ADL</Span>: Plaintext logs generated by this program <Italic>cannot</Italic> be accepted by F-List staff in case of a dispute, even if the source file is completely intact.
                         </TextBlock>
-                        <Label x:Name="HelpVersionNumber" Content="FLogS - Version 1.0.6.1 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,-14" FontWeight="Thin"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="2">
+                        <Label x:Name="HelpHeader2" HorizontalAlignment="Center" FontSize="24" FontFamily="Century" FontWeight="Bold" Margin="0,10" Content="How do I use this program?"/>
+                        <TextBlock x:Name="HelpText2" TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" FontSize="14" FontFamily="Calibri" Margin="10,20">
+                            It's as simple as one, two, three, four!<LineBreak/><LineBreak/>
+                            <Bold>For file processing:</Bold><LineBreak/>
+                            Click on the <Bold>File</Bold> tab at the top to export a single log file, or <Bold>Directory</Bold> to export many files at once.<LineBreak/>
+                            Select one or more F-Chat log files by clicking the first button labelled "..." and following the prompt.
+                            Or, you may enter a path manually.<LineBreak/>
+                            Select a destination file or folder by clicking the second "..." button or entering a manual path.<LineBreak/>
+                            You may optionally enter an inclusive range of dates to scan for messages - <Bold>FLogS</Bold> will discard messages outside this range.<LineBreak/>
+                            Finally, hit the Run button!<LineBreak/><LineBreak/>
+                            <Bold>For advanced searching:</Bold><LineBreak/>
+                            Select the <Bold>Phrase</Bold> tab at the top.<LineBreak/>
+                            Follow the above procedure, and enter a word or phrase to search for in the labelled text box.
+                            The search text is not case-sensitive; you may also include punctuation if desired.<LineBreak/>
+                            <Bold>FLogS</Bold> will output only messages containing the text you enter!
+                        </TextBlock>
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="1" VerticalAlignment="Bottom">
+                        <Label x:Name="HelpVersionNumber" Content="FLogS — Version 1.0.7 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,2" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
