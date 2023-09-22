@@ -181,7 +181,7 @@ namespace FLogS
                 DirectoryProgress.Maximum = totalSize;
                 PhraseProgress.Maximum = totalSize;
 
-                TransitionMenus(true);
+                TransitionMenus(false);
                 ResetStats();
                 UpdateLogs();
 
@@ -292,7 +292,7 @@ namespace FLogS
                 DirectoryProgress.Maximum = totalSize;
                 PhraseProgress.Maximum = totalSize;
 
-                TransitionMenus(true);
+                TransitionMenus(false);
                 ResetStats();
                 UpdateLogs();
 
@@ -438,7 +438,7 @@ namespace FLogS
                 FileProgress.Maximum = new FileInfo(srcFile).Length;
                 PhraseProgress.Maximum = new FileInfo(srcFile).Length;
 
-                TransitionMenus(true);
+                TransitionMenus(false);
                 ResetStats();
                 UpdateLogs();
 
@@ -479,12 +479,11 @@ namespace FLogS
             {
                 SolidColorBrush[][] brushCombos =
                 {
-                    new SolidColorBrush[] { Brushes.Black, Brushes.White },
-                    new SolidColorBrush[] { Brushes.DarkGray, Brushes.LightGray },
-                    new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige },
-                    new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray },
-                    new SolidColorBrush[] { Brushes.Pink, Brushes.Red },
-                    new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkOrange },
+                    new SolidColorBrush[] { Brushes.Black, Brushes.White }, // Textboxes
+                    new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige }, // Buttons
+                    new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray }, // Grids/Borders
+                    new SolidColorBrush[] { Brushes.Pink, Brushes.Red }, // Error messages (And the ADL warning)
+                    new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkOrange }, // Warning messages
                 };
 
                 int brushPalette = 1;
@@ -506,70 +505,28 @@ namespace FLogS
                     ThemeSelector.Content = "Dark";
                 }
 
-                // Grids
-                DirectoryGrid.Background = brushCombos[3][brushPalette];
-                FileGrid.Background = brushCombos[3][brushPalette];
-                HelpGrid.Background = brushCombos[3][brushPalette];
-                PhraseGrid.Background = brushCombos[3][brushPalette];
-
-                // TabControl
-                TabMenu.Background = brushCombos[3][brushPalette];
-
-                // Textboxes
-                DirectoryLogWindow.Background = brushCombos[0][brushPalette];
-                DirectoryLogWindow.BorderBrush = brushCombos[3][reversePalette];
-                DirectoryLogWindow.Foreground = brushCombos[0][reversePalette];
-                DirectoryOutput.Background = brushCombos[0][brushPalette];
-                DirectoryOutput.BorderBrush = brushCombos[3][reversePalette];
-                DirectoryOutput.Foreground = brushCombos[0][reversePalette];
-                DirectorySource.Background = brushCombos[0][brushPalette];
-                DirectorySource.BorderBrush = brushCombos[3][reversePalette];
-                DirectorySource.Foreground = brushCombos[0][reversePalette];
-                FileOutput.Background = brushCombos[0][brushPalette];
-                FileOutput.BorderBrush = brushCombos[3][reversePalette];
-                FileOutput.Foreground = brushCombos[0][reversePalette];
-                FileSource.Background = brushCombos[0][brushPalette];
-                FileSource.BorderBrush = brushCombos[3][reversePalette];
-                FileSource.Foreground = brushCombos[0][reversePalette];
-                LogWindow.Background = brushCombos[0][brushPalette];
-                LogWindow.BorderBrush = brushCombos[3][reversePalette];
-                LogWindow.Foreground = brushCombos[0][reversePalette];
-                PhraseLogWindow.Background = brushCombos[0][brushPalette];
-                PhraseLogWindow.BorderBrush = brushCombos[3][reversePalette];
-                PhraseLogWindow.Foreground = brushCombos[0][reversePalette];
-                PhraseOutput.Background = brushCombos[0][brushPalette];
-                PhraseOutput.BorderBrush = brushCombos[3][reversePalette];
-                PhraseOutput.Foreground = brushCombos[0][reversePalette];
-                PhraseSearch.Background = brushCombos[0][brushPalette];
-                PhraseSearch.BorderBrush = brushCombos[3][reversePalette];
-                PhraseSearch.Foreground = brushCombos[0][reversePalette];
-                PhraseSource.Background = brushCombos[0][brushPalette];
-                PhraseSource.BorderBrush = brushCombos[3][reversePalette];
-                PhraseSource.Foreground = brushCombos[0][reversePalette];
-
-                // ListBoxItems
-                foreach (ListBoxItem lbItem in LogWindow.Items)
-                {
-                    lbItem.Foreground = brushCombos[0][reversePalette];
-                    lbItem.Background = brushCombos[0][brushPalette];
-                }
-
                 // Buttons
-                DirectoryRunButton.Background = brushCombos[2][brushPalette];
-                DirectoryThemeSelector.Background = brushCombos[2][brushPalette];
-                DstDirectoryButton.Background = brushCombos[2][brushPalette];
-                DstFileButton.Background = brushCombos[2][brushPalette];
-                DstPhraseButton.Background = brushCombos[2][brushPalette];
-                PhraseRunButton.Background = brushCombos[2][brushPalette];
-                PhraseThemeSelector.Background = brushCombos[2][brushPalette];
-                RunButton.Background = brushCombos[2][brushPalette];
-                SrcDirectoryButton.Background = brushCombos[2][brushPalette];
-                SrcFileButton.Background = brushCombos[2][brushPalette];
-                SrcPhraseButton.Background = brushCombos[2][brushPalette];
-                ThemeSelector.Background = brushCombos[2][brushPalette];
+                DirectoryRunButton.Background = brushCombos[1][brushPalette];
+                DirectoryThemeSelector.Background = brushCombos[1][brushPalette];
+                DstDirectoryButton.Background = brushCombos[1][brushPalette];
+                DstFileButton.Background = brushCombos[1][brushPalette];
+                DstPhraseButton.Background = brushCombos[1][brushPalette];
+                PhraseRunButton.Background = brushCombos[1][brushPalette];
+                PhraseThemeSelector.Background = brushCombos[1][brushPalette];
+                RunButton.Background = brushCombos[1][brushPalette];
+                SrcDirectoryButton.Background = brushCombos[1][brushPalette];
+                SrcFileButton.Background = brushCombos[1][brushPalette];
+                SrcPhraseButton.Background = brushCombos[1][brushPalette];
+                ThemeSelector.Background = brushCombos[1][brushPalette];
+
+                // Grids
+                DirectoryGrid.Background = brushCombos[2][brushPalette];
+                FileGrid.Background = brushCombos[2][brushPalette];
+                HelpGrid.Background = brushCombos[2][brushPalette];
+                PhraseGrid.Background = brushCombos[2][brushPalette];
 
                 // Labels
-                ADLWarning.Foreground = brushCombos[4][brushPalette];
+                ADLWarning.Foreground = brushCombos[3][brushPalette];
                 AfterDateLabel.Foreground = brushCombos[0][reversePalette];
                 BeforeDateLabel.Foreground = brushCombos[0][reversePalette];
                 DirectoryAfterDateLabel.Foreground = brushCombos[0][reversePalette];
@@ -577,7 +534,7 @@ namespace FLogS
                 DirectoryOutputLabel.Foreground = brushCombos[0][reversePalette];
                 DirectorySourceLabel.Foreground = brushCombos[0][reversePalette];
                 DirectoryVersionNumber.Foreground = brushCombos[0][reversePalette];
-                DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
+                DirectoryWarningLabel.Foreground = brushCombos[3][brushPalette];
                 FileOutputLabel.Foreground = brushCombos[0][reversePalette];
                 FileSourceLabel.Foreground = brushCombos[0][reversePalette];
                 FileVersionNumber.Foreground = brushCombos[0][reversePalette];
@@ -592,15 +549,50 @@ namespace FLogS
                 PhraseSearchLabel.Foreground = brushCombos[0][reversePalette];
                 PhraseSourceLabel.Foreground = brushCombos[0][reversePalette];
                 PhraseVersionNumber.Foreground = brushCombos[0][reversePalette];
-                PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
-                WarningLabel.Foreground = brushCombos[4][brushPalette];
+                PhraseWarningLabel.Foreground = brushCombos[3][brushPalette];
+                WarningLabel.Foreground = brushCombos[3][brushPalette];
+
+                // TabControl
+                TabMenu.Background = brushCombos[2][brushPalette];
+
+                // Textboxes
+                DirectoryLogWindow.Background = brushCombos[0][brushPalette];
+                DirectoryLogWindow.BorderBrush = brushCombos[2][reversePalette];
+                DirectoryLogWindow.Foreground = brushCombos[0][reversePalette];
+                DirectoryOutput.Background = brushCombos[0][brushPalette];
+                DirectoryOutput.BorderBrush = brushCombos[2][reversePalette];
+                DirectoryOutput.Foreground = brushCombos[0][reversePalette];
+                DirectorySource.Background = brushCombos[0][brushPalette];
+                DirectorySource.BorderBrush = brushCombos[2][reversePalette];
+                DirectorySource.Foreground = brushCombos[0][reversePalette];
+                FileOutput.Background = brushCombos[0][brushPalette];
+                FileOutput.BorderBrush = brushCombos[2][reversePalette];
+                FileOutput.Foreground = brushCombos[0][reversePalette];
+                FileSource.Background = brushCombos[0][brushPalette];
+                FileSource.BorderBrush = brushCombos[2][reversePalette];
+                FileSource.Foreground = brushCombos[0][reversePalette];
+                LogWindow.Background = brushCombos[0][brushPalette];
+                LogWindow.BorderBrush = brushCombos[2][reversePalette];
+                LogWindow.Foreground = brushCombos[0][reversePalette];
+                PhraseLogWindow.Background = brushCombos[0][brushPalette];
+                PhraseLogWindow.BorderBrush = brushCombos[2][reversePalette];
+                PhraseLogWindow.Foreground = brushCombos[0][reversePalette];
+                PhraseOutput.Background = brushCombos[0][brushPalette];
+                PhraseOutput.BorderBrush = brushCombos[2][reversePalette];
+                PhraseOutput.Foreground = brushCombos[0][reversePalette];
+                PhraseSearch.Background = brushCombos[0][brushPalette];
+                PhraseSearch.BorderBrush = brushCombos[2][reversePalette];
+                PhraseSearch.Foreground = brushCombos[0][reversePalette];
+                PhraseSource.Background = brushCombos[0][brushPalette];
+                PhraseSource.BorderBrush = brushCombos[2][reversePalette];
+                PhraseSource.Foreground = brushCombos[0][reversePalette];
 
                 if (directoryReadyToRun == 0)
-                    DirectoryWarningLabel.Foreground = brushCombos[5][brushPalette];
+                    DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
                 if (phraseReadyToRun == 0)
-                    PhraseWarningLabel.Foreground = brushCombos[5][brushPalette];
+                    PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
                 if (fileReadyToRun == 0)
-                    WarningLabel.Foreground = brushCombos[5][brushPalette];
+                    WarningLabel.Foreground = brushCombos[4][brushPalette];
             }
             catch (Exception ex)
             {
@@ -609,60 +601,48 @@ namespace FLogS
             }
         }
 
-        private void TransitionMenus(bool isProcessing)
+        private void TransitionMenus(bool enabled)
         {
-            if (isProcessing)
+            DirectoryOutput.IsEnabled = enabled;
+            DirectoryRunButton.IsEnabled = enabled;
+            DirectorySource.IsEnabled = enabled;
+            DstDirectoryButton.IsEnabled = enabled;
+            DstFileButton.IsEnabled = enabled;
+            DstPhraseButton.IsEnabled = enabled;
+            FileOutput.IsEnabled = enabled;
+            FileSource.IsEnabled = enabled;
+            PhraseOutput.IsEnabled = enabled;
+            PhraseRunButton.IsEnabled = enabled;
+            PhraseSource.IsEnabled = enabled;
+            RunButton.IsEnabled = enabled;
+            SrcDirectoryButton.IsEnabled = enabled;
+            SrcFileButton.IsEnabled = enabled;
+            SrcPhraseButton.IsEnabled = enabled;
+
+            if (!enabled)
             {
-                DirectoryOutput.IsEnabled = false;
-                DirectoryRunButton.IsEnabled = false;
-                DirectoryRunButton.Content = "Scanning...";
-                DirectorySource.IsEnabled = false;
-                DstDirectoryButton.IsEnabled = false;
-                DstFileButton.IsEnabled = false;
-                DstPhraseButton.IsEnabled = false;
-                FileOutput.IsEnabled = false;
-                FileSource.IsEnabled = false;
-                PhraseOutput.IsEnabled = false;
-                PhraseRunButton.Content = "Scanning...";
-                PhraseRunButton.IsEnabled = false;
-                PhraseSource.IsEnabled = false;
-                RunButton.Content = "Scanning...";
-                RunButton.IsEnabled = false;
-                SrcDirectoryButton.IsEnabled = false;
-                SrcFileButton.IsEnabled = false;
-                SrcPhraseButton.IsEnabled = false;
+                DirectoryRunButton.Content = "Run";
+                PhraseRunButton.Content = "Run";
+                RunButton.Content = "Run";
 
                 if (filesProcessed == 1)
                     HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Scanning {Path.GetFileName(srcFile)}...";
                 else
                     HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Scanning {filesProcessed:N0} files...";
+
                 return;
             }
 
-            DirectoryOutput.IsEnabled = true;
-            DirectoryRunButton.IsEnabled = true;
-            DirectoryRunButton.Content = "Run";
-            DirectorySource.IsEnabled = true;
-            DstDirectoryButton.IsEnabled = true;
-            DstFileButton.IsEnabled = true;
-            DstPhraseButton.IsEnabled = true;
-            FileOutput.IsEnabled = true;
-            FileSource.IsEnabled = true;
-            PhraseOutput.IsEnabled = true;
-            PhraseRunButton.Content = "Run";
-            PhraseRunButton.IsEnabled = true;
-            PhraseSource.IsEnabled = true;
-            RunButton.Content = "Run";
-            RunButton.IsEnabled = true;
-            SrcDirectoryButton.IsEnabled = true;
-            SrcFileButton.IsEnabled = true;
-            SrcPhraseButton.IsEnabled = true;
+            DirectoryRunButton.Content = "Scanning...";
+            PhraseRunButton.Content = "Scanning...";
+            RunButton.Content = "Scanning...";
 
             double timeTaken = DateTime.Now.Subtract(timeBegin).TotalSeconds;
             if (filesProcessed == 1)
                 HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Processed {Path.GetFileName(srcFile)} in {timeTaken:N2} seconds.";
             else
                 HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Processed {filesProcessed:N0} files in {timeTaken:N2} seconds.";
+
             return;
         }
 
@@ -813,7 +793,7 @@ namespace FLogS
                 PhraseProgress.Value = PhraseProgress.Maximum;
 
                 UpdateLogs();
-                TransitionMenus(false);
+                TransitionMenus(true);
             }
             catch (Exception ex)
             {
