@@ -25,6 +25,15 @@ namespace FLogS
             InitializeComponent();
         }
 
+        private readonly static SolidColorBrush[][] brushCombos =
+        {
+            new SolidColorBrush[] { Brushes.Black, Brushes.White }, // Textboxes
+            new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige }, // Buttons
+            new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray }, // Grids/Borders
+            new SolidColorBrush[] { Brushes.Pink, Brushes.Red }, // Error messages (And the ADL warning)
+            new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkOrange }, // Warning messages
+        };
+        private int brushPalette = 0;
         private uint bytesRead;
         private uint corruptTimestamps;
         private readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
@@ -53,6 +62,7 @@ namespace FLogS
         private readonly string[] prefixes = { "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q" }; // Always futureproof...
         private int prefixIndex = 0;
         private int result;
+        private int reversePalette;
         private bool saveTruncated;
         private string? srcFile = "";
         private byte[]? streamBuffer;
@@ -60,6 +70,27 @@ namespace FLogS
         private uint truncatedBytes;
         private uint truncatedMessages;
         private int unreadBytes;
+        private readonly static string[] warnings =
+        {
+            "",
+            "No source log files selected.",
+            "No destination directory selected.",
+            "Destination is not a directory.",
+            "Destination directory does not exist.",
+            "One or more source files do not exist.",
+            "One or more source files exist in the destination.",
+            "No source log file selected.",
+            "Source log file does not exist.",
+            "No destination file selected.",
+            "Destination is not a file.",
+            "Source and destination files are identical.",
+            "No search text entered.",
+            "",
+            "",
+            "",
+            "Destination file will be overwritten.",
+            "One or more files will be overwritten.",
+        };
 
         private enum MessageType
         {
@@ -313,92 +344,6 @@ namespace FLogS
             }
         }
 
-        private void ProcessWarnings()
-        {
-            switch (directoryReadyToRun)
-            {
-                case 0:
-                    DirectoryRunButton.IsEnabled = true;
-                    break;
-                case 1:
-                    DirectoryWarningLabel.Content = "No source log files selected.";
-                    break;
-                case 2:
-                    DirectoryWarningLabel.Content = "No destination directory selected.";
-                    break;
-                case 3:
-                    DirectoryWarningLabel.Content = "Destination directory does not exist.";
-                    break;
-                case 4:
-                    DirectoryWarningLabel.Content = "One or more source files do not exist.";
-                    break;
-                case 5:
-                    DirectoryWarningLabel.Content = "One or more source files exist in the destination.";
-                    break;
-                default:
-                    DirectoryWarningLabel.Content = "An unknown error has occurred.";
-                    break;
-            }
-
-            switch (fileReadyToRun)
-            {
-                case 0:
-                    RunButton.IsEnabled = true;
-                    break;
-                case 1:
-                    WarningLabel.Content = "No source log file selected.";
-                    break;
-                case 2:
-                    WarningLabel.Content = "Source log file does not exist.";
-                    break;
-                case 3:
-                    WarningLabel.Content = "No destination file selected.";
-                    break;
-                case 4:
-                    WarningLabel.Content = "Destination is not a file.";
-                    break;
-                case 5:
-                    WarningLabel.Content = "Destination directory does not exist.";
-                    break;
-                case 6:
-                    WarningLabel.Content = "Source and destination files are identical.";
-                    break;
-                default:
-                    WarningLabel.Content = "An unknown error has occurred.";
-                    break;
-            }
-
-            switch (phraseReadyToRun)
-            {
-                case 0:
-                    PhraseRunButton.IsEnabled = true;
-                    break;
-                case 1:
-                    PhraseWarningLabel.Content = "No source log files selected.";
-                    break;
-                case 2:
-                    PhraseWarningLabel.Content = "No destination directory selected.";
-                    break;
-                case 3:
-                    PhraseWarningLabel.Content = "Destination directory does not exist.";
-                    break;
-                case 4:
-                    PhraseWarningLabel.Content = "No search text entered.";
-                    break;
-                case 5:
-                    PhraseWarningLabel.Content = "One or more source files do not exist.";
-                    break;
-                case 6:
-                    PhraseWarningLabel.Content = "One or more source files exist in the destination.";
-                    break;
-                default:
-                    PhraseWarningLabel.Content = "An unknown error has occurred.";
-                    break;
-            }
-
-            return;
-        }
-
         private void ResetStats()
         {
             bytesRead = 0;
@@ -477,17 +422,8 @@ namespace FLogS
         {
             try
             {
-                SolidColorBrush[][] brushCombos =
-                {
-                    new SolidColorBrush[] { Brushes.Black, Brushes.White }, // Textboxes
-                    new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige }, // Buttons
-                    new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray }, // Grids/Borders
-                    new SolidColorBrush[] { Brushes.Pink, Brushes.Red }, // Error messages (And the ADL warning)
-                    new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkOrange }, // Warning messages
-                };
-
-                int brushPalette = 1;
-                int reversePalette = 0;
+                brushPalette = 1;
+                reversePalette = 0;
 
                 if (ThemeSelector.Content.ToString().Equals("Dark"))
                 {
@@ -651,58 +587,56 @@ namespace FLogS
             try
             {
                 fileReadyToRun = directoryReadyToRun = phraseReadyToRun = 0;
-                RunButton.IsEnabled = DirectoryRunButton.IsEnabled = PhraseRunButton.IsEnabled = false;
+                RunButton.IsEnabled = DirectoryRunButton.IsEnabled = PhraseRunButton.IsEnabled = true;
                 WarningLabel.Content = DirectoryWarningLabel.Content = PhraseWarningLabel.Content = "";
-                WarningLabel.Foreground = DirectoryWarningLabel.Foreground = PhraseWarningLabel.Foreground = (ThemeSelector.Content as string).Equals("Light") ? Brushes.Pink : Brushes.Red;
+                WarningLabel.Foreground = DirectoryWarningLabel.Foreground = PhraseWarningLabel.Foreground = brushCombos[3][brushPalette];
 
                 if (DirectorySource.Text.Length == 0)
                     directoryReadyToRun = 1;
                 else if (DirectoryOutput.Text.Length == 0)
                     directoryReadyToRun = 2;
-                else if (Directory.Exists(DirectoryOutput.Text) == false)
+                else if (File.Exists(DirectoryOutput.Text))
                     directoryReadyToRun = 3;
+                else if (Directory.Exists(DirectoryOutput.Text) == false)
+                    directoryReadyToRun = 4;
                 else
                 {
                     foreach (string file in DirectorySource.Text.Split(';'))
                     {
                         if (File.Exists(file) == false)
-                            directoryReadyToRun = 4;
-                        else if (file.Equals(Path.Join(DirectoryOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
                             directoryReadyToRun = 5;
+                        else if (file.Equals(Path.Join(DirectoryOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
+                            directoryReadyToRun = 6;
                         else if (directoryReadyToRun == 0 && File.Exists(Path.Join(DirectoryOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
-                        {
-                            DirectoryWarningLabel.Foreground = (ThemeSelector.Content as string).Equals("Light") ? Brushes.Yellow : Brushes.DarkOrange;
-                            DirectoryWarningLabel.Content = "One or more files will be overwritten.";
-                        }
+                            directoryReadyToRun = 0x11;
                     }
                 }
 
                 if (FileSource.Text.Length == 0)
-                    fileReadyToRun = 1;
+                    fileReadyToRun = 7;
                 else if (File.Exists(FileSource.Text) == false)
-                    fileReadyToRun = 2;
+                    fileReadyToRun = 8;
                 else if (FileOutput.Text.Length == 0)
-                    fileReadyToRun = 3;
+                    fileReadyToRun = 9;
                 else if (Directory.Exists(FileOutput.Text))
-                    fileReadyToRun = 4;
+                    fileReadyToRun = 0xA;
                 else if (Directory.Exists(Path.GetDirectoryName(FileOutput.Text)) == false)
-                    fileReadyToRun = 5;
+                    fileReadyToRun = 4;
                 else if (FileSource.Text.Equals(FileOutput.Text))
-                    fileReadyToRun = 6;
+                    fileReadyToRun = 0xB;
                 else if (File.Exists(FileOutput.Text))
-                {
-                    WarningLabel.Foreground = (ThemeSelector.Content as string).Equals("Light") ? Brushes.Yellow : Brushes.DarkOrange;
-                    WarningLabel.Content = "Destination file will be overwritten.";
-                }
+                    fileReadyToRun = 0x10;
 
                 if (PhraseSource.Text.Length == 0)
                     phraseReadyToRun = 1;
                 else if (PhraseOutput.Text.Length == 0)
                     phraseReadyToRun = 2;
-                else if (Directory.Exists(PhraseOutput.Text) == false)
+                else if (File.Exists(PhraseOutput.Text))
                     phraseReadyToRun = 3;
-                else if (PhraseSearch.Text.Length == 0)
+                else if (Directory.Exists(PhraseOutput.Text) == false)
                     phraseReadyToRun = 4;
+                else if (PhraseSearch.Text.Length == 0)
+                    phraseReadyToRun = 0xC;
                 else
                 {
                     foreach (string file in PhraseSource.Text.Split(';'))
@@ -712,20 +646,29 @@ namespace FLogS
                         else if (file.Equals(Path.Join(PhraseOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
                             phraseReadyToRun = 6;
                         else if (phraseReadyToRun == 0 && File.Exists(Path.Join(PhraseOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
-                        {
-                            PhraseWarningLabel.Foreground = (ThemeSelector.Content as string).Equals("Light") ? Brushes.Yellow : Brushes.DarkOrange;
-                            PhraseWarningLabel.Content = "One or more files will be overwritten.";
-                        }
+                            phraseReadyToRun = 0x11;
                     }
                 }
-
-                ProcessWarnings();
             }
             catch (Exception ex)
             {
                 HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = LogException(ex);
                 return;
             }
+
+            DirectoryWarningLabel.Content = warnings[directoryReadyToRun];
+            DirectoryRunButton.IsEnabled = directoryReadyToRun == 0 || directoryReadyToRun > 0xF;
+            PhraseWarningLabel.Content = warnings[phraseReadyToRun];
+            PhraseRunButton.IsEnabled = phraseReadyToRun == 0 || phraseReadyToRun > 0xF;
+            WarningLabel.Content = warnings[fileReadyToRun];
+            RunButton.IsEnabled = fileReadyToRun == 0 || fileReadyToRun > 0xF;
+
+            if (directoryReadyToRun > 0xF)
+                DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
+            if (phraseReadyToRun > 0xF)
+                PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
+            if (fileReadyToRun > 0xF)
+                WarningLabel.Foreground = brushCombos[4][brushPalette];
         }
 
         private static uint UNIXTimestamp()
@@ -878,19 +821,19 @@ namespace FLogS
                 if (result < 4)
                     return written;
                 timestamp = BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
-                thisDT = DTFromStamp(timestamp);
-                if (IsValidTimestamp(timestamp) == false)
+                if (IsValidTimestamp(timestamp))
+                {
+                    lastTimestamp = timestamp;
+                    thisDT = DTFromStamp(timestamp);
+                    messageOut += "[" + thisDT.ToString(dateFormat) + "] ";
+                    if (thisDT.CompareTo(dtBefore) > 0 || thisDT.CompareTo(dtAfter) < 0)
+                        withinRange = false;
+                }
+                else
                 {
                     corruptTimestamps++;
                     intact = false;
                     messageOut = "[BAD TIMESTAMP] ";
-                }
-                else
-                {
-                    lastTimestamp = timestamp;
-                    messageOut += "[" + thisDT.ToString(dateFormat) + "] ";
-                    if (thisDT.CompareTo(dtBefore) > 0 || thisDT.CompareTo(dtAfter) < 0)
-                        withinRange = false;
                 }
                 nextByte = srcFS.ReadByte(); // Read the delimiter.
                 if (nextByte == -1)

@@ -22,7 +22,7 @@
 - Major fix: Refusal to overwrite files during a batch process, as a result of a misused variable.
 
 # 1.0.5.4 - 18/09/2023
-- Additional compatibility for earlier versions of Windows; previously, we had supported only the most recent version of Windows 10 and later.
+- Additional compatibility for earlier versions of Windows; previously, we had supported only the most recent version of Windows 10 and later. We now tentatively support everything back to Windows 7.
 - Additional error messages and some warnings.
 - The program now refuses to overwrite files it intends to read from, which for several reasons is just good practice.
 
