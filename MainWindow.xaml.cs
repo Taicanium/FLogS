@@ -37,8 +37,8 @@ namespace FLogS
         private uint bytesRead;
         private uint corruptTimestamps;
         private readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
-        private string? destDir = "";
-        private string? destFile = "";
+        private string? destDir;
+        private string? destFile;
         private uint directoryReadyToRun = 1;
         private uint discardedBytes;
         private uint discardedMessages;
@@ -59,12 +59,12 @@ namespace FLogS
         private int nextByte;
         private string? phrase;
         private uint phraseReadyToRun = 1;
-        private readonly string[] prefixes = { "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q" }; // Always futureproof...
+        private readonly static string[] prefixes = { "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q" }; // We count bytes, so in practice this app will overflow upon reaching 2 GB.
         private int prefixIndex = 0;
         private int result;
         private int reversePalette;
         private bool saveTruncated;
-        private string? srcFile = "";
+        private string? srcFile;
         private byte[]? streamBuffer;
         private DateTime timeBegin;
         private uint truncatedBytes;
@@ -101,6 +101,7 @@ namespace FLogS
             DiceRoll = 3,
             Warning = 4,
             Headless = 5,
+            Announcement = 6,
         }
 
         private static uint BEInt(byte[] buffer)
@@ -131,17 +132,11 @@ namespace FLogS
             if (DirectorySaveTruncated is null || PhraseSaveTruncated is null || SaveTruncated is null)
                 return;
 
-            if ((sender as ComboBox).SelectedIndex == 0)
-            {
-                DirectorySaveTruncated.SelectedIndex = 0;
-                PhraseSaveTruncated.SelectedIndex = 0;
-                SaveTruncated.SelectedIndex = 0;
-                return;
-            }
+            DirectorySaveTruncated.SelectedIndex = (sender as ComboBox).SelectedIndex;
+            PhraseSaveTruncated.SelectedIndex = (sender as ComboBox).SelectedIndex;
+            SaveTruncated.SelectedIndex = (sender as ComboBox).SelectedIndex;
 
-            DirectorySaveTruncated.SelectedIndex = 1;
-            PhraseSaveTruncated.SelectedIndex = 1;
-            SaveTruncated.SelectedIndex = 1;
+            return;
         }
 
         private void DatePicker_Update(object? sender, RoutedEventArgs e)
@@ -383,6 +378,9 @@ namespace FLogS
                 FileProgress.Maximum = new FileInfo(srcFile).Length;
                 PhraseProgress.Maximum = new FileInfo(srcFile).Length;
 
+                if (File.Exists(destFile))
+                    File.Delete(destFile);
+
                 TransitionMenus(false);
                 ResetStats();
                 UpdateLogs();
@@ -557,9 +555,9 @@ namespace FLogS
 
             if (!enabled)
             {
-                DirectoryRunButton.Content = "Run";
-                PhraseRunButton.Content = "Run";
-                RunButton.Content = "Run";
+                DirectoryRunButton.Content = "Scanning...";
+                PhraseRunButton.Content = "Scanning...";
+                RunButton.Content = "Scanning...";
 
                 if (filesProcessed == 1)
                     HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Scanning {Path.GetFileName(srcFile)}...";
@@ -569,9 +567,9 @@ namespace FLogS
                 return;
             }
 
-            DirectoryRunButton.Content = "Scanning...";
-            PhraseRunButton.Content = "Scanning...";
-            RunButton.Content = "Scanning...";
+            DirectoryRunButton.Content = "Run";
+            PhraseRunButton.Content = "Run";
+            RunButton.Content = "Run";
 
             double timeTaken = DateTime.Now.Subtract(timeBegin).TotalSeconds;
             if (filesProcessed == 1)
@@ -834,6 +832,9 @@ namespace FLogS
                     corruptTimestamps++;
                     intact = false;
                     messageOut = "[BAD TIMESTAMP] ";
+                    if (timestamp > 0 && timestamp < UNIXTimestamp())
+                        lastTimestamp = timestamp; // On the very off chance an otherwise-valid set of messages was made non-sequential, say, by F-Chat's client while trying to repair corruption.
+                                                   // This should never happen, but you throw 100% of the exceptions you don't catch.
                 }
                 nextByte = srcFS.ReadByte(); // Read the delimiter.
                 if (nextByte == -1)
@@ -874,6 +875,9 @@ namespace FLogS
                                 break;
                             case MessageType.Warning:
                                 messageOut += " (warning): ";
+                                break;
+                            case MessageType.Announcement:
+                                messageOut += " (announcement): ";
                                 break;
                         }
                     }
@@ -962,7 +966,7 @@ namespace FLogS
                     if (nextByte == -1)
                         return written;
                     srcFS.Seek(-6, SeekOrigin.Current);
-                    if (nextByte < 6)
+                    if (nextByte < 7)
                     {
                         discrepancy = (int)srcFS.Position - (int)lastPosition;
                         lastDiscrepancy += discrepancy;
@@ -982,7 +986,7 @@ namespace FLogS
                         srcFS.Seek(-7, SeekOrigin.Current);
                         srcFS.ReadByte();
                         srcFS.ReadByte();
-                        if (nextByte < 6)
+                        if (nextByte < 7)
                         {
                             discrepancy = (int)srcFS.Position - (int)lastPosition - 2;
                             lastDiscrepancy += discrepancy;

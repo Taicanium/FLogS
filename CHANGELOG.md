@@ -1,3 +1,10 @@
+# 1.0.7.2 - 24/09/2023
+- Streamlined error message selection. This probably wasn't impacting performance, but it was still massively inefficient.
+- Major fix: Single log files were getting appended to, rather than overwritten.
+- Major fix: The program now processes public announcements and staff broadcasts correctly.
+- Minor fix: Run buttons weren't reverting to 'ready' status after finishing a job.
+- Minor fix: We now adjust our 'timestamp count' when reading one that's out of order - so long as it's actually a valid UNIX timestamp. In practice this probably never happens without the file going right back to where it was in the next message. But it's good to proof for.
+
 # 1.0.7.1 - 22/09/2023
 - Exceptions are now reported in the header of the log window.
 - Identified selection of IDX files during batch processing as the cause of the known issue regarding successful translations being overwritten with garbage.
