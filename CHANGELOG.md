@@ -1,3 +1,8 @@
+# 1.0.7.3 - 25/09/2023
+- Snazzy new design accents, and an overall improvement in how theme switching is handled. I've tried to emulate the old "embossed" style of Windows XP while preserving some modern touch-ups.
+- Error messages are now less verbose in the log window, though they remain descriptive in the error file.
+- The translation routine now aborts if a fatal error is occurred, e.g. no access to the destination file.
+
 # 1.0.7.2 - 24/09/2023
 - Streamlined error message selection. This probably wasn't impacting performance, but it was still massively inefficient.
 - Major fix: Single log files were getting appended to, rather than overwritten.

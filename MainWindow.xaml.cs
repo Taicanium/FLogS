@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Collections;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -27,11 +28,13 @@ namespace FLogS
 
         private readonly static SolidColorBrush[][] brushCombos =
         {
+            // 0 = Dark mode, 1 = Light mode.
             new SolidColorBrush[] { Brushes.Black, Brushes.White }, // Textboxes
             new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige }, // Buttons
-            new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray }, // Grids/Borders
+            new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray }, // Borders
             new SolidColorBrush[] { Brushes.Pink, Brushes.Red }, // Error messages (And the ADL warning)
-            new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkOrange }, // Warning messages
+            new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkRed }, // Warning messages
+            new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x4C, G = 0x4C, B = 0x4C }), Brushes.DarkGray }, // TabControl
         };
         private int brushPalette = 0;
         private uint bytesRead;
@@ -46,6 +49,7 @@ namespace FLogS
         private DateTime? dtBefore;
         private uint emptyMessages;
         private readonly static DateTime epoch = new(1970, 1, 1, 0, 0, 0);
+        private readonly static string errorFile = "FLogS_ERROR.txt";
         private uint fileReadyToRun = 1;
         private uint filesProcessed;
         private double finalBytes;
@@ -54,6 +58,7 @@ namespace FLogS
         private uint intactBytes;
         private uint intactMessages;
         private int lastDiscrepancy;
+        private static string lastException = "";
         private uint lastPosition;
         private static uint lastTimestamp;
         private int nextByte;
@@ -127,6 +132,55 @@ namespace FLogS
             return $"{finalBytes:N1} {prefixes[prefixIndex]}B";
         }
 
+        private void ChangeStyle(DependencyObject? sender)
+        {
+            if (sender is null)
+                return;
+
+            switch (sender.DependencyObjectType.Name)
+            {
+                case "Button":
+                    (sender as Button).Background = brushCombos[1][brushPalette];
+                    break;
+                case "DatePicker":
+                    (sender as DatePicker).BorderBrush = brushCombos[2][brushPalette];
+                    break;
+                case "Label":
+                    (sender as Label).Foreground = brushCombos[0][reversePalette];
+                    break;
+                case "ListBox":
+                    (sender as ListBox).Background = brushCombos[0][brushPalette];
+                    (sender as ListBox).BorderBrush = brushCombos[2][reversePalette];
+                    (sender as ListBox).Foreground = brushCombos[0][reversePalette];
+                    break;
+                case "ProgressBar":
+                    (sender as ProgressBar).Background = brushCombos[0][brushPalette];
+                    break;
+                case "StackPanel":
+                    (sender as StackPanel).Background = brushCombos[2][brushPalette];
+                    break;
+                case "TabControl":
+                    (sender as TabControl).Background = brushCombos[5][brushPalette];
+                    break;
+                case "TextBlock":
+                    (sender as TextBlock).Foreground = brushCombos[0][reversePalette];
+                    break;
+                case "TextBox":
+                    (sender as TextBox).Background = brushCombos[0][brushPalette];
+                    (sender as TextBox).BorderBrush = brushCombos[2][reversePalette];
+                    (sender as TextBox).Foreground = brushCombos[0][reversePalette];
+                    break;
+            }
+
+            if ((sender.GetValue(TagProperty) as string ?? "") == "WarningLabel")
+                sender.SetValue(ForegroundProperty, brushCombos[3][brushPalette]);
+
+            foreach (object dp in LogicalTreeHelper.GetChildren(sender))
+                ChangeStyle(dp as DependencyObject);
+
+            return;
+        }
+
         private void ComboBox_Update(object? sender, RoutedEventArgs e)
         {
             if (DirectorySaveTruncated is null || PhraseSaveTruncated is null || SaveTruncated is null)
@@ -152,6 +206,8 @@ namespace FLogS
             AfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
             DirectoryAfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
             PhraseAfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
+
+            return;
         }
 
         private static string DialogFileSelect(bool checkExists = false, bool multi = true)
@@ -213,7 +269,8 @@ namespace FLogS
 
                 BackgroundWorker worker = new()
                 {
-                    WorkerReportsProgress = true
+                    WorkerReportsProgress = true,
+                    WorkerSupportsCancellation = true
                 };
                 worker.DoWork += Worker_BatchProcess;
                 worker.ProgressChanged += Worker_ProgressChanged;
@@ -223,7 +280,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = LogException(ex);
+                LogException(ex);
                 return;
             }
         }
@@ -269,10 +326,12 @@ namespace FLogS
             return true;
         }
 
-        private static string LogException(Exception e)
+        private static void LogException(Exception e)
         {
-            File.AppendAllText("FLogS_ERROR.txt", DateTime.Now.ToString(dateFormat) + " - " + e.Message + "\n");
-            return e.Message;
+            lastException = e.Message;
+            File.AppendAllText(errorFile, DateTime.Now.ToString(dateFormat) + " - " + lastException + "\n");
+            File.AppendAllText(errorFile, e.TargetSite.DeclaringType.FullName + "." + e.TargetSite.Name + "\n");
+            return;
         }
 
         private void MainGrid_Loaded(object? sender, RoutedEventArgs e)
@@ -281,6 +340,9 @@ namespace FLogS
             {
                 if (ShouldSystemUseDarkMode())
                     ThemeSelector_Click(sender, e);
+
+                if (File.Exists(errorFile))
+                    File.Delete(errorFile);
             }
             catch (Exception)
             {
@@ -324,7 +386,8 @@ namespace FLogS
 
                 BackgroundWorker worker = new()
                 {
-                    WorkerReportsProgress = true
+                    WorkerReportsProgress = true,
+                    WorkerSupportsCancellation = true
                 };
                 worker.DoWork += Worker_BatchProcess;
                 worker.ProgressChanged += Worker_ProgressChanged;
@@ -334,7 +397,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = LogException(ex);
+                LogException(ex);
                 return;
             }
         }
@@ -387,7 +450,8 @@ namespace FLogS
 
                 BackgroundWorker worker = new()
                 {
-                    WorkerReportsProgress = true
+                    WorkerReportsProgress = true,
+                    WorkerSupportsCancellation = true
                 };
                 worker.DoWork += Worker_DoWork;
                 worker.ProgressChanged += Worker_ProgressChanged;
@@ -396,7 +460,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = LogException(ex);
+                LogException(ex);
                 return;
             }
         }
@@ -439,119 +503,44 @@ namespace FLogS
                     ThemeSelector.Content = "Dark";
                 }
 
-                // Buttons
-                DirectoryRunButton.Background = brushCombos[1][brushPalette];
-                DirectoryThemeSelector.Background = brushCombos[1][brushPalette];
-                DstDirectoryButton.Background = brushCombos[1][brushPalette];
-                DstFileButton.Background = brushCombos[1][brushPalette];
-                DstPhraseButton.Background = brushCombos[1][brushPalette];
-                PhraseRunButton.Background = brushCombos[1][brushPalette];
-                PhraseThemeSelector.Background = brushCombos[1][brushPalette];
-                RunButton.Background = brushCombos[1][brushPalette];
-                SrcDirectoryButton.Background = brushCombos[1][brushPalette];
-                SrcFileButton.Background = brushCombos[1][brushPalette];
-                SrcPhraseButton.Background = brushCombos[1][brushPalette];
-                ThemeSelector.Background = brushCombos[1][brushPalette];
+                foreach (object dp in LogicalTreeHelper.GetChildren(MainGrid))
+                    ChangeStyle(dp as DependencyObject);
 
-                // Grids
-                DirectoryGrid.Background = brushCombos[2][brushPalette];
-                FileGrid.Background = brushCombos[2][brushPalette];
-                HelpGrid.Background = brushCombos[2][brushPalette];
-                PhraseGrid.Background = brushCombos[2][brushPalette];
-
-                // Labels
                 ADLWarning.Foreground = brushCombos[3][brushPalette];
-                AfterDateLabel.Foreground = brushCombos[0][reversePalette];
-                BeforeDateLabel.Foreground = brushCombos[0][reversePalette];
-                DirectoryAfterDateLabel.Foreground = brushCombos[0][reversePalette];
-                DirectoryBeforeDateLabel.Foreground = brushCombos[0][reversePalette];
-                DirectoryOutputLabel.Foreground = brushCombos[0][reversePalette];
-                DirectorySourceLabel.Foreground = brushCombos[0][reversePalette];
-                DirectoryVersionNumber.Foreground = brushCombos[0][reversePalette];
-                DirectoryWarningLabel.Foreground = brushCombos[3][brushPalette];
-                FileOutputLabel.Foreground = brushCombos[0][reversePalette];
-                FileSourceLabel.Foreground = brushCombos[0][reversePalette];
-                FileVersionNumber.Foreground = brushCombos[0][reversePalette];
-                HelpHeader1.Foreground = brushCombos[0][reversePalette];
-                HelpHeader2.Foreground = brushCombos[0][reversePalette];
-                HelpText1.Foreground = brushCombos[0][reversePalette];
-                HelpText2.Foreground = brushCombos[0][reversePalette];
-                HelpVersionNumber.Foreground = brushCombos[0][reversePalette];
-                PhraseAfterDateLabel.Foreground = brushCombos[0][reversePalette];
-                PhraseBeforeDateLabel.Foreground = brushCombos[0][reversePalette];
-                PhraseOutputLabel.Foreground = brushCombos[0][reversePalette];
-                PhraseSearchLabel.Foreground = brushCombos[0][reversePalette];
-                PhraseSourceLabel.Foreground = brushCombos[0][reversePalette];
-                PhraseVersionNumber.Foreground = brushCombos[0][reversePalette];
-                PhraseWarningLabel.Foreground = brushCombos[3][brushPalette];
-                WarningLabel.Foreground = brushCombos[3][brushPalette];
+                MainGrid.Background = brushCombos[5][brushPalette];
 
-                // TabControl
-                TabMenu.Background = brushCombos[2][brushPalette];
-
-                // Textboxes
-                DirectoryLogWindow.Background = brushCombos[0][brushPalette];
-                DirectoryLogWindow.BorderBrush = brushCombos[2][reversePalette];
-                DirectoryLogWindow.Foreground = brushCombos[0][reversePalette];
-                DirectoryOutput.Background = brushCombos[0][brushPalette];
-                DirectoryOutput.BorderBrush = brushCombos[2][reversePalette];
-                DirectoryOutput.Foreground = brushCombos[0][reversePalette];
-                DirectorySource.Background = brushCombos[0][brushPalette];
-                DirectorySource.BorderBrush = brushCombos[2][reversePalette];
-                DirectorySource.Foreground = brushCombos[0][reversePalette];
-                FileOutput.Background = brushCombos[0][brushPalette];
-                FileOutput.BorderBrush = brushCombos[2][reversePalette];
-                FileOutput.Foreground = brushCombos[0][reversePalette];
-                FileSource.Background = brushCombos[0][brushPalette];
-                FileSource.BorderBrush = brushCombos[2][reversePalette];
-                FileSource.Foreground = brushCombos[0][reversePalette];
-                LogWindow.Background = brushCombos[0][brushPalette];
-                LogWindow.BorderBrush = brushCombos[2][reversePalette];
-                LogWindow.Foreground = brushCombos[0][reversePalette];
-                PhraseLogWindow.Background = brushCombos[0][brushPalette];
-                PhraseLogWindow.BorderBrush = brushCombos[2][reversePalette];
-                PhraseLogWindow.Foreground = brushCombos[0][reversePalette];
-                PhraseOutput.Background = brushCombos[0][brushPalette];
-                PhraseOutput.BorderBrush = brushCombos[2][reversePalette];
-                PhraseOutput.Foreground = brushCombos[0][reversePalette];
-                PhraseSearch.Background = brushCombos[0][brushPalette];
-                PhraseSearch.BorderBrush = brushCombos[2][reversePalette];
-                PhraseSearch.Foreground = brushCombos[0][reversePalette];
-                PhraseSource.Background = brushCombos[0][brushPalette];
-                PhraseSource.BorderBrush = brushCombos[2][reversePalette];
-                PhraseSource.Foreground = brushCombos[0][reversePalette];
-
-                if (directoryReadyToRun == 0)
+                if (directoryReadyToRun == 0 || directoryReadyToRun > 0xF)
                     DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
-                if (phraseReadyToRun == 0)
+                if (phraseReadyToRun == 0 || phraseReadyToRun > 0xF)
                     PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
-                if (fileReadyToRun == 0)
+                if (fileReadyToRun == 0 || fileReadyToRun > 0xF)
                     WarningLabel.Foreground = brushCombos[4][brushPalette];
             }
             catch (Exception ex)
             {
-                HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = LogException(ex);
+                LogException(ex);
                 return;
             }
         }
 
+        private void TransitionEnableables(DependencyObject sender, bool enabled)
+        {
+            if (sender is null)
+                return;
+
+            if ((sender.GetValue(TagProperty) ?? "").Equals("Enableable"))
+                sender.SetValue(IsEnabledProperty, enabled);
+
+            foreach (object dp in LogicalTreeHelper.GetChildren(sender))
+                TransitionEnableables(dp as DependencyObject, enabled);
+
+            return;
+        }
+
         private void TransitionMenus(bool enabled)
         {
-            DirectoryOutput.IsEnabled = enabled;
-            DirectoryRunButton.IsEnabled = enabled;
-            DirectorySource.IsEnabled = enabled;
-            DstDirectoryButton.IsEnabled = enabled;
-            DstFileButton.IsEnabled = enabled;
-            DstPhraseButton.IsEnabled = enabled;
-            FileOutput.IsEnabled = enabled;
-            FileSource.IsEnabled = enabled;
-            PhraseOutput.IsEnabled = enabled;
-            PhraseRunButton.IsEnabled = enabled;
-            PhraseSource.IsEnabled = enabled;
-            RunButton.IsEnabled = enabled;
-            SrcDirectoryButton.IsEnabled = enabled;
-            SrcFileButton.IsEnabled = enabled;
-            SrcPhraseButton.IsEnabled = enabled;
+            foreach (object dp in LogicalTreeHelper.GetChildren(MainGrid))
+                TransitionEnableables(dp as DependencyObject, enabled);
 
             if (!enabled)
             {
@@ -571,11 +560,14 @@ namespace FLogS
             PhraseRunButton.Content = "Run";
             RunButton.Content = "Run";
 
-            double timeTaken = DateTime.Now.Subtract(timeBegin).TotalSeconds;
-            if (filesProcessed == 1)
-                HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Processed {Path.GetFileName(srcFile)} in {timeTaken:N2} seconds.";
-            else
-                HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Processed {filesProcessed:N0} files in {timeTaken:N2} seconds.";
+            if (lastException.Equals(""))
+            {
+                double timeTaken = DateTime.Now.Subtract(timeBegin).TotalSeconds;
+                if (filesProcessed == 1)
+                    HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Processed {Path.GetFileName(srcFile)} in {timeTaken:N2} seconds.";
+                else
+                    HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Processed {filesProcessed:N0} files in {timeTaken:N2} seconds.";
+            }
 
             return;
         }
@@ -650,7 +642,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = LogException(ex);
+                LogException(ex);
                 return;
             }
 
@@ -674,27 +666,27 @@ namespace FLogS
             return (uint)Math.Floor(DateTime.UtcNow.Subtract(epoch).TotalSeconds);
         }
 
-        private void UpdateLogs()
+        private void UpdateLogs(object? sender = null)
         {
             int intactCount;
-            int byteCount;
             string byteString;
 
             intactCount = (int)intactMessages - (int)discardedMessages;
-            byteCount = (int)intactBytes - (int)discardedBytes;
-            byteString = ByteSizeString(byteCount);
-            IMBox.Content = $"Intact Messages: {intactCount:N0} ({byteString})";
-            CTBox.Content = $"Corrupted Timestamps: {corruptTimestamps:N0}";
+            byteString = ByteSizeString((int)intactBytes - (int)discardedBytes);
+            PhraseIMBox.Content = DirectoryIMBox.Content = IMBox.Content = $"Intact Messages: {intactCount:N0} ({byteString})";
+            PhraseCTBox.Content = DirectoryCTBox.Content = CTBox.Content = $"Corrupted Timestamps: {corruptTimestamps:N0}";
             byteString = ByteSizeString(truncatedBytes);
-            TMBox.Content = $"Truncated Messages: {truncatedMessages:N0} ({byteString})";
-            EMBox.Content = $"Empty Messages: {emptyMessages:N0}";
+            PhraseTMBox.Content = DirectoryTMBox.Content = TMBox.Content = $"Truncated Messages: {truncatedMessages:N0} ({byteString})";
+            PhraseEMBox.Content = DirectoryEMBox.Content = EMBox.Content = $"Empty Messages: {emptyMessages:N0}";
             byteString = ByteSizeString(unreadBytes);
-            UBBox.Content = $"Unread Bytes: {unreadBytes:N0} ({byteString})";
-            PhraseIMBox.Content = DirectoryIMBox.Content = IMBox.Content;
-            PhraseCTBox.Content = DirectoryCTBox.Content = CTBox.Content;
-            PhraseTMBox.Content = DirectoryTMBox.Content = TMBox.Content;
-            PhraseEMBox.Content = DirectoryEMBox.Content = EMBox.Content;
-            PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content;
+            PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content = $"Unread Bytes: {unreadBytes:N0} ({byteString})";
+
+            if (lastException.Equals("") == false)
+            {
+                HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = "A critical error has occurred.";
+                PhraseEXBox.Content = DirectoryEXBox.Content = EXBox.Content = lastException;
+                (sender as BackgroundWorker).CancelAsync();
+            }
 
             return;
         }
@@ -715,11 +707,14 @@ namespace FLogS
 
                     Worker_DoWork(sender, e);
                     bytesRead += (uint)new FileInfo(logfile).Length;
+
+                    if (lastException.Equals("") == false)
+                        break;
                 }
             }
             catch (Exception ex)
             {
-                HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = LogException(ex);
+                LogException(ex);
             }
 
             return;
@@ -729,16 +724,18 @@ namespace FLogS
         {
             try
             {
+                if (lastException.Equals("") == false)
+                    HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = lastException;
                 DirectoryProgress.Value = DirectoryProgress.Maximum;
                 FileProgress.Value = FileProgress.Maximum;
                 PhraseProgress.Value = PhraseProgress.Maximum;
 
-                UpdateLogs();
+                UpdateLogs(sender);
                 TransitionMenus(true);
             }
             catch (Exception ex)
             {
-                HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = LogException(ex);
+                LogException(ex);
                 return;
             }
         }
@@ -761,6 +758,8 @@ namespace FLogS
                     {
                         (sender as BackgroundWorker).ReportProgress((int)(bytesRead + srcFS.Position));
                         lastUpdate = DateTime.Now;
+                        if (lastException.Equals("") == false)
+                            break;
                     }
                 }
             }
@@ -778,11 +777,11 @@ namespace FLogS
                 DirectoryProgress.Value = e.ProgressPercentage;
                 PhraseProgress.Value = e.ProgressPercentage;
 
-                UpdateLogs();
+                UpdateLogs(sender);
             }
             catch (Exception ex)
             {
-                HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = LogException(ex);
+                LogException(ex);
                 return;
             }
         }
@@ -799,9 +798,9 @@ namespace FLogS
             idBuffer = new byte[4];
             intact = true;
             bool matchPhrase = false;
-            string messageData = "";
+            ArrayList messageData = new();
             uint messageLength = 0U;
-            string messageOut = "";
+            string messageOut;
             MessageType msId;
             bool nextTimestamp = false;
             string profileName;
@@ -815,15 +814,16 @@ namespace FLogS
                 discrepancy = (int)srcFS.Position - (int)lastPosition; // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
                 lastDiscrepancy += discrepancy;
                 unreadBytes += discrepancy;
-                result = srcFS.Read(idBuffer, 0, 4); // Read the timestamp.
-                if (result < 4)
+
+                if (srcFS.Read(idBuffer, 0, 4) < 4) // Read the timestamp.
                     return written;
+
                 timestamp = BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
                 if (IsValidTimestamp(timestamp))
                 {
                     lastTimestamp = timestamp;
                     thisDT = DTFromStamp(timestamp);
-                    messageOut += "[" + thisDT.ToString(dateFormat) + "] ";
+                    messageData.Add("[" + thisDT.ToString(dateFormat) + "]");
                     if (thisDT.CompareTo(dtBefore) > 0 || thisDT.CompareTo(dtAfter) < 0)
                         withinRange = false;
                 }
@@ -831,59 +831,56 @@ namespace FLogS
                 {
                     corruptTimestamps++;
                     intact = false;
-                    messageOut = "[BAD TIMESTAMP] ";
+                    messageData.Add("[BAD TIMESTAMP]");
                     if (timestamp > 0 && timestamp < UNIXTimestamp())
                         lastTimestamp = timestamp; // On the very off chance an otherwise-valid set of messages was made non-sequential, say, by F-Chat's client while trying to repair corruption.
                                                    // This should never happen, but you throw 100% of the exceptions you don't catch.
                 }
-                nextByte = srcFS.ReadByte(); // Read the delimiter.
-                if (nextByte == -1)
+
+                msId = (MessageType)srcFS.ReadByte(); // Message delimiter.
+                nextByte = srcFS.ReadByte(); // 1-byte length of profile name. Headless messages have a null terminator here.
+
+                if (msId == MessageType.EOF || nextByte == -1)
                     return written;
-                msId = (MessageType)nextByte;
+
                 if (msId != MessageType.Headless)
                 {
-                    nextByte = srcFS.ReadByte(); // 1-byte length of profile name.
-                    if (nextByte == -1)
-                        return written;
                     streamBuffer = new byte[nextByte];
+
                     result = srcFS.Read(streamBuffer, 0, nextByte); // Read the profile name.
                     if (result < nextByte)
                     {
-                        emptyMessages++;
+                        truncatedMessages++;
+                        truncatedBytes += (uint)result;
                         intact = false;
-                        messageOut += "[EMPTY MESSAGE]";
+                        messageData.Add("[TRUNCATED MESSAGE]");
                     }
-                    else
+
+                    profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
+                    messageData.Add(profileName);
+                    switch (msId)
                     {
-                        profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
-                        messageOut += profileName;
-                        switch (msId)
-                        {
-                            case MessageType.EOF:
-                                return written;
-                            case MessageType.Regular:
-                                messageOut += ": ";
-                                break;
-                            case MessageType.Me:
-                                messageOut += "";
-                                break;
-                            case MessageType.Ad:
-                                messageOut += " (ad): ";
-                                break;
-                            case MessageType.DiceRoll: // These also include bottle spins and other 'fun' commands.
-                                messageOut += "";
-                                break;
-                            case MessageType.Warning:
-                                messageOut += " (warning): ";
-                                break;
-                            case MessageType.Announcement:
-                                messageOut += " (announcement): ";
-                                break;
-                        }
+                        case MessageType.EOF:
+                            return written;
+                        case MessageType.Regular:
+                            messageData[^1] += ":"; // This prevents us from putting a space before the colon later.
+                            break;
+                        case MessageType.Me:
+                        case MessageType.DiceRoll: // These also include bottle spins and other 'fun' commands.
+                            // messageData.Add("");
+                            break;
+                        case MessageType.Ad:
+                            messageData.Add("(ad):");
+                            break;
+                        case MessageType.Warning:
+                            messageData.Add("(warning):");
+                            break;
+                        case MessageType.Announcement:
+                            messageData.Add("(announcement):");
+                            break;
                     }
                 }
-                else
-                    nextByte = srcFS.ReadByte(); // Headless messages have a null terminator here, representing a lack of a profile name.
+
                 result = srcFS.Read(idBuffer, 0, 2); // 2-byte length of message.
                 if (result < 2)
                     result = 0;
@@ -900,27 +897,32 @@ namespace FLogS
                         result = srcFS.Read(streamBuffer, 0, (int)messageLength); // Read the message text.
                     }
                 }
+
                 if (result == 0)
                 {
                     emptyMessages++;
                     intact = false;
-                    messageOut += "[EMPTY MESSAGE]";
+                    messageData.Add("[EMPTY MESSAGE]");
                 }
                 else if (result < messageLength)
                 {
                     intact = false;
                     truncatedBytes += (uint)result;
                     truncatedMessages++;
-                    messageOut += "[TRUNCATED MESSAGE] ";
+                    messageData.Add("[TRUNCATED MESSAGE]");
                 }
+
                 if (result > 0)
-                    messageData = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
-                messageData = Regex.Replace(messageData, @"[^\u0009\u000A\u000D\u0020-\u007E]", ""); // Remove everything that's not a printable or newline character.
-                if (phrase is null || (messageOut + messageData).Contains(phrase, StringComparison.OrdinalIgnoreCase)) // Either the profile name or the message can contain our search text.
+                    messageData.Add(Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length));
+
+                messageOut = string.Join(' ', messageData.ToArray());
+                messageOut = Regex.Replace(messageOut, @"[^\u0009\u000A\u000D\u0020-\u007E]", ""); // Remove everything that's not a printable or newline character.
+
+                if (phrase is null || messageOut.Contains(phrase, StringComparison.OrdinalIgnoreCase)) // Either the profile name or the message can contain our search text.
                     matchPhrase = true;
                 if (intact)
                 {
-                    intactBytes += (uint)messageOut.Length + (uint)messageData.Length;
+                    intactBytes += (uint)messageOut.Length;
                     intactMessages++;
                     if (withinRange && matchPhrase)
                     {
@@ -930,14 +932,13 @@ namespace FLogS
                             dstFS.Write(dstFS.NewLine);
                         }
                         dstFS.Write(messageOut);
-                        dstFS.Write(messageData);
                         dstFS.Write(dstFS.NewLine);
                         lastDiscrepancy = 0;
                         written = true;
                     }
                     else // If the message doesn't match our criteria, we won't count it.
                     {
-                        discardedBytes += (uint)messageOut.Length + (uint)messageData.Length;
+                        discardedBytes += (uint)messageOut.Length;
                         discardedMessages++;
                     }
                 }
@@ -951,7 +952,6 @@ namespace FLogS
                             dstFS.Write(dstFS.NewLine);
                         }
                         dstFS.Write(messageOut);
-                        dstFS.Write(messageData);
                         dstFS.Write(dstFS.NewLine);
                         lastDiscrepancy = 0;
                         written = true;
@@ -999,7 +999,7 @@ namespace FLogS
             }
             catch (Exception ex)
             {
-                HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = LogException(ex);
+                LogException(ex);
             }
 
             return written;
