@@ -9,7 +9,7 @@
         Title="FLogS" Height="600" Width="800" ResizeMode="NoResize">
     <Grid x:Name="MainGrid" Background="DarkGray">
         <TabControl x:Name="TabMenu" Background="DarkGray" BorderThickness="0">
-            <TabItem Header="File" x:Name="TabFile">
+            <TabItem x:Name="TabFile" Header="File">
                 <Grid x:Name="FileGrid">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"></ColumnDefinition>
@@ -23,7 +23,7 @@
                         <StackPanel.Clip>
                             <RectangleGeometry Rect="0 0 398 417"/>
                         </StackPanel.Clip>
-                        <ListBox x:Name="LogWindow" Width="350" Height="350" Margin="0,25" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF212121" BorderThickness="1">
+                        <ListBox x:Name="LogWindow" Width="350" Height="350" Margin="0,25" IsHitTestVisible="false" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1">
                             <ListBoxItem x:Name="HeaderBox">Ready to receive data.</ListBoxItem>
                             <ListBoxItem Margin="10" Visibility="Hidden" IsHitTestVisible="False"></ListBoxItem>
                             <ListBoxItem x:Name="IMBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
@@ -43,21 +43,21 @@
                         <Label x:Name="FileSourceLabel" FontFamily="Arial" FontSize="14" Width="300" Height="25" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Margin="15,0,0,0" Content="Path to Source Log File"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button x:Name="SrcFileButton" Width="20" Height="20" HorizontalAlignment="Center" Margin="-15,0,10,0" Background="Beige" IsEnabled="True" Click="SrcFileButton_Click" Content="..."/>
-                            <TextBox x:Name="FileSource" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF212121" BorderThickness="1" TextChanged="TextboxUpdated"/>
+                            <TextBox x:Name="FileSource" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
                         </StackPanel>
                         <Label x:Name="FileOutputLabel" FontFamily="Arial" FontSize="14" Width="300" Height="25" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Margin="15,20,0,0" Content="Path to Destination Log File"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button x:Name="DstFileButton" Width="20" Height="20" HorizontalAlignment="Center" Margin="-15,0,10,0" Background="Beige" IsEnabled="True" Click="DstFileButton_Click" Content="..."/>
-                            <TextBox x:Name="FileOutput" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF212121" BorderThickness="1" TextChanged="TextboxUpdated"/>
+                            <TextBox x:Name="FileOutput" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="20,10,0,0">
                             <StackPanel>
                                 <Label x:Name="AfterDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages after..."/>
-                                <DatePicker x:Name="AfterDate" Width="120" SelectedDateChanged="DatePicker_Update" BorderBrush="#FF212121"/>
+                                <DatePicker x:Name="AfterDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                             </StackPanel>
                             <StackPanel Margin="25,0,0,0">
                                 <Label x:Name="BeforeDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages before..."/>
-                                <DatePicker x:Name="BeforeDate" Width="120" SelectedDateChanged="DatePicker_Update" BorderBrush="#FF212121"/>
+                                <DatePicker x:Name="BeforeDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                             </StackPanel>
                         </StackPanel>
                         <ComboBox x:Name="SaveTruncated" Width="300" Height="25" HorizontalAlignment="Center" Margin="20,40,0,0" IsEnabled="True" SelectionChanged="ComboBox_Update">
@@ -90,11 +90,11 @@
                                 <ProgressBar x:Name="FileProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="FileVersionNumber" Content="FLogS — Version 1.0.7.3 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="FileVersionNumber" Content="FLogS — Version 1.0.8 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
-            <TabItem Header="Directory" x:Name="TabDirectory">
+            <TabItem x:Name="TabDirectory" Header="Directory">
                 <Grid x:Name="DirectoryGrid">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"></ColumnDefinition>
@@ -108,7 +108,7 @@
                         <StackPanel.Clip>
                             <RectangleGeometry Rect="0 0 398 417"/>
                         </StackPanel.Clip>
-                        <ListBox x:Name="DirectoryLogWindow" Width="350" Height="350" HorizontalAlignment="Center" Margin="0,25" Padding="3" FontSize="14" BorderBrush="#FF212121" BorderThickness="1">
+                        <ListBox x:Name="DirectoryLogWindow" Width="350" Height="350" IsHitTestVisible="false" HorizontalAlignment="Center" Margin="0,25" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1">
                             <ListBoxItem x:Name="DirectoryHeaderBox">Ready to receive data.</ListBoxItem>
                             <ListBoxItem Margin="10" Visibility="Hidden" IsHitTestVisible="False"></ListBoxItem>
                             <ListBoxItem x:Name="DirectoryIMBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
@@ -128,21 +128,21 @@
                         <Label x:Name="DirectorySourceLabel" FontFamily="Arial" FontSize="14" Width="165" Height="25" HorizontalAlignment="Center" Margin="15,0,0,0" Content="Path to Source Log Files"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button x:Name="SrcDirectoryButton" Width="20" Height="20" HorizontalAlignment="Center" Margin="-15,0,10,0" Background="Beige" IsEnabled="True" Click="SrcDirectoryButton_Click" Content="..."/>
-                            <TextBox x:Name="DirectorySource" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF212121" BorderThickness="1" TextChanged="TextboxUpdated"/>
+                            <TextBox x:Name="DirectorySource" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
                         </StackPanel>
                         <Label x:Name="DirectoryOutputLabel" FontFamily="Arial" FontSize="14" Width="220" Height="25" HorizontalAlignment="Center" Margin="15,20,0,0" Content="Path to Destination Log Directory"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button x:Name="DstDirectoryButton" Width="20" Height="20" HorizontalAlignment="Center" Margin="-15,0,10,0" Background="Beige" IsEnabled="True" Click="DstDirectoryButton_Click" Content="..."/>
-                            <TextBox x:Name="DirectoryOutput" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF212121" BorderThickness="1" TextChanged="TextboxUpdated"/>
+                            <TextBox x:Name="DirectoryOutput" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="20,10,0,0">
                             <StackPanel>
                                 <Label x:Name="DirectoryAfterDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages after..."/>
-                                <DatePicker x:Name="DirectoryAfterDate" Width="120" SelectedDateChanged="DatePicker_Update" BorderBrush="#FF212121"/>
+                                <DatePicker x:Name="DirectoryAfterDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                             </StackPanel>
                             <StackPanel Margin="25,0,0,0">
                                 <Label x:Name="DirectoryBeforeDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages before..."/>
-                                <DatePicker x:Name="DirectoryBeforeDate" Width="120" SelectedDateChanged="DatePicker_Update" BorderBrush="#FF212121"/>
+                                <DatePicker x:Name="DirectoryBeforeDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                             </StackPanel>
                         </StackPanel>
                         <ComboBox x:Name="DirectorySaveTruncated" Width="300" Height="25" HorizontalAlignment="Center" Margin="20,40,0,0" Background="White" IsEnabled="True" SelectionChanged="ComboBox_Update">
@@ -175,11 +175,11 @@
                                 <ProgressBar x:Name="DirectoryProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="DirectoryVersionNumber" Content="FLogS — Version 1.0.7.3 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="DirectoryVersionNumber" Content="FLogS — Version 1.0.8 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
-            <TabItem x:Name="TabPhrase" Header="Phrase">
+            <TabItem Header="Phrase" x:Name="TabPhrase">
                 <Grid x:Name="PhraseGrid">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"></ColumnDefinition>
@@ -193,7 +193,7 @@
                         <StackPanel.Clip>
                             <RectangleGeometry Rect="0 0 398 417"/>
                         </StackPanel.Clip>
-                        <ListBox x:Name="PhraseLogWindow" Width="350" Height="350" HorizontalAlignment="Center" Margin="0,25" Padding="3" FontSize="14" BorderBrush="#FF212121" BorderThickness="1">
+                        <ListBox x:Name="PhraseLogWindow" Width="350" Height="350" IsHitTestVisible="false" HorizontalAlignment="Center" Margin="0,25" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1">
                             <ListBoxItem x:Name="PhraseHeaderBox">Ready to receive data.</ListBoxItem>
                             <ListBoxItem Margin="10" Visibility="Hidden" IsHitTestVisible="False"></ListBoxItem>
                             <ListBoxItem x:Name="PhraseIMBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
@@ -213,23 +213,26 @@
                         <Label x:Name="PhraseSourceLabel" FontFamily="Arial" FontSize="14" Width="165" Height="25" HorizontalAlignment="Center" Margin="15,0,0,0" Content="Path to Source Log Files"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button x:Name="SrcPhraseButton" Width="20" Height="20" HorizontalAlignment="Center" Margin="-15,0,10,0" Background="Beige" IsEnabled="True" Click="SrcPhraseButton_Click" Content="..."/>
-                            <TextBox x:Name="PhraseSource" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF212121" BorderThickness="1" TextChanged="TextboxUpdated"/>
+                            <TextBox x:Name="PhraseSource" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
                         </StackPanel>
                         <Label x:Name="PhraseOutputLabel" FontFamily="Arial" FontSize="14" Width="220" Height="25" HorizontalAlignment="Center" Margin="15,20,0,0" Content="Path to Destination Log Directory"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                             <Button x:Name="DstPhraseButton" Width="20" Height="20" HorizontalAlignment="Center" Margin="-15,0,10,0" Background="Beige" IsEnabled="True" Click="DstPhraseButton_Click" Content="..."/>
-                            <TextBox x:Name="PhraseOutput" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF212121" BorderThickness="1" TextChanged="TextboxUpdated"/>
+                            <TextBox x:Name="PhraseOutput" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
                         </StackPanel>
                         <Label x:Name="PhraseSearchLabel" FontFamily="Arial" FontSize="14" Width="220" Height="25" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Margin="15,20,0,0" Content="Target Word or Phrase"/>
-                        <TextBox x:Name="PhraseSearch" Width="300" Height="20" HorizontalAlignment="Center" Margin="15,0,0,0" BorderBrush="#FF212121" BorderThickness="1" TextChanged="TextboxUpdated"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <CheckBox x:Name="RegexCheckBox" Width="15" Height="15" HorizontalAlignment="Center" Margin="-15,0,10,0" Background="Beige" Checked="TextboxUpdated" Unchecked="TextboxUpdated" IsEnabled="True" IsChecked="False"/>
+                            <TextBox x:Name="PhraseSearch" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
+                        </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="20,5,0,0">
                             <StackPanel>
                                 <Label x:Name="PhraseAfterDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages after..."/>
-                                <DatePicker x:Name="PhraseAfterDate" Width="120" SelectedDateChanged="DatePicker_Update" BorderBrush="#FF212121"/>
+                                <DatePicker x:Name="PhraseAfterDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                             </StackPanel>
                             <StackPanel Margin="25,0,0,0">
                                 <Label x:Name="PhraseBeforeDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages before..."/>
-                                <DatePicker x:Name="PhraseBeforeDate" Width="120" SelectedDateChanged="DatePicker_Update" BorderBrush="#FF212121"/>
+                                <DatePicker x:Name="PhraseBeforeDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                             </StackPanel>
                         </StackPanel>
                         <ComboBox x:Name="PhraseSaveTruncated" Width="300" Height="25" HorizontalAlignment="Center" Margin="20,30,0,0" Background="White" IsEnabled="True" SelectionChanged="ComboBox_Update">
@@ -262,11 +265,11 @@
                                 <ProgressBar x:Name="PhraseProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                             </StackPanel>
                         </Grid>
-                        <Label x:Name="PhraseVersionNumber" Content="FLogS — Version 1.0.7.3 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
+                        <Label x:Name="PhraseVersionNumber" Content="FLogS — Version 1.0.8 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,15" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>
-            <TabItem x:Name="TabHelp" Header="Help">
+            <TabItem Header="Help" x:Name="TabHelp">
                 <Grid x:Name="HelpGrid">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"></ColumnDefinition>
@@ -310,16 +313,17 @@
                             Finally, hit the Run button!<LineBreak/><LineBreak/>
                             <Bold>For advanced searching:</Bold><LineBreak/>
                             Select the <Bold>Phrase</Bold> tab at the top.<LineBreak/>
-                            Follow the above procedure, and enter a word or phrase to search for in the labelled text box.
-                            The search text is not case-sensitive; you may also include punctuation if desired.<LineBreak/>
-                            <Bold>FLogS</Bold> will output only messages containing the text you enter!
+                            Follow the above procedure, and enter a word or phrase to search for in the labelled text box.<LineBreak/>
+                            Check the box next to the phrase text to search using .NET regular expressions.
+                            Ordinary searches are not case-sensitive, but RegEx searches are.<LineBreak/>
+                            <Bold>FLogS</Bold> will output only messages containing the text (or matching the pattern) that you enter.
                         </TextBlock>
                     </StackPanel>
                     <StackPanel Grid.Row="1" Grid.Column="1" VerticalAlignment="Bottom" Background="LightGray">
                         <StackPanel.Clip>
                             <RectangleGeometry Rect="2 0 398 558"/>
                         </StackPanel.Clip>
-                        <Label x:Name="HelpVersionNumber" Content="FLogS — Version 1.0.7.3 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
+                        <Label x:Name="HelpVersionNumber" Content="FLogS — Version 1.0.8 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
                     </StackPanel>
                 </Grid>
             </TabItem>

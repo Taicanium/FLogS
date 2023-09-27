@@ -1,3 +1,8 @@
+# 1.0.8 - 27/09/2023
+- Major refactoring of the logical backend. The program is sizable enough at this point that it was just not good practice to have so many disparate functions in the same class.
+- Regular expressions (RegEx) phrase searching. Whew. And it wasn't even that hard to implement, either.
+- Minor adjustments to the UI design.
+
 # 1.0.7.3 - 25/09/2023
 - Snazzy new design accents, and an overall improvement in how theme switching is handled. I've tried to emulate the old "embossed" style of Windows XP while preserving some modern touch-ups.
 - Error messages are now less verbose in the log window, though they remain descriptive in the error file.
