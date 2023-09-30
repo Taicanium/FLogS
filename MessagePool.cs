@@ -12,17 +12,16 @@ namespace FLogS
     /// </summary>
     internal class MessagePool
     {
-        public static uint bytesRead;
+        public static ByteCount bytesRead;
         public static uint corruptTimestamps;
-        private readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
         public static string? destDir;
         public static string? destFile;
-        public static uint discardedBytes;
+        public static ByteCount discardedBytes;
         public static uint discardedMessages;
         public static DateTime? dtAfter;
         public static DateTime? dtBefore;
         public static uint emptyMessages;
-        public static uint intactBytes;
+        public static ByteCount intactBytes;
         public static uint intactMessages;
         private static int lastDiscrepancy;
         private static uint lastPosition;
@@ -30,9 +29,9 @@ namespace FLogS
         public static bool regex;
         public static bool saveTruncated;
         public static string? srcFile;
-        public static uint truncatedBytes;
+        public static ByteCount truncatedBytes;
         public static uint truncatedMessages;
-        public static int unreadBytes;
+        public static ByteCount unreadBytes;
 
         public static void BatchProcess(object? sender, DoWorkEventArgs e)
         {
@@ -47,7 +46,7 @@ namespace FLogS
                     lastPosition = 0U;
 
                     DoWork(sender, e);
-                    bytesRead += (uint)new FileInfo(logfile).Length;
+                    bytesRead.bytes += (uint)new FileInfo(logfile).Length;
 
                     if (Common.lastException.Equals("") == false)
                         break;
@@ -80,7 +79,7 @@ namespace FLogS
 
                     if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 10)
                     {
-                        (sender as BackgroundWorker).ReportProgress((int)(bytesRead + srcFS.Position));
+                        (sender as BackgroundWorker).ReportProgress((int)(bytesRead.bytes + srcFS.Position));
                         lastUpdate = DateTime.Now;
                         if (Common.lastException.Equals("") == false)
                             break;
@@ -97,17 +96,17 @@ namespace FLogS
 
         public static void ResetStats()
         {
-            bytesRead = 0;
+            bytesRead = new();
             corruptTimestamps = 0U;
-            discardedBytes = 0U;
+            discardedBytes = new();
             discardedMessages = 0U;
             emptyMessages = 0U;
-            intactBytes = 0U;
+            intactBytes = new();
             intactMessages = 0U;
             lastPosition = 0U;
-            truncatedBytes = 0U;
+            truncatedBytes = new();
             truncatedMessages = 0U;
-            unreadBytes = 0;
+            unreadBytes = new();
 
             return;
         }
@@ -142,7 +141,7 @@ namespace FLogS
             {
                 discrepancy = (int)srcFS.Position - (int)lastPosition; // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
                 lastDiscrepancy += discrepancy;
-                unreadBytes += discrepancy;
+                unreadBytes.bytes += discrepancy;
 
                 if (srcFS.Read(idBuffer, 0, 4) < 4) // Read the timestamp.
                     return written;
@@ -152,7 +151,7 @@ namespace FLogS
                 {
                     Common.lastTimestamp = timestamp;
                     thisDT = Common.DTFromStamp(timestamp);
-                    messageData.Add("[" + thisDT.ToString(dateFormat) + "]");
+                    messageData.Add("[" + thisDT.ToString(Common.dateFormat) + "]");
                     if (thisDT.CompareTo(dtBefore) > 0 || thisDT.CompareTo(dtAfter) < 0)
                         withinRange = false;
                 }
@@ -179,7 +178,7 @@ namespace FLogS
                     if ((result = (uint)srcFS.Read(streamBuffer, 0, nextByte)) < nextByte) // Read the profile name.
                     {
                         intact = false;
-                        truncatedBytes += result;
+                        truncatedBytes.bytes += result;
                         truncatedMessages++;
                         messageData.Add("[TRUNCATED MESSAGE]");
                     }
@@ -232,7 +231,7 @@ namespace FLogS
                         if ((result = (uint)srcFS.Read(streamBuffer, 0, (int)messageLength)) < messageLength) // Read the message text.
                         {
                             intact = false;
-                            truncatedBytes += result;
+                            truncatedBytes.bytes += result;
                             truncatedMessages++;
                             messageData.Add("[TRUNCATED MESSAGE]");
                         }
@@ -247,7 +246,7 @@ namespace FLogS
                     matchPhrase = true;
                 if (intact)
                 {
-                    intactBytes += (uint)messageOut.Length;
+                    intactBytes.bytes += (uint)messageOut.Length;
                     intactMessages++;
                     if (withinRange && matchPhrase)
                     {
@@ -263,7 +262,7 @@ namespace FLogS
                     }
                     else // If the message doesn't match our criteria, we won't count it.
                     {
-                        discardedBytes += (uint)messageOut.Length;
+                        discardedBytes.bytes += (uint)messageOut.Length;
                         discardedMessages++;
                     }
                 }
@@ -297,7 +296,7 @@ namespace FLogS
                         lastDiscrepancy += discrepancy;
                         lastPosition = (uint)srcFS.Position;
                         nextTimestamp = true;
-                        unreadBytes += discrepancy;
+                        unreadBytes.bytes += discrepancy;
                         srcFS.ReadByte();
                     }
                     else
@@ -317,7 +316,7 @@ namespace FLogS
                             lastDiscrepancy += discrepancy;
                             lastPosition = (uint)srcFS.Position;
                             nextTimestamp = true;
-                            unreadBytes += discrepancy;
+                            unreadBytes.bytes += discrepancy;
                         }
                     }
                 }

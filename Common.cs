@@ -4,6 +4,61 @@ using System.Text.RegularExpressions;
 
 namespace FLogS
 {
+    struct ByteCount
+    {
+        public ByteCount() { bytes = 0.0; prefix = -1; }
+        public ByteCount(double b, short p) { bytes = b; prefix = p; }
+
+        public double bytes;
+        public short prefix;
+
+        private void Adjust(short factor, bool absolute = true)
+        {
+            if (!absolute)
+                factor = (short)(prefix - factor);
+            while (prefix < factor)
+                Magnitude(-1);
+            while (prefix > factor)
+                Magnitude(1);
+            return;
+        }
+
+        private void Magnitude(sbyte factor)
+        {
+            bytes *= Math.Pow(1024, factor);
+            prefix -= factor;
+        }
+
+        private void Simplify()
+        {
+            while (bytes >= 921.6 && prefix < Common.prefixes.Length)
+                Magnitude(-1);
+            while (bytes < 0.9 && prefix > -1)
+                Magnitude(1);
+            return;
+        }
+
+        public static ByteCount operator -(ByteCount a, ByteCount b)
+        {
+            ByteCount o = new(a.bytes, a.prefix);
+            o.Adjust(b.prefix);
+            o.bytes -= b.bytes;
+            return o;
+        }
+
+        /// <summary>
+        /// Returns the size of this byte counter, formatted with the most appropriate metric prefix. This function does not preserve manual adjustments to the counter's magnitude.
+        /// </summary>
+        /// <returns>The byte counter size, in the format "0.0 xB", where 'x' is a metric prefix.</returns>
+        public override string ToString()
+        {
+            Simplify();
+            if (prefix == -1)
+                return $"{bytes:N0} B";
+            return $"{bytes:N1} {Common.prefixes[prefix]}B";
+        }
+    }
+
     enum MessageType
     {
         EOF = -1,
@@ -21,12 +76,12 @@ namespace FLogS
     /// </summary>
     internal class Common
     {
-        private readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
+        public readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
         private readonly static DateTime epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         public readonly static string errorFile = "FLogS_ERROR.txt";
         public static string lastException = "";
         public static uint lastTimestamp;
-        private readonly static string[] prefixes = { "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q" }; // We count bytes, so in practice this app will overflow upon reaching 2 GB.
+        public readonly static string[] prefixes = { "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q" }; // Always futureproof...
         public static DateTime timeBegin;
 
         public static uint BEInt(byte[] buffer)
@@ -35,22 +90,6 @@ namespace FLogS
                 + buffer[1] * 256U
                 + buffer[2] * 65536U
                 + buffer[3] * 16777216U;
-        }
-
-        public static string ByteSizeString(double bytes)
-        {
-            double finalBytes = bytes;
-            int prefixIndex = -1;
-
-            while (finalBytes >= 921.6 && prefixIndex < 9)
-            {
-                finalBytes *= 0.0009765625; // 1/1024
-                prefixIndex++;
-            }
-
-            if (prefixIndex == -1)
-                return $"{finalBytes:N0} B";
-            return $"{finalBytes:N1} {prefixes[prefixIndex]}B";
         }
 
         public static DateTime DTFromStamp(uint stamp)
@@ -71,7 +110,6 @@ namespace FLogS
                 return false;
             if (pattern.Trim().Equals(""))
                 return false;
-
             try
             {
                 Regex.IsMatch("", pattern);
@@ -102,7 +140,7 @@ namespace FLogS
         {
             lastException = e.Message;
             File.AppendAllText(errorFile, DateTime.Now.ToString(dateFormat) + " - " + lastException + "\n");
-            File.AppendAllText(errorFile, e.TargetSite.DeclaringType.FullName + "." + e.TargetSite.Name + "\n");
+            File.AppendAllText(errorFile, e.TargetSite.DeclaringType.FullName + "." + e.TargetSite.Name + "\n\n");
             return;
         }
 

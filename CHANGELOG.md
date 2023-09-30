@@ -1,3 +1,7 @@
+# 1.0.8.1 - 30/09/2023
+- Touch-ups to the frontend design. Bit more professional, now.
+- Filesize measurements are handled via struct rather than naively. There's no measureable drop in performance, and memory should be more organized now.
+
 # 1.0.8 - 27/09/2023
 - Major refactoring of the logical backend. The program is sizable enough at this point that it was just not good practice to have so many disparate functions in the same class.
 - Regular expressions (RegEx) phrase searching. Whew. And it wasn't even that hard to implement, either.

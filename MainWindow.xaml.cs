@@ -19,8 +19,7 @@ namespace FLogS
         private static extern bool ShouldSystemUseDarkMode();
 
         private readonly static SolidColorBrush[][] brushCombos =
-        {
-            // 0 = Dark mode, 1 = Light mode.
+        {   // 0 = Dark mode, 1 = Light mode.
             new SolidColorBrush[] { Brushes.Black, Brushes.White }, // Textboxes
             new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige }, // Buttons
             new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray }, // Borders
@@ -28,6 +27,7 @@ namespace FLogS
             new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkRed }, // Warning messages
             new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x4C, G = 0x4C, B = 0x4C }), Brushes.DarkGray }, // TabControl
             new SolidColorBrush[] { Brushes.Transparent, new SolidColorBrush(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }) }, // DatePicker borders
+            new SolidColorBrush[] { Brushes.DimGray, Brushes.AntiqueWhite }, // PanelGrids
         };
         private static int brushPalette = 1;
         private static uint directoryReadyToRun = 1;
@@ -75,8 +75,12 @@ namespace FLogS
                 case "DatePicker":
                     (sender as DatePicker).Background = brushCombos[0][brushPalette];
                     (sender as DatePicker).BorderBrush = brushCombos[6][brushPalette]; // The inner white border of a DatePicker is pretty much impossible to remove programmatically.
-                                                                                       // So just set the outer one to be visible in light mode and invisible otherwise.
+                                                                                       // So just set the outer one to be black in light mode and transparent otherwise.
                     (sender as DatePicker).Foreground = brushCombos[0][reversePalette];
+                    break;
+                case "Grid":
+                    if ((sender as Grid).Tag != null && (sender as Grid).Tag.Equals("PanelGrid"))
+                        (sender as Grid).Background = brushCombos[7][brushPalette];
                     break;
                 case "Label":
                     (sender as Label).Foreground = brushCombos[0][reversePalette];
@@ -108,7 +112,7 @@ namespace FLogS
             foreach (object dp in LogicalTreeHelper.GetChildren(sender))
                 ChangeStyle(dp as DependencyObject);
 
-            if ((sender.GetValue(TagProperty) as string ?? "") == "WarningLabel")
+            if ((sender.GetValue(TagProperty) as string ?? "").Equals("WarningLabel"))
                 sender.SetValue(ForegroundProperty, brushCombos[3][brushPalette]);
 
             return;
@@ -352,32 +356,18 @@ namespace FLogS
             try
             {
                 (brushPalette, reversePalette) = (reversePalette, brushPalette);
+                DirectoryThemeSelector.Content = PhraseThemeSelector.Content = ThemeSelector.Content = brushPalette == 0 ? "Light" : "Dark";
 
-                if (ThemeSelector.Content.ToString().Equals("Dark"))
-                {
-                    DirectoryThemeSelector.Content = "Light";
-                    PhraseThemeSelector.Content = "Light";
-                    ThemeSelector.Content = "Light";
-                }
-                else
-                {
-                    DirectoryThemeSelector.Content = "Dark";
-                    PhraseThemeSelector.Content = "Dark";
-                    ThemeSelector.Content = "Dark";
-                }
-
-                foreach (object dp in LogicalTreeHelper.GetChildren(MainGrid))
-                    ChangeStyle(dp as DependencyObject);
-
+                ChangeStyle(MainGrid);
                 ADLWarning.Foreground = brushCombos[3][brushPalette];
                 MainGrid.Background = brushCombos[5][brushPalette];
                 RegexCheckBox.Background = brushCombos[1][brushPalette];
 
-                if (directoryReadyToRun == 0 || directoryReadyToRun > 0xF)
+                if (directoryReadyToRun > 0xF)
                     DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
-                if (phraseReadyToRun == 0 || phraseReadyToRun > 0xF)
+                if (phraseReadyToRun > 0xF)
                     PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
-                if (fileReadyToRun == 0 || fileReadyToRun > 0xF)
+                if (fileReadyToRun > 0xF)
                     WarningLabel.Foreground = brushCombos[4][brushPalette];
             }
             catch (Exception ex)
@@ -496,8 +486,7 @@ namespace FLogS
 
         private void TransitionMenus(bool enabled)
         {
-            foreach (object dp in LogicalTreeHelper.GetChildren(MainGrid))
-                TransitionEnableables(dp as DependencyObject, enabled);
+            TransitionEnableables(MainGrid, enabled);
 
             if (!enabled)
             {
@@ -534,18 +523,11 @@ namespace FLogS
 
         private void UpdateLogs(object? sender = null)
         {
-            int intactCount;
-            string byteString;
-
-            intactCount = (int)(MessagePool.intactMessages - MessagePool.discardedMessages);
-            byteString = Common.ByteSizeString((int)(MessagePool.intactBytes - MessagePool.discardedBytes));
-            PhraseIMBox.Content = DirectoryIMBox.Content = IMBox.Content = $"Intact Messages: {intactCount:N0} ({byteString})";
+            PhraseIMBox.Content = DirectoryIMBox.Content = IMBox.Content = $"Intact Messages: {MessagePool.intactMessages - MessagePool.discardedMessages:N0} ({MessagePool.intactBytes - MessagePool.discardedBytes:S})";
             PhraseCTBox.Content = DirectoryCTBox.Content = CTBox.Content = $"Corrupted Timestamps: {MessagePool.corruptTimestamps:N0}";
-            byteString = Common.ByteSizeString(MessagePool.truncatedBytes);
-            PhraseTMBox.Content = DirectoryTMBox.Content = TMBox.Content = $"Truncated Messages: {MessagePool.truncatedMessages:N0} ({byteString})";
+            PhraseTMBox.Content = DirectoryTMBox.Content = TMBox.Content = $"Truncated Messages: {MessagePool.truncatedMessages:N0} ({MessagePool.truncatedBytes:S})";
             PhraseEMBox.Content = DirectoryEMBox.Content = EMBox.Content = $"Empty Messages: {MessagePool.emptyMessages:N0}";
-            byteString = Common.ByteSizeString(MessagePool.unreadBytes);
-            PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content = $"Unread Bytes: {MessagePool.unreadBytes:N0} ({byteString})";
+            PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content = $"Unread data: {MessagePool.unreadBytes:S}";
 
             if (Common.lastException.Equals("") == false)
             {
