@@ -1,3 +1,7 @@
+# 1.0.8.2 - 01/10/2023
+- The program handles exceptionally large files in a more organized manner. In particular, integer overflows should no longer occur when measuring gigabytes' worth of logs.
+- Minor fix: A variable conflict caused the program to discard all messages in a batch process if a Regex search had previously been conducted during that same session. This is now remedied.
+
 # 1.0.8.1 - 30/09/2023
 - Touch-ups to the frontend design. Bit more professional, now.
 - Filesize measurements are handled via struct rather than naively. There's no measureable drop in performance, and memory should be more organized now.

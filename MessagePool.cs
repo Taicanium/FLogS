@@ -29,6 +29,7 @@ namespace FLogS
         public static bool regex;
         public static bool saveTruncated;
         public static string? srcFile;
+        public static ByteCount totalSize;
         public static ByteCount truncatedBytes;
         public static uint truncatedMessages;
         public static ByteCount unreadBytes;
@@ -46,7 +47,7 @@ namespace FLogS
                     lastPosition = 0U;
 
                     DoWork(sender, e);
-                    bytesRead.bytes += (uint)new FileInfo(logfile).Length;
+                    bytesRead += new FileInfo(logfile).Length;
 
                     if (Common.lastException.Equals("") == false)
                         break;
@@ -79,7 +80,14 @@ namespace FLogS
 
                     if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 10)
                     {
-                        (sender as BackgroundWorker).ReportProgress((int)(bytesRead.bytes + srcFS.Position));
+                        if (bytesRead.prefix > totalSize.prefix - 2)
+                        {
+                            ByteCount progress = bytesRead + srcFS.Position;
+                            progress.Adjust(totalSize.prefix);
+                            (sender as BackgroundWorker).ReportProgress((int)progress.bytes);
+                        }
+                        else
+                            (sender as BackgroundWorker).ReportProgress(0);
                         lastUpdate = DateTime.Now;
                         if (Common.lastException.Equals("") == false)
                             break;
@@ -141,7 +149,7 @@ namespace FLogS
             {
                 discrepancy = (int)srcFS.Position - (int)lastPosition; // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
                 lastDiscrepancy += discrepancy;
-                unreadBytes.bytes += discrepancy;
+                unreadBytes += discrepancy;
 
                 if (srcFS.Read(idBuffer, 0, 4) < 4) // Read the timestamp.
                     return written;
@@ -178,7 +186,7 @@ namespace FLogS
                     if ((result = (uint)srcFS.Read(streamBuffer, 0, nextByte)) < nextByte) // Read the profile name.
                     {
                         intact = false;
-                        truncatedBytes.bytes += result;
+                        truncatedBytes += result;
                         truncatedMessages++;
                         messageData.Add("[TRUNCATED MESSAGE]");
                     }
@@ -231,7 +239,7 @@ namespace FLogS
                         if ((result = (uint)srcFS.Read(streamBuffer, 0, (int)messageLength)) < messageLength) // Read the message text.
                         {
                             intact = false;
-                            truncatedBytes.bytes += result;
+                            truncatedBytes += result;
                             truncatedMessages++;
                             messageData.Add("[TRUNCATED MESSAGE]");
                         }
@@ -242,11 +250,11 @@ namespace FLogS
                 messageOut = string.Join(' ', messageData.ToArray());
                 messageOut = Regex.Replace(messageOut, @"[^\u0009\u000A\u000D\u0020-\u007E]", ""); // Remove everything that's not a printable or newline character.
 
-                if (phrase is null || messageOut.Contains(phrase, StringComparison.OrdinalIgnoreCase) || (regex && Regex.IsMatch(messageOut, phrase))) // Either the profile name or the message body can contain our search text.
+                if (phrase is null || (!regex && messageOut.Contains(phrase, StringComparison.OrdinalIgnoreCase)) || (regex && Regex.IsMatch(messageOut, phrase))) // Either the profile name or the message body can contain our search text.
                     matchPhrase = true;
                 if (intact)
                 {
-                    intactBytes.bytes += (uint)messageOut.Length;
+                    intactBytes += messageOut.Length;
                     intactMessages++;
                     if (withinRange && matchPhrase)
                     {
@@ -262,7 +270,7 @@ namespace FLogS
                     }
                     else // If the message doesn't match our criteria, we won't count it.
                     {
-                        discardedBytes.bytes += (uint)messageOut.Length;
+                        discardedBytes += messageOut.Length;
                         discardedMessages++;
                     }
                 }
@@ -296,7 +304,7 @@ namespace FLogS
                         lastDiscrepancy += discrepancy;
                         lastPosition = (uint)srcFS.Position;
                         nextTimestamp = true;
-                        unreadBytes.bytes += discrepancy;
+                        unreadBytes += discrepancy;
                         srcFS.ReadByte();
                     }
                     else
@@ -316,7 +324,7 @@ namespace FLogS
                             lastDiscrepancy += discrepancy;
                             lastPosition = (uint)srcFS.Position;
                             nextTimestamp = true;
-                            unreadBytes.bytes += discrepancy;
+                            unreadBytes += discrepancy;
                         }
                     }
                 }

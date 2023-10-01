@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 
 namespace FLogS
@@ -74,8 +75,7 @@ namespace FLogS
                     break;
                 case "DatePicker":
                     (sender as DatePicker).Background = brushCombos[0][brushPalette];
-                    (sender as DatePicker).BorderBrush = brushCombos[6][brushPalette]; // The inner white border of a DatePicker is pretty much impossible to remove programmatically.
-                                                                                       // So just set the outer one to be black in light mode and transparent otherwise.
+                    (sender as DatePicker).BorderBrush = brushCombos[6][brushPalette];
                     (sender as DatePicker).Foreground = brushCombos[0][reversePalette];
                     break;
                 case "Grid":
@@ -181,20 +181,21 @@ namespace FLogS
                 MessagePool.dtBefore = DirectoryBeforeDate.SelectedDate ?? DateTime.UtcNow;
                 string[] files = DirectorySource.Text.Split(';');
                 filesProcessed = files.Length;
+                MessagePool.phrase = "";
                 MessagePool.saveTruncated = DirectorySaveTruncated.SelectedIndex != 0;
-                long totalSize = 0;
+                MessagePool.totalSize = new();
 
                 foreach (string logfile in files)
                 {
-                    totalSize += new FileInfo(logfile).Length;
+                    MessagePool.totalSize += new FileInfo(logfile).Length;
                     MessagePool.destFile = Path.Join(MessagePool.destDir, Path.GetFileNameWithoutExtension(logfile) + ".txt");
                     if (File.Exists(MessagePool.destFile))
                         File.Delete(MessagePool.destFile);
                 }
 
-                FileProgress.Maximum = totalSize;
-                DirectoryProgress.Maximum = totalSize;
-                PhraseProgress.Maximum = totalSize;
+                FileProgress.Maximum = MessagePool.totalSize.bytes;
+                DirectoryProgress.Maximum = MessagePool.totalSize.bytes;
+                PhraseProgress.Maximum = MessagePool.totalSize.bytes;
 
                 MessagePool.ResetStats();
                 TransitionMenus(false);
@@ -260,19 +261,19 @@ namespace FLogS
                 filesProcessed = files.Length;
                 MessagePool.phrase = PhraseSearch.Text;
                 MessagePool.saveTruncated = PhraseSaveTruncated.SelectedIndex != 0;
-                long totalSize = 0;
+                MessagePool.totalSize = new();
 
                 foreach (string logfile in files)
                 {
-                    totalSize += new FileInfo(logfile).Length;
+                    MessagePool.totalSize += new FileInfo(logfile).Length;
                     MessagePool.destFile = Path.Join(MessagePool.destDir, Path.GetFileNameWithoutExtension(logfile) + ".txt");
                     if (File.Exists(MessagePool.destFile))
                         File.Delete(MessagePool.destFile);
                 }
 
-                FileProgress.Maximum = totalSize;
-                DirectoryProgress.Maximum = totalSize;
-                PhraseProgress.Maximum = totalSize;
+                FileProgress.Maximum = MessagePool.totalSize.bytes;
+                DirectoryProgress.Maximum = MessagePool.totalSize.bytes;
+                PhraseProgress.Maximum = MessagePool.totalSize.bytes;
 
                 MessagePool.ResetStats();
                 TransitionMenus(false);
@@ -304,6 +305,7 @@ namespace FLogS
                 MessagePool.dtAfter = AfterDate.SelectedDate ?? Common.DTFromStamp(1);
                 MessagePool.dtBefore = BeforeDate.SelectedDate ?? DateTime.UtcNow;
                 filesProcessed = 1;
+                MessagePool.phrase = "";
                 MessagePool.saveTruncated = SaveTruncated.SelectedIndex != 0;
                 MessagePool.srcFile = FileSource.Text;
 

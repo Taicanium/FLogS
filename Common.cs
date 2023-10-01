@@ -12,7 +12,7 @@ namespace FLogS
         public double bytes;
         public short prefix;
 
-        private void Adjust(short factor, bool absolute = true)
+        public void Adjust(int factor, bool absolute = true)
         {
             if (!absolute)
                 factor = (short)(prefix - factor);
@@ -23,13 +23,13 @@ namespace FLogS
             return;
         }
 
-        private void Magnitude(sbyte factor)
+        private void Magnitude(int factor)
         {
             bytes *= Math.Pow(1024, factor);
-            prefix -= factor;
+            prefix -= (short)factor;
         }
 
-        private void Simplify()
+        public void Simplify()
         {
             while (bytes >= 921.6 && prefix < Common.prefixes.Length)
                 Magnitude(-1);
@@ -40,9 +40,80 @@ namespace FLogS
 
         public static ByteCount operator -(ByteCount a, ByteCount b)
         {
-            ByteCount o = new(a.bytes, a.prefix);
+            ByteCount o;
+            ByteCount o2;
+
+            if (Math.Abs(a.prefix - b.prefix) > 3) // Special accommodations must be made if the disparity in magnitude would normally result in an int overflow.
+            {
+                o = new(a.bytes, a.prefix);
+                o2 = new(b.bytes, b.prefix);
+                o.Adjust(Math.Abs(a.prefix - b.prefix) / 2);
+                o2.Adjust(o.prefix);
+                o.bytes -= o2.bytes;
+                o.Simplify();
+                return o;
+            }
+
+            o = new(a.bytes, a.prefix);
             o.Adjust(b.prefix);
             o.bytes -= b.bytes;
+            o.Simplify();
+            return o;
+        }
+
+        public static ByteCount operator +(ByteCount a, ByteCount b)
+        {
+            ByteCount o;
+            ByteCount o2;
+
+            if (Math.Abs(a.prefix - b.prefix) > 3)
+            {
+                o = new(a.bytes, a.prefix);
+                o2 = new(b.bytes, b.prefix);
+                o.Adjust(Math.Abs(a.prefix - b.prefix) / 2);
+                o2.Adjust(o.prefix);
+                o.bytes += o2.bytes;
+                o.Simplify();
+                return o;
+            }
+
+            o = new(a.bytes, a.prefix);
+            o.Adjust(b.prefix);
+            o.bytes += b.bytes;
+            o.Simplify();
+            return o;
+        }
+
+        public static ByteCount operator +(ByteCount a, int b)
+        {
+            ByteCount o = new(a.bytes, a.prefix);
+            ByteCount o2 = new(b, -1);
+            o.Adjust((o.prefix + 1) / 2);
+            o2.Adjust(o.prefix);
+            o.bytes += o2.bytes;
+            o.Simplify();
+            return o;
+        }
+
+        public static ByteCount operator +(ByteCount a, uint b)
+        {
+            ByteCount o = new(a.bytes, a.prefix);
+            ByteCount o2 = new(b, -1);
+            o.Adjust((o.prefix + 1) / 2);
+            o2.Adjust(o.prefix);
+            o.bytes += o2.bytes;
+            o.Simplify();
+            return o;
+        }
+
+        public static ByteCount operator +(ByteCount a, long b)
+        {
+            ByteCount o = new(a.bytes, a.prefix);
+            ByteCount o2 = new(b, -1);
+            o.Adjust((o.prefix + 1) / 2);
+            o2.Adjust(o.prefix);
+            o.bytes += o2.bytes;
+            o.Simplify();
             return o;
         }
 
