@@ -2,6 +2,7 @@
 using System.Collections;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -49,7 +50,7 @@ namespace FLogS
                     DoWork(sender, e);
                     bytesRead += new FileInfo(logfile).Length;
 
-                    if (Common.lastException.Equals("") == false)
+                    if (!Common.lastException.Equals(""))
                         break;
                 }
             }
@@ -65,6 +66,19 @@ namespace FLogS
         {
             if (dtBefore < dtAfter)
                 (dtAfter, dtBefore) = (dtBefore, dtAfter);
+            
+            string[] idxOptions = { Path.Join(Path.GetDirectoryName(srcFile), Path.GetFileNameWithoutExtension(srcFile)) + ".idx", srcFile + ".idx" };
+            bool idxFound = false;
+
+            foreach (string idx in idxOptions)
+            {
+                if (!idxFound && File.Exists(idx))
+                {
+                    FileStream srcIDX = File.OpenRead(idx);
+                    idxFound = TranslateIDX(srcIDX);
+                    srcIDX.Close();
+                }
+            }
 
             FileStream srcFS = File.OpenRead(srcFile);
 
@@ -89,7 +103,7 @@ namespace FLogS
                         else
                             (sender as BackgroundWorker).ReportProgress(0);
                         lastUpdate = DateTime.Now;
-                        if (Common.lastException.Equals("") == false)
+                        if (!Common.lastException.Equals(""))
                             break;
                     }
                 }
@@ -120,6 +134,56 @@ namespace FLogS
         }
 
         /// <summary>
+        /// Extracts the name of a private channel from an IDX file, and appends it to the destination file path.
+        /// </summary>
+        /// <param name="srcFS">>A FileStream opened to the IDX file matching MessagePool.srcFile.</param>
+        /// <returns>'true' if a channel name was successfully extracted from the filestream and appended to MessagePool.destFile; 'false' if, for any reason, that did not occur.</returns>
+        private static bool TranslateIDX(FileStream srcFS)
+        {
+            int nameLength;
+            string nameString;
+            int result;
+            byte[]? streamBuffer;
+
+            try
+            {
+                nameLength = srcFS.ReadByte();
+                if (nameLength < 1
+                    || (!Path.GetFileNameWithoutExtension(srcFS.Name).Contains("#") && nameLength > 20)) // F-List character profiles cannot be greater than 20 characters in length.
+                    return false;
+
+                streamBuffer = new byte[nameLength];
+                if ((result = srcFS.Read(streamBuffer, 0, (int)nameLength)) < nameLength)
+                    return false;
+
+                nameString = new string(Encoding.UTF8.GetString(streamBuffer).Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).ToLower();
+
+                if (("#" + nameString).Equals(Path.GetFileNameWithoutExtension(srcFile).ToLower())
+                    || ("#" + nameString).Equals("#" + Path.GetFileNameWithoutExtension(srcFile).ToLower()))
+                {
+                    if (Path.GetFileNameWithoutExtension(srcFile).Contains("#"))
+                    {
+                        destFile = new string(Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + Path.GetExtension(destFile)));
+                        return true;
+                    }
+
+                    destFile = new string(Path.Join(Path.GetDirectoryName(destFile), nameString + Path.GetExtension(destFile)));
+                    return true;
+                }
+
+                destFile = new string(Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + " (" + Path.GetFileNameWithoutExtension(destFile) + ")" + Path.GetExtension(destFile)));
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Common.LogException(ex);
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// 
         /// </summary>
         /// <param name="srcFS">A FileStream opened to the source log file.</param>
@@ -138,7 +202,7 @@ namespace FLogS
             int nextByte;
             bool nextTimestamp = false;
             string profileName;
-            uint result;
+            int result;
             byte[]? streamBuffer;
             DateTime thisDT;
             uint timestamp;
@@ -183,7 +247,7 @@ namespace FLogS
                 {
                     streamBuffer = new byte[nextByte];
 
-                    if ((result = (uint)srcFS.Read(streamBuffer, 0, nextByte)) < nextByte) // Read the profile name.
+                    if ((result = srcFS.Read(streamBuffer, 0, nextByte)) < nextByte) // Read the profile name.
                     {
                         intact = false;
                         truncatedBytes += result;
@@ -236,7 +300,7 @@ namespace FLogS
                     else
                     {
                         streamBuffer = new byte[messageLength];
-                        if ((result = (uint)srcFS.Read(streamBuffer, 0, (int)messageLength)) < messageLength) // Read the message text.
+                        if ((result = srcFS.Read(streamBuffer, 0, (int)messageLength)) < messageLength) // Read the message text.
                         {
                             intact = false;
                             truncatedBytes += result;

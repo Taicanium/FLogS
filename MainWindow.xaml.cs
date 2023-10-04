@@ -396,13 +396,13 @@ namespace FLogS
                     directoryReadyToRun = 2;
                 else if (File.Exists(DirectoryOutput.Text))
                     directoryReadyToRun = 3;
-                else if (Directory.Exists(DirectoryOutput.Text) == false)
+                else if (!Directory.Exists(DirectoryOutput.Text))
                     directoryReadyToRun = 4;
                 else
                 {
                     foreach (string file in DirectorySource.Text.Split(';'))
                     {
-                        if (File.Exists(file) == false)
+                        if (!File.Exists(file))
                             directoryReadyToRun = 5;
                         else if (file.Equals(Path.Join(DirectoryOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
                             directoryReadyToRun = 6;
@@ -413,13 +413,13 @@ namespace FLogS
 
                 if (FileSource.Text.Length == 0)
                     fileReadyToRun = 7;
-                else if (File.Exists(FileSource.Text) == false)
+                else if (!File.Exists(FileSource.Text))
                     fileReadyToRun = 8;
                 else if (FileOutput.Text.Length == 0)
                     fileReadyToRun = 9;
                 else if (Directory.Exists(FileOutput.Text))
                     fileReadyToRun = 0xA;
-                else if (Directory.Exists(Path.GetDirectoryName(FileOutput.Text)) == false)
+                else if (!Directory.Exists(Path.GetDirectoryName(FileOutput.Text)))
                     fileReadyToRun = 4;
                 else if (FileSource.Text.Equals(FileOutput.Text))
                     fileReadyToRun = 0xB;
@@ -432,17 +432,17 @@ namespace FLogS
                     phraseReadyToRun = 2;
                 else if (File.Exists(PhraseOutput.Text))
                     phraseReadyToRun = 3;
-                else if (Directory.Exists(PhraseOutput.Text) == false)
+                else if (!Directory.Exists(PhraseOutput.Text))
                     phraseReadyToRun = 4;
                 else if (PhraseSearch.Text.Length == 0)
                     phraseReadyToRun = 0xC;
-                else if (RegexCheckBox.IsChecked == true && Common.IsValidPattern(PhraseSearch.Text) == false)
+                else if (RegexCheckBox.IsChecked == true && !Common.IsValidPattern(PhraseSearch.Text))
                     phraseReadyToRun = 0xD;
                 else
                 {
                     foreach (string file in PhraseSource.Text.Split(';'))
                     {
-                        if (File.Exists(file) == false)
+                        if (!File.Exists(file))
                             phraseReadyToRun = 5;
                         else if (file.Equals(Path.Join(PhraseOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
                             phraseReadyToRun = 6;
@@ -531,7 +531,7 @@ namespace FLogS
             PhraseEMBox.Content = DirectoryEMBox.Content = EMBox.Content = $"Empty Messages: {MessagePool.emptyMessages:N0}";
             PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content = $"Unread data: {MessagePool.unreadBytes:S}";
 
-            if (Common.lastException.Equals("") == false)
+            if (!Common.lastException.Equals(""))
             {
                 HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = "A critical error has occurred.";
                 PhraseEXBox.Content = DirectoryEXBox.Content = EXBox.Content = Common.lastException;

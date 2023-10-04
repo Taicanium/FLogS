@@ -1,3 +1,6 @@
+# 1.0.8.3 - 04/10/2023
+- We now scan for .idx files matching input source logs. If we find one, we'll extract the channel or character name from it, thus avoiding excessive "adh-#####" files in the destination directory.
+
 # 1.0.8.2 - 01/10/2023
 - The program handles exceptionally large files in a more organized manner. In particular, integer overflows should no longer occur when measuring gigabytes' worth of logs.
 - Minor fix: A variable conflict caused the program to discard all messages in a batch process if a Regex search had previously been conducted during that same session. This is now remedied.

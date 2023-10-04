@@ -7,11 +7,11 @@
     <UseWPF>true</UseWPF>
     <SignAssembly>False</SignAssembly>
     <Title>FLogS</Title>
-    <Version>1.0.8.2</Version>
+    <Version>1.0.8.3</Version>
     <IncludeSymbols>True</IncludeSymbols>
     <ErrorReport>none</ErrorReport>
-    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
     <UseWindowsForms>True</UseWindowsForms>
+    <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
