@@ -1,3 +1,9 @@
+# 1.0.8.4 - 04/10/2023
+- Minor adjustments to the design, mostly margins that were on the order of a few pixels off. Saves my OCD, though.
+- Major fix: The new IDX scanning feature was overwriting the user's desired filename when translating a single file.
+- Major fix: We weren't deleting existing files before writing to them if their IDX names didn't match their filenames.
+- Minor fix: Status messages going off the screen when displaying very long filenames.
+
 # 1.0.8.3 - 04/10/2023
 - We now scan for .idx files matching input source logs. If we find one, we'll extract the channel or character name from it, thus avoiding excessive "adh-#####" files in the destination directory.
 

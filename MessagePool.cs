@@ -29,6 +29,7 @@ namespace FLogS
         public static string? phrase;
         public static bool regex;
         public static bool saveTruncated;
+        private static bool scanIDX;
         public static string? srcFile;
         public static ByteCount totalSize;
         public static ByteCount truncatedBytes;
@@ -40,6 +41,7 @@ namespace FLogS
             try
             {
                 string[]? files = (string[]?)e.Argument;
+                scanIDX = true;
 
                 foreach (string logfile in files)
                 {
@@ -66,19 +68,28 @@ namespace FLogS
         {
             if (dtBefore < dtAfter)
                 (dtAfter, dtBefore) = (dtBefore, dtAfter);
-            
-            string[] idxOptions = { Path.Join(Path.GetDirectoryName(srcFile), Path.GetFileNameWithoutExtension(srcFile)) + ".idx", srcFile + ".idx" };
-            bool idxFound = false;
 
-            foreach (string idx in idxOptions)
+            if (scanIDX) // We only want to scan for an IDX channel name during a batch process.
+                         // The user supplies their own filename during single-file translation, so it's moot in those cases.
             {
-                if (!idxFound && File.Exists(idx))
+                string[] idxOptions = {
+                Path.Join(Path.GetDirectoryName(srcFile), Path.GetFileNameWithoutExtension(srcFile)) + ".idx", // Search first for an IDX file matching just the log file's name. e.g. "pokefurs.idx".
+                srcFile + ".idx" }; // As a fallback, also search for an IDX that matches the log's name and extention. e.g. "pokefurs.log.idx".
+                bool idxFound = false;
+
+                foreach (string idx in idxOptions)
                 {
-                    FileStream srcIDX = File.OpenRead(idx);
-                    idxFound = TranslateIDX(srcIDX);
-                    srcIDX.Close();
+                    if (!idxFound && File.Exists(idx))
+                    {
+                        FileStream srcIDX = File.OpenRead(idx);
+                        idxFound = TranslateIDX(srcIDX);
+                        srcIDX.Close();
+                    }
                 }
             }
+
+            if (File.Exists(destFile))
+                File.Delete(destFile);
 
             FileStream srcFS = File.OpenRead(srcFile);
 
@@ -126,6 +137,7 @@ namespace FLogS
             intactBytes = new();
             intactMessages = 0U;
             lastPosition = 0U;
+            scanIDX = false;
             truncatedBytes = new();
             truncatedMessages = 0U;
             unreadBytes = new();
@@ -149,7 +161,7 @@ namespace FLogS
             {
                 nameLength = srcFS.ReadByte();
                 if (nameLength < 1
-                    || (!Path.GetFileNameWithoutExtension(srcFS.Name).Contains("#") && nameLength > 20)) // F-List character profiles cannot be greater than 20 characters in length.
+                    || (!Path.GetFileNameWithoutExtension(srcFS.Name).Contains('#') && nameLength > 20)) // F-List character profiles cannot be greater than 20 characters in length.
                     return false;
 
                 streamBuffer = new byte[nameLength];
@@ -159,19 +171,20 @@ namespace FLogS
                 nameString = new string(Encoding.UTF8.GetString(streamBuffer).Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).ToLower();
 
                 if (("#" + nameString).Equals(Path.GetFileNameWithoutExtension(srcFile).ToLower())
-                    || ("#" + nameString).Equals("#" + Path.GetFileNameWithoutExtension(srcFile).ToLower()))
+                    || ("#" + nameString).Equals("#" + Path.GetFileNameWithoutExtension(srcFile).ToLower())) // If the IDX encoded name matches the log file name, we're either working with a public channel or a DM.
+                                                                                                             // It bears mentioning that the IDX name will never contain a hashtag, hence why we append it here.
                 {
-                    if (Path.GetFileNameWithoutExtension(srcFile).Contains("#"))
+                    if (Path.GetFileNameWithoutExtension(srcFile).Contains('#')) // If the log filename contains a hashtag, it's a public channel.
                     {
-                        destFile = new string(Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + Path.GetExtension(destFile)));
+                        destFile = new string(Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + Path.GetExtension(destFile))); // Preserve it as such.
                         return true;
                     }
 
-                    destFile = new string(Path.Join(Path.GetDirectoryName(destFile), nameString + Path.GetExtension(destFile)));
+                    destFile = new string(Path.Join(Path.GetDirectoryName(destFile), nameString + Path.GetExtension(destFile))); // Otherwise, it's a DM. As before, preserve the name - but this time, leave out the hashtag.
                     return true;
                 }
 
-                destFile = new string(Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + " (" + Path.GetFileNameWithoutExtension(destFile) + ")" + Path.GetExtension(destFile)));
+                destFile = new string(Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + " (" + Path.GetFileNameWithoutExtension(destFile) + ")" + Path.GetExtension(destFile))); // In all other cases, it's a private channel. Format it with the channel name followed by its ID.
 
                 return true;
             }
@@ -314,8 +327,11 @@ namespace FLogS
                 messageOut = string.Join(' ', messageData.ToArray());
                 messageOut = Regex.Replace(messageOut, @"[^\u0009\u000A\u000D\u0020-\u007E]", ""); // Remove everything that's not a printable or newline character.
 
-                if (phrase is null || (!regex && messageOut.Contains(phrase, StringComparison.OrdinalIgnoreCase)) || (regex && Regex.IsMatch(messageOut, phrase))) // Either the profile name or the message body can contain our search text.
+                if (phrase is null
+                    || (!regex && messageOut.Contains(phrase, StringComparison.OrdinalIgnoreCase)) // Either the profile name or the message body can contain our search text.
+                    || (regex && Regex.IsMatch(messageOut, phrase)))
                     matchPhrase = true;
+
                 if (intact)
                 {
                     intactBytes += messageOut.Length;

@@ -28,7 +28,7 @@ namespace FLogS
             new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkRed }, // Warning messages
             new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x4C, G = 0x4C, B = 0x4C }), Brushes.DarkGray }, // TabControl
             new SolidColorBrush[] { Brushes.Transparent, new SolidColorBrush(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }) }, // DatePicker borders
-            new SolidColorBrush[] { Brushes.DimGray, Brushes.AntiqueWhite }, // PanelGrids
+            new SolidColorBrush[] { Brushes.DimGray, Brushes.Beige }, // PanelGrids
         };
         private static int brushPalette = 1;
         private static uint directoryReadyToRun = 1;
@@ -189,8 +189,6 @@ namespace FLogS
                 {
                     MessagePool.totalSize += new FileInfo(logfile).Length;
                     MessagePool.destFile = Path.Join(MessagePool.destDir, Path.GetFileNameWithoutExtension(logfile) + ".txt");
-                    if (File.Exists(MessagePool.destFile))
-                        File.Delete(MessagePool.destFile);
                 }
 
                 FileProgress.Maximum = MessagePool.totalSize.bytes;
@@ -267,8 +265,6 @@ namespace FLogS
                 {
                     MessagePool.totalSize += new FileInfo(logfile).Length;
                     MessagePool.destFile = Path.Join(MessagePool.destDir, Path.GetFileNameWithoutExtension(logfile) + ".txt");
-                    if (File.Exists(MessagePool.destFile))
-                        File.Delete(MessagePool.destFile);
                 }
 
                 FileProgress.Maximum = MessagePool.totalSize.bytes;
@@ -308,9 +304,6 @@ namespace FLogS
                 MessagePool.phrase = "";
                 MessagePool.saveTruncated = SaveTruncated.SelectedIndex != 0;
                 MessagePool.srcFile = FileSource.Text;
-
-                if (File.Exists(MessagePool.destFile))
-                    File.Delete(MessagePool.destFile);
 
                 DirectoryProgress.Maximum = new FileInfo(MessagePool.srcFile).Length;
                 FileProgress.Maximum = new FileInfo(MessagePool.srcFile).Length;
@@ -514,8 +507,11 @@ namespace FLogS
             if (Common.lastException.Equals(""))
             {
                 double timeTaken = DateTime.Now.Subtract(Common.timeBegin).TotalSeconds;
+                string formattedName = Path.GetFileName(MessagePool.srcFile);
+                if (formattedName.Length > 16)
+                    formattedName = formattedName[..14] + "...";
                 if (filesProcessed == 1)
-                    HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Processed {Path.GetFileName(MessagePool.srcFile)} in {timeTaken:N2} seconds.";
+                    HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Processed {formattedName} in {timeTaken:N2} seconds.";
                 else
                     HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Processed {filesProcessed:N0} files in {timeTaken:N2} seconds.";
             }
