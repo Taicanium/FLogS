@@ -23,7 +23,7 @@ namespace FLogS
             return;
         }
 
-        private void Magnitude(int factor)
+        public void Magnitude(int factor)
         {
             bytes *= Math.Pow(1024, factor);
             prefix -= (short)factor;
@@ -178,8 +178,6 @@ namespace FLogS
         public static bool IsValidPattern(string? pattern = null)
         {
             if (pattern is null)
-                return false;
-            if (pattern.Trim().Equals(""))
                 return false;
             try
             {

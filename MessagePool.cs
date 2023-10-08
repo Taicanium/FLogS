@@ -73,8 +73,9 @@ namespace FLogS
                          // The user supplies their own filename during single-file translation, so it's moot in those cases.
             {
                 string[] idxOptions = {
-                Path.Join(Path.GetDirectoryName(srcFile), Path.GetFileNameWithoutExtension(srcFile)) + ".idx", // Search first for an IDX file matching just the log file's name. e.g. "pokefurs.idx".
-                srcFile + ".idx" }; // As a fallback, also search for an IDX that matches the log's name and extention. e.g. "pokefurs.log.idx".
+                    Path.Join(Path.GetDirectoryName(srcFile), Path.GetFileNameWithoutExtension(srcFile)) + ".idx", // Search first for an IDX file matching just the log file's name. e.g. "pokefurs.idx".
+                    srcFile + ".idx", // As a fallback, also search for an IDX that matches the log's name and extension. e.g. "pokefurs.log.idx".
+                };
                 bool idxFound = false;
 
                 foreach (string idx in idxOptions)
@@ -105,9 +106,12 @@ namespace FLogS
 
                     if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 10)
                     {
-                        if (bytesRead.prefix > totalSize.prefix - 2)
+                        ByteCount progress = bytesRead + srcFS.Position;
+                        progress.Simplify();
+                        totalSize.Simplify();
+                        if (progress.prefix > totalSize.prefix - 2)
                         {
-                            ByteCount progress = bytesRead + srcFS.Position;
+                            totalSize.Magnitude(1); // We'll look at the progress values with more precision to keep the bar from "jerking".
                             progress.Adjust(totalSize.prefix);
                             (sender as BackgroundWorker).ReportProgress((int)progress.bytes);
                         }

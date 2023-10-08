@@ -6,7 +6,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 
 namespace FLogS
@@ -186,10 +185,9 @@ namespace FLogS
                 MessagePool.totalSize = new();
 
                 foreach (string logfile in files)
-                {
                     MessagePool.totalSize += new FileInfo(logfile).Length;
-                    MessagePool.destFile = Path.Join(MessagePool.destDir, Path.GetFileNameWithoutExtension(logfile) + ".txt");
-                }
+                MessagePool.totalSize.Simplify();
+                MessagePool.totalSize.Magnitude(1);
 
                 FileProgress.Maximum = MessagePool.totalSize.bytes;
                 DirectoryProgress.Maximum = MessagePool.totalSize.bytes;
@@ -262,10 +260,9 @@ namespace FLogS
                 MessagePool.totalSize = new();
 
                 foreach (string logfile in files)
-                {
                     MessagePool.totalSize += new FileInfo(logfile).Length;
-                    MessagePool.destFile = Path.Join(MessagePool.destDir, Path.GetFileNameWithoutExtension(logfile) + ".txt");
-                }
+                MessagePool.totalSize.Simplify();
+                MessagePool.totalSize.Magnitude(1);
 
                 FileProgress.Maximum = MessagePool.totalSize.bytes;
                 DirectoryProgress.Maximum = MessagePool.totalSize.bytes;
@@ -305,9 +302,14 @@ namespace FLogS
                 MessagePool.saveTruncated = SaveTruncated.SelectedIndex != 0;
                 MessagePool.srcFile = FileSource.Text;
 
-                DirectoryProgress.Maximum = new FileInfo(MessagePool.srcFile).Length;
-                FileProgress.Maximum = new FileInfo(MessagePool.srcFile).Length;
-                PhraseProgress.Maximum = new FileInfo(MessagePool.srcFile).Length;
+                MessagePool.totalSize = new();
+                MessagePool.totalSize += new FileInfo(MessagePool.srcFile).Length;
+                MessagePool.totalSize.Simplify();
+                MessagePool.totalSize.Magnitude(1);
+
+                DirectoryProgress.Maximum = MessagePool.totalSize.bytes;
+                FileProgress.Maximum = MessagePool.totalSize.bytes;
+                PhraseProgress.Maximum = MessagePool.totalSize.bytes;
 
                 MessagePool.ResetStats();
                 TransitionMenus(false);

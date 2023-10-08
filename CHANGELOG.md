@@ -1,3 +1,7 @@
+# 1.0.8.5 - 07/10/2023
+- Regex patterns can now contain leading and trailing whitespace. We'd previously excluded such whitespace on purpose, but there are instances where it might be useful.
+- Major fix: The progress bar on the File tab was broken. We've fixed the underlying routine, and also rewritten it to be more efficient.
+
 # 1.0.8.4 - 04/10/2023
 - Minor adjustments to the design, mostly margins that were on the order of a few pixels off. Saves my OCD, though.
 - Major fix: The new IDX scanning feature was overwriting the user's desired filename when translating a single file.
