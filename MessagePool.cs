@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Windows.Forms.VisualStyles;
 
 namespace FLogS
 {
@@ -329,7 +330,7 @@ namespace FLogS
                 }
 
                 messageOut = string.Join(' ', messageData.ToArray());
-                messageOut = Regex.Replace(messageOut, @"[^\u0009\u000A\u000D\u0020-\u007E]", ""); // Remove everything that's not a printable or newline character.
+                messageOut = Regex.Replace(messageOut, @"\p{C}+", string.Empty); // Remove everything that's not a printable or newline character.
 
                 if (phrase is null
                     || (!regex && messageOut.Contains(phrase, StringComparison.OrdinalIgnoreCase)) // Either the profile name or the message body can contain our search text.

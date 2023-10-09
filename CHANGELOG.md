@@ -1,3 +1,6 @@
+# 1.0.8.6 - 09/10/2023
+- Replaced our method for stripping garbage characters; it's now tolerant of non-ASCII Unicode characters. In other words, accented letters, em dashes, and the like are now preserved in the output rather than being removed. Further testing may be necessary.
+
 # 1.0.8.5 - 07/10/2023
 - Regex patterns can now contain leading and trailing whitespace. We'd previously excluded such whitespace on purpose, but there are instances where it might be useful.
 - Major fix: The progress bar on the File tab was broken. We've fixed the underlying routine, and also rewritten it to be more efficient.
