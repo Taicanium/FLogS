@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Windows.Forms.VisualStyles;
 
 namespace FLogS
 {
@@ -157,6 +156,7 @@ namespace FLogS
         /// <returns>'true' if a channel name was successfully extracted from the filestream and appended to MessagePool.destFile; 'false' if, for any reason, that did not occur.</returns>
         private static bool TranslateIDX(FileStream srcFS)
         {
+            string? fileName = Path.GetFileNameWithoutExtension(srcFile);
             int nameLength;
             string nameString;
             int result;
@@ -175,11 +175,11 @@ namespace FLogS
 
                 nameString = new string(Encoding.UTF8.GetString(streamBuffer).Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).ToLower();
 
-                if (("#" + nameString).Equals(Path.GetFileNameWithoutExtension(srcFile).ToLower())
-                    || ("#" + nameString).Equals("#" + Path.GetFileNameWithoutExtension(srcFile).ToLower())) // If the IDX encoded name matches the log file name, we're either working with a public channel or a DM.
+                if (("#" + nameString).Equals(fileName?.ToLower())
+                    || ("#" + nameString).Equals("#" + fileName?.ToLower())) // If the IDX encoded name matches the log file name, we're either working with a public channel or a DM.
                                                                                                              // It bears mentioning that the IDX name will never contain a hashtag, hence why we append it here.
                 {
-                    if (Path.GetFileNameWithoutExtension(srcFile).Contains('#')) // If the log filename contains a hashtag, it's a public channel.
+                    if (fileName.Contains('#')) // If the log filename contains a hashtag, it's a public channel.
                     {
                         destFile = new string(Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + Path.GetExtension(destFile))); // Preserve it as such.
                         return true;
@@ -330,7 +330,7 @@ namespace FLogS
                 }
 
                 messageOut = string.Join(' ', messageData.ToArray());
-                messageOut = Regex.Replace(messageOut, @"\p{C}+", string.Empty); // Remove everything that's not a printable or newline character.
+                messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Remove everything that's not a printable, newline, or format character.
 
                 if (phrase is null
                     || (!regex && messageOut.Contains(phrase, StringComparison.OrdinalIgnoreCase)) // Either the profile name or the message body can contain our search text.

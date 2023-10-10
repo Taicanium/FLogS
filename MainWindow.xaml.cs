@@ -509,8 +509,8 @@ namespace FLogS
             if (Common.lastException.Equals(""))
             {
                 double timeTaken = DateTime.Now.Subtract(Common.timeBegin).TotalSeconds;
-                string formattedName = Path.GetFileName(MessagePool.srcFile);
-                if (formattedName.Length > 16)
+                string? formattedName = Path.GetFileName(MessagePool.srcFile);
+                if (formattedName?.Length > 16)
                     formattedName = formattedName[..14] + "...";
                 if (filesProcessed == 1)
                     HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Processed {formattedName} in {timeTaken:N2} seconds.";

@@ -209,7 +209,7 @@ namespace FLogS
         {
             lastException = e.Message;
             File.AppendAllText(errorFile, DateTime.Now.ToString(dateFormat) + " - " + lastException + "\n");
-            File.AppendAllText(errorFile, e.TargetSite.DeclaringType.FullName + "." + e.TargetSite.Name + "\n\n");
+            File.AppendAllText(errorFile, e?.TargetSite?.DeclaringType?.FullName + "." + e?.TargetSite?.Name + "\n\n");
             return;
         }
 

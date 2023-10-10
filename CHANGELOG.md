@@ -1,3 +1,6 @@
+# 1.0.8.7 - 10/10/2023
+- Repaired the previously implemented garbage stripping method so that it no longer omits newlines. Now that's embarrassing.
+
 # 1.0.8.6 - 09/10/2023
 - Replaced our method for stripping garbage characters; it's now tolerant of non-ASCII Unicode characters. In other words, accented letters, em dashes, and the like are now preserved in the output rather than being removed. Further testing may be necessary.
 
