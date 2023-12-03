@@ -1,3 +1,6 @@
+# 1.0.9 - 03/12/2023
+- Error and warning messages are now updated each time the mouse is moved; this more stringently ensures that we won't, e.g. encounter a deleted source file that could crash the program out.
+
 # 1.0.8.7 - 10/10/2023
 - Repaired the previously implemented garbage stripping method so that it no longer omits newlines. Now that's embarrassing.
 

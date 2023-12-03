@@ -177,7 +177,7 @@ namespace FLogS
 
                 if (("#" + nameString).Equals(fileName?.ToLower())
                     || ("#" + nameString).Equals("#" + fileName?.ToLower())) // If the IDX encoded name matches the log file name, we're either working with a public channel or a DM.
-                                                                                                             // It bears mentioning that the IDX name will never contain a hashtag, hence why we append it here.
+                                                                             // It bears mentioning that the IDX name will never contain a hashtag, hence why we append it here.
                 {
                     if (fileName.Contains('#')) // If the log filename contains a hashtag, it's a public channel.
                     {
@@ -308,8 +308,7 @@ namespace FLogS
                 {
                     idBuffer[2] = 0;
                     idBuffer[3] = 0;
-                    messageLength = Common.BEInt(idBuffer);
-                    if (messageLength < 1)
+                    if ((messageLength = Common.BEInt(idBuffer)) < 1)
                     {
                         emptyMessages++;
                         intact = false;

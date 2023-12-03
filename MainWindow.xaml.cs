@@ -67,7 +67,7 @@ namespace FLogS
             if (sender is null)
                 return;
 
-            switch (sender.DependencyObjectType.Name)
+            switch (sender?.DependencyObjectType.Name)
             {
                 case "Button":
                     (sender as Button).Background = brushCombos[1][brushPalette];
@@ -173,6 +173,9 @@ namespace FLogS
 
         private void DirectoryRunButton_Click(object? sender, RoutedEventArgs e)
         {
+            if (!DirectoryRunButton.IsEnabled)
+                return;
+
             try
             {
                 MessagePool.destDir = DirectoryOutput.Text;
@@ -246,8 +249,17 @@ namespace FLogS
             }
         }
 
+        private void MainGrid_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            // We will rescan for errors upon user interaction, in case of e.g. a source file being deleted after its path has already been entered.
+            TextboxUpdated(sender, e);
+        }
+
         private void PhraseRunButton_Click(object? sender, RoutedEventArgs e)
         {
+            if (!PhraseRunButton.IsEnabled)
+                return;
+
             try
             {
                 MessagePool.dtAfter = PhraseAfterDate.SelectedDate ?? Common.DTFromStamp(1);
@@ -292,6 +304,10 @@ namespace FLogS
 
         private void RunButton_Click(object? sender, RoutedEventArgs e)
         {
+            TextboxUpdated(sender, e);
+            if (!RunButton.IsEnabled)
+                return;
+
             try
             {
                 MessagePool.destFile = FileOutput.Text;

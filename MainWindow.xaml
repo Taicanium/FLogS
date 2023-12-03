@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Loaded="MainGrid_Loaded"
         Title="FLogS" Height="600" Width="800" ResizeMode="NoResize">
-    <Grid x:Name="MainGrid" Background="DarkGray">
+    <Grid x:Name="MainGrid" Background="DarkGray" MouseMove="MainGrid_MouseMove">
         <TabControl x:Name="TabMenu" Background="DarkGray" BorderThickness="0">
             <TabItem x:Name="TabFile" Header="File">
                 <Grid x:Name="FileGrid">
@@ -28,7 +28,7 @@
                                 <ListBoxItem x:Name="CTBox">Corrupted Timestamps:</ListBoxItem>
                                 <ListBoxItem x:Name="TMBox">Truncated Messages:</ListBoxItem>
                                 <ListBoxItem x:Name="EMBox">Empty Messages:</ListBoxItem>
-                                <ListBoxItem x:Name="UBBox">Unread Bytes:</ListBoxItem>
+                                <ListBoxItem x:Name="UBBox">Unread Data:</ListBoxItem>
                                 <ListBoxItem Margin="10" Visibility="Hidden"></ListBoxItem>
                                 <ListBoxItem Tag="WarningLabel" x:Name="EXBox" Foreground="Red"></ListBoxItem>
                             </ListBox>
@@ -86,7 +86,7 @@
                                     <ProgressBar x:Name="FileProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                                 </StackPanel>
                             </Grid>
-                            <Label x:Name="FileVersionNumber" Content="FLogS — Version 1.0.8.7 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
+                            <Label x:Name="FileVersionNumber" Content="FLogS — Version 1.0.9 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -110,7 +110,7 @@
                                 <ListBoxItem x:Name="DirectoryCTBox">Corrupted Timestamps:</ListBoxItem>
                                 <ListBoxItem x:Name="DirectoryTMBox">Truncated Messages:</ListBoxItem>
                                 <ListBoxItem x:Name="DirectoryEMBox">Empty Messages:</ListBoxItem>
-                                <ListBoxItem x:Name="DirectoryUBBox">Unread Bytes:</ListBoxItem>
+                                <ListBoxItem x:Name="DirectoryUBBox">Unread Data:</ListBoxItem>
                                 <ListBoxItem Margin="10" Visibility="Hidden"></ListBoxItem>
                                 <ListBoxItem Tag="WarningLabel" x:Name="DirectoryEXBox" Foreground="Red"></ListBoxItem>
                             </ListBox>
@@ -168,7 +168,7 @@
                                     <ProgressBar x:Name="DirectoryProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                                 </StackPanel>
                             </Grid>
-                            <Label x:Name="DirectoryVersionNumber" Content="FLogS — Version 1.0.8.7 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
+                            <Label x:Name="DirectoryVersionNumber" Content="FLogS — Version 1.0.9 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -192,7 +192,7 @@
                                 <ListBoxItem x:Name="PhraseCTBox">Corrupted Timestamps:</ListBoxItem>
                                 <ListBoxItem x:Name="PhraseTMBox">Truncated Messages:</ListBoxItem>
                                 <ListBoxItem x:Name="PhraseEMBox">Empty Messages:</ListBoxItem>
-                                <ListBoxItem x:Name="PhraseUBBox">Unread Bytes:</ListBoxItem>
+                                <ListBoxItem x:Name="PhraseUBBox">Unread Data:</ListBoxItem>
                                 <ListBoxItem Margin="10" Visibility="Hidden"></ListBoxItem>
                                 <ListBoxItem Tag="WarningLabel" x:Name="PhraseEXBox" Foreground="Red"></ListBoxItem>
                             </ListBox>
@@ -255,7 +255,7 @@
                                     <ProgressBar x:Name="PhraseProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                                 </StackPanel>
                             </Grid>
-                            <Label x:Name="PhraseVersionNumber" Content="FLogS — Version 1.0.8.7 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
+                            <Label x:Name="PhraseVersionNumber" Content="FLogS — Version 1.0.9 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -310,7 +310,7 @@
                     </Grid>
                     <Grid Grid.Row="1" Grid.Column="1" VerticalAlignment="Bottom" Margin="2,2">
                         <StackPanel Background="LightGray" Margin="2,2">
-                            <Label x:Name="HelpVersionNumber" Content="FLogS — Version 1.0.8.7 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
+                            <Label x:Name="HelpVersionNumber" Content="FLogS — Version 1.0.9 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>

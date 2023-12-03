@@ -179,6 +179,7 @@ namespace FLogS
         {
             if (pattern is null)
                 return false;
+
             try
             {
                 Regex.IsMatch("", pattern);
