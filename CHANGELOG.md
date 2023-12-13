@@ -1,3 +1,7 @@
+# 1.0.9.1 - 12/12/2023
+- There is now a hyperlink in the About screen that leads to the official layout for .NET RegEx, for users who aren't familiar with it.
+- Byte discrepancies are now cleared when moving to a new file; missing data in one file will no longer be counted when notating another. This was causing minor errors when phrase-searching.
+
 # 1.0.9 - 03/12/2023
 - Error and warning messages are now updated each time the mouse is moved; this more stringently ensures that we won't, e.g. encounter a deleted source file that could crash the program out.
 

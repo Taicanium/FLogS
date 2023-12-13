@@ -96,6 +96,7 @@ namespace FLogS
 
             using (StreamWriter dstFS = new(destFile, true))
             {
+                lastDiscrepancy = 0;
                 lastPosition = 0U;
                 Common.lastTimestamp = 0;
                 DateTime lastUpdate = DateTime.Now;

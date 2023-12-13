@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -173,6 +174,7 @@ namespace FLogS
 
         private void DirectoryRunButton_Click(object? sender, RoutedEventArgs e)
         {
+            TextboxUpdated(sender, e);
             if (!DirectoryRunButton.IsEnabled)
                 return;
 
@@ -233,15 +235,21 @@ namespace FLogS
             PhraseOutput.Text = DialogFolderSelect();
         }
 
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        {
+            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+            e.Handled = true;
+        }
+
         private void MainGrid_Loaded(object? sender, RoutedEventArgs e)
         {
             try
             {
-                if (ShouldSystemUseDarkMode())
-                    ThemeSelector_Click(sender, e);
-
                 if (File.Exists(Common.errorFile))
                     File.Delete(Common.errorFile);
+
+                if (ShouldSystemUseDarkMode())
+                    ThemeSelector_Click(sender, e);
             }
             catch (Exception)
             {
@@ -257,6 +265,7 @@ namespace FLogS
 
         private void PhraseRunButton_Click(object? sender, RoutedEventArgs e)
         {
+            TextboxUpdated(sender, e);
             if (!PhraseRunButton.IsEnabled)
                 return;
 
@@ -543,7 +552,7 @@ namespace FLogS
             PhraseCTBox.Content = DirectoryCTBox.Content = CTBox.Content = $"Corrupted Timestamps: {MessagePool.corruptTimestamps:N0}";
             PhraseTMBox.Content = DirectoryTMBox.Content = TMBox.Content = $"Truncated Messages: {MessagePool.truncatedMessages:N0} ({MessagePool.truncatedBytes:S})";
             PhraseEMBox.Content = DirectoryEMBox.Content = EMBox.Content = $"Empty Messages: {MessagePool.emptyMessages:N0}";
-            PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content = $"Unread data: {MessagePool.unreadBytes:S}";
+            PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content = $"Unread Data: {MessagePool.unreadBytes:S}";
 
             if (!Common.lastException.Equals(""))
             {
