@@ -118,7 +118,7 @@ namespace FLogS
         }
 
         /// <summary>
-        /// Returns the size of this byte counter, formatted with the most appropriate metric prefix. This function does not preserve manual adjustments to the counter's magnitude.
+        /// Return the size of this byte counter, formatted with the most appropriate metric prefix. This function does not preserve manual adjustments to the counter's magnitude.
         /// </summary>
         /// <returns>The byte counter size, in the format "0.0 xB", where 'x' is a metric prefix.</returns>
         public override string ToString()
@@ -150,7 +150,7 @@ namespace FLogS
         public readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
         private readonly static DateTime epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         public readonly static string errorFile = "FLogS_ERROR.txt";
-        public static string lastException = "";
+        public static string lastException = string.Empty;
         public static uint lastTimestamp;
         public readonly static string[] prefixes = { "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q" }; // Always futureproof...
         public static DateTime timeBegin;
@@ -182,7 +182,7 @@ namespace FLogS
 
             try
             {
-                Regex.IsMatch("", pattern);
+                Regex.IsMatch(string.Empty, pattern);
             }
             catch (Exception)
             {
@@ -198,7 +198,7 @@ namespace FLogS
                 return false;
             if (timestamp > UNIXTimestamp()) // If it's in the future, also a problem.
                 return false;
-            if ((DTFromStamp(timestamp).ToString(dateFormat) ?? "").Equals("")) // If it can't be translated to a date, also a problem.
+            if ((DTFromStamp(timestamp).ToString(dateFormat) ?? string.Empty).Equals(string.Empty)) // If it can't be translated to a date, also a problem.
                 return false;
             if (timestamp < lastTimestamp)  // If it isn't sequential, also a problem, because F-Chat would never save it that way.
                                             // In this case specifically, there's an extremely high chance we're about to produce garbage data in the output.

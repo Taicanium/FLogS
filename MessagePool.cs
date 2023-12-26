@@ -17,8 +17,6 @@ namespace FLogS
         public static uint corruptTimestamps;
         public static string? destDir;
         public static string? destFile;
-        public static ByteCount discardedBytes;
-        public static uint discardedMessages;
         public static DateTime? dtAfter;
         public static DateTime? dtBefore;
         public static uint emptyMessages;
@@ -52,7 +50,7 @@ namespace FLogS
                     DoWork(sender, e);
                     bytesRead += new FileInfo(logfile).Length;
 
-                    if (!Common.lastException.Equals(""))
+                    if (!Common.lastException.Equals(string.Empty))
                         break;
                 }
             }
@@ -105,7 +103,7 @@ namespace FLogS
                 {
                     TranslateMessage(srcFS, dstFS);
 
-                    if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 10)
+                    if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 20)
                     {
                         ByteCount progress = bytesRead + srcFS.Position;
                         progress.Simplify();
@@ -119,7 +117,7 @@ namespace FLogS
                         else
                             (sender as BackgroundWorker).ReportProgress(0);
                         lastUpdate = DateTime.Now;
-                        if (!Common.lastException.Equals(""))
+                        if (!Common.lastException.Equals(string.Empty))
                             break;
                     }
                 }
@@ -136,8 +134,6 @@ namespace FLogS
         {
             bytesRead = new();
             corruptTimestamps = 0U;
-            discardedBytes = new();
-            discardedMessages = 0U;
             emptyMessages = 0U;
             intactBytes = new();
             intactMessages = 0U;
@@ -151,7 +147,7 @@ namespace FLogS
         }
 
         /// <summary>
-        /// Extracts the name of a private channel from an IDX file, and appends it to the destination file path.
+        /// Extract the name of a private channel from an IDX file, and append it to the destination file path.
         /// </summary>
         /// <param name="srcFS">>A FileStream opened to the IDX file matching MessagePool.srcFile.</param>
         /// <returns>'true' if a channel name was successfully extracted from the filestream and appended to MessagePool.destFile; 'false' if, for any reason, that did not occur.</returns>
@@ -167,7 +163,7 @@ namespace FLogS
             {
                 nameLength = srcFS.ReadByte();
                 if (nameLength < 1
-                    || (!Path.GetFileNameWithoutExtension(srcFS.Name).Contains('#') && nameLength > 20)) // F-List character profiles cannot be greater than 20 characters in length.
+                    || (!Path.GetFileNameWithoutExtension(srcFS.Name).Contains('#') && nameLength > 20)) // F-List profile names cannot be greater than 20 characters in length.
                     return false;
 
                 streamBuffer = new byte[nameLength];
@@ -191,7 +187,6 @@ namespace FLogS
                 }
 
                 destFile = new string(Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + " (" + Path.GetFileNameWithoutExtension(destFile) + ")" + Path.GetExtension(destFile))); // In all other cases, it's a private channel. Format it with the channel name followed by its ID.
-
                 return true;
             }
             catch (Exception ex)
@@ -203,7 +198,7 @@ namespace FLogS
         }
 
         /// <summary>
-        /// 
+        /// Read from the source log file and convert a single message to plaintext, then conditionally write it to the destination. This function seeks to the next valid message before returning.
         /// </summary>
         /// <param name="srcFS">A FileStream opened to the source log file.</param>
         /// <param name="dstFS">A StreamWriter opened to the destination file.</param>
@@ -285,7 +280,7 @@ namespace FLogS
                             break;
                         case MessageType.Me:
                         case MessageType.DiceRoll: // These also include bottle spins and other 'fun' commands.
-                            // messageData.Add("");
+                            // messageData.Add(string.Empty);
                             break;
                         case MessageType.Ad:
                             messageData.Add("(ad):");
@@ -337,43 +332,25 @@ namespace FLogS
                     || (regex && Regex.IsMatch(messageOut, phrase)))
                     matchPhrase = true;
 
-                if (intact)
+                if (matchPhrase && withinRange && (intact || saveTruncated))
                 {
-                    intactBytes += messageOut.Length;
-                    intactMessages++;
-                    if (withinRange && matchPhrase)
+                    if (intact)
                     {
-                        if (lastDiscrepancy > 0)
-                        {
-                            dstFS.Write(string.Format("({0:#,0} missing bytes)", lastDiscrepancy));
-                            dstFS.Write(dstFS.NewLine);
-                        }
-                        dstFS.Write(messageOut);
+                        intactMessages++;
+                        intactBytes += messageOut.Length;
+                    }
+
+                    if (lastDiscrepancy > 0)
+                    {
+                        dstFS.Write(string.Format("({0:#,0} missing bytes)", lastDiscrepancy));
                         dstFS.Write(dstFS.NewLine);
-                        lastDiscrepancy = 0;
-                        written = true;
                     }
-                    else // If the message doesn't match our criteria, we won't count it.
-                    {
-                        discardedBytes += messageOut.Length;
-                        discardedMessages++;
-                    }
+                    dstFS.Write(messageOut);
+                    dstFS.Write(dstFS.NewLine);
+                    lastDiscrepancy = 0;
+                    written = true;
                 }
-                else if (saveTruncated)
-                {
-                    if (withinRange && matchPhrase)
-                    {
-                        if (lastDiscrepancy > 0)
-                        {
-                            dstFS.Write(string.Format("({0:#,0} missing bytes)", lastDiscrepancy));
-                            dstFS.Write(dstFS.NewLine);
-                        }
-                        dstFS.Write(messageOut);
-                        dstFS.Write(dstFS.NewLine);
-                        lastDiscrepancy = 0;
-                        written = true;
-                    }
-                }
+
                 lastPosition = (uint)srcFS.Position;
                 while (!nextTimestamp) // Search for the next message by locating its timestamp and delimiter. It's the latter we're *really* looking for; the timestamp just helps us identify it.
                 {

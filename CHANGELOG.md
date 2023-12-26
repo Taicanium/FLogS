@@ -1,3 +1,7 @@
+# 1.0.9.2 - 26/12/2023
+- Empty strings are now handled in a more memory-safe way.
+- Progress updates are now more efficient, leading to a minor speedup in bulk translations.
+
 # 1.0.9.1 - 12/12/2023
 - There is now a hyperlink in the About screen that leads to the official layout for .NET RegEx, for users who aren't familiar with it.
 - Byte discrepancies are now cleared when moving to a new file; missing data in one file will no longer be counted when notating another. This was causing minor errors when phrase-searching.

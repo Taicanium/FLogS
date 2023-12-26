@@ -29,6 +29,7 @@ namespace FLogS
             new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x4C, G = 0x4C, B = 0x4C }), Brushes.DarkGray }, // TabControl
             new SolidColorBrush[] { Brushes.Transparent, new SolidColorBrush(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }) }, // DatePicker borders
             new SolidColorBrush[] { Brushes.DimGray, Brushes.Beige }, // PanelGrids
+            new SolidColorBrush[] { Brushes.LightBlue, Brushes.DarkBlue }, // Hyperlinks
         };
         private static int brushPalette = 1;
         private static uint directoryReadyToRun = 1;
@@ -38,7 +39,7 @@ namespace FLogS
         private static int reversePalette = 0;
         private readonly static string[] warnings =
         {
-            "",
+            string.Empty,
             "No source log files selected.",
             "No destination directory selected.",
             "Destination is not a directory.",
@@ -52,8 +53,8 @@ namespace FLogS
             "Source and destination files are identical.",
             "No search text entered.",
             "Search text contains an invalid RegEx pattern.",
-            "",
-            "",
+            string.Empty,
+            string.Empty,
             "Destination file will be overwritten.",
             "One or more files will be overwritten.",
         };
@@ -112,7 +113,7 @@ namespace FLogS
             foreach (object dp in LogicalTreeHelper.GetChildren(sender))
                 ChangeStyle(dp as DependencyObject);
 
-            if ((sender.GetValue(TagProperty) as string ?? "").Equals("WarningLabel"))
+            if ((sender.GetValue(TagProperty) as string ?? string.Empty).Equals("WarningLabel"))
                 sender.SetValue(ForegroundProperty, brushCombos[3][brushPalette]);
 
             return;
@@ -158,7 +159,7 @@ namespace FLogS
             if (openFileDialog.ShowDialog() == true)
                 return string.Join(";", openFileDialog.FileNames.Where(file => !file.Contains(".idx"))); // IDX files contain metadata relating to the corresponding (usually extension-less) log files.
                                                                                                          // They will never contain actual messages, so we exclude them unconditionally.
-            return "";
+            return string.Empty;
         }
 
         private static string DialogFolderSelect()
@@ -169,7 +170,7 @@ namespace FLogS
             };
             if (folderBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 return folderBrowserDialog.SelectedPath;
-            return "";
+            return string.Empty;
         }
 
         private void DirectoryRunButton_Click(object? sender, RoutedEventArgs e)
@@ -185,7 +186,7 @@ namespace FLogS
                 MessagePool.dtBefore = DirectoryBeforeDate.SelectedDate ?? DateTime.UtcNow;
                 string[] files = DirectorySource.Text.Split(';');
                 filesProcessed = files.Length;
-                MessagePool.phrase = "";
+                MessagePool.phrase = string.Empty;
                 MessagePool.saveTruncated = DirectorySaveTruncated.SelectedIndex != 0;
                 MessagePool.totalSize = new();
 
@@ -261,6 +262,10 @@ namespace FLogS
         {
             // We will rescan for errors upon user interaction, in case of e.g. a source file being deleted after its path has already been entered.
             TextboxUpdated(sender, e);
+
+            RegExLink.Foreground = brushCombos[8][brushPalette];
+            if (RegExLink.IsMouseOver)
+                RegExLink.Foreground = brushCombos[3][brushPalette];
         }
 
         private void PhraseRunButton_Click(object? sender, RoutedEventArgs e)
@@ -323,7 +328,7 @@ namespace FLogS
                 MessagePool.dtAfter = AfterDate.SelectedDate ?? Common.DTFromStamp(1);
                 MessagePool.dtBefore = BeforeDate.SelectedDate ?? DateTime.UtcNow;
                 filesProcessed = 1;
-                MessagePool.phrase = "";
+                MessagePool.phrase = string.Empty;
                 MessagePool.saveTruncated = SaveTruncated.SelectedIndex != 0;
                 MessagePool.srcFile = FileSource.Text;
 
@@ -407,7 +412,7 @@ namespace FLogS
                 fileReadyToRun = directoryReadyToRun = phraseReadyToRun = 0;
                 PhraseSearchLabel.Content = MessagePool.regex ? "Target Pattern" : "Target Word or Phrase";
                 RunButton.IsEnabled = DirectoryRunButton.IsEnabled = PhraseRunButton.IsEnabled = true;
-                WarningLabel.Content = DirectoryWarningLabel.Content = PhraseWarningLabel.Content = "";
+                WarningLabel.Content = DirectoryWarningLabel.Content = PhraseWarningLabel.Content = string.Empty;
                 WarningLabel.Foreground = DirectoryWarningLabel.Foreground = PhraseWarningLabel.Foreground = brushCombos[3][brushPalette];
 
                 if (DirectorySource.Text.Length == 0)
@@ -497,7 +502,7 @@ namespace FLogS
             if (sender is null)
                 return;
 
-            if ((sender.GetValue(TagProperty) ?? "").Equals("Enableable"))
+            if ((sender.GetValue(TagProperty) ?? string.Empty).Equals("Enableable"))
                 sender.SetValue(IsEnabledProperty, enabled);
 
             foreach (object dp in LogicalTreeHelper.GetChildren(sender))
@@ -516,7 +521,7 @@ namespace FLogS
                 PhraseRunButton.Content = "Scanning...";
                 RunButton.Content = "Scanning...";
 
-                Common.lastException = "";
+                Common.lastException = string.Empty;
                 Common.timeBegin = DateTime.Now;
 
                 if (filesProcessed == 1)
@@ -531,7 +536,7 @@ namespace FLogS
             PhraseRunButton.Content = "Run";
             RunButton.Content = "Run";
 
-            if (Common.lastException.Equals(""))
+            if (Common.lastException.Equals(string.Empty))
             {
                 double timeTaken = DateTime.Now.Subtract(Common.timeBegin).TotalSeconds;
                 string? formattedName = Path.GetFileName(MessagePool.srcFile);
@@ -548,13 +553,13 @@ namespace FLogS
 
         private void UpdateLogs(object? sender = null)
         {
-            PhraseIMBox.Content = DirectoryIMBox.Content = IMBox.Content = $"Intact Messages: {MessagePool.intactMessages - MessagePool.discardedMessages:N0} ({MessagePool.intactBytes - MessagePool.discardedBytes:S})";
+            PhraseIMBox.Content = DirectoryIMBox.Content = IMBox.Content = $"Intact Messages: {MessagePool.intactMessages:N0} ({MessagePool.intactBytes:S})";
             PhraseCTBox.Content = DirectoryCTBox.Content = CTBox.Content = $"Corrupted Timestamps: {MessagePool.corruptTimestamps:N0}";
             PhraseTMBox.Content = DirectoryTMBox.Content = TMBox.Content = $"Truncated Messages: {MessagePool.truncatedMessages:N0} ({MessagePool.truncatedBytes:S})";
             PhraseEMBox.Content = DirectoryEMBox.Content = EMBox.Content = $"Empty Messages: {MessagePool.emptyMessages:N0}";
             PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content = $"Unread Data: {MessagePool.unreadBytes:S}";
 
-            if (!Common.lastException.Equals(""))
+            if (!Common.lastException.Equals(string.Empty))
             {
                 HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = "A critical error has occurred.";
                 PhraseEXBox.Content = DirectoryEXBox.Content = EXBox.Content = Common.lastException;
