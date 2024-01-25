@@ -23,11 +23,11 @@ namespace FLogS
         {   // 0 = Dark mode, 1 = Light mode.
             new SolidColorBrush[] { Brushes.Black, Brushes.White }, // Textboxes
             new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige }, // Buttons
-            new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray }, // Borders
+            new SolidColorBrush[] { new(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray }, // Borders
             new SolidColorBrush[] { Brushes.Pink, Brushes.Red }, // Error messages (And the ADL warning)
             new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkRed }, // Warning messages
-            new SolidColorBrush[] { new SolidColorBrush(new Color() { A = 0xFF, R = 0x4C, G = 0x4C, B = 0x4C }), Brushes.DarkGray }, // TabControl
-            new SolidColorBrush[] { Brushes.Transparent, new SolidColorBrush(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }) }, // DatePicker borders
+            new SolidColorBrush[] { new(new Color() { A = 0xFF, R = 0x4C, G = 0x4C, B = 0x4C }), Brushes.DarkGray }, // TabControl
+            new SolidColorBrush[] { Brushes.Transparent, new(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }) }, // DatePicker borders
             new SolidColorBrush[] { Brushes.DimGray, Brushes.Beige }, // PanelGrids
             new SolidColorBrush[] { Brushes.LightBlue, Brushes.DarkBlue }, // Hyperlinks
         };
@@ -35,6 +35,7 @@ namespace FLogS
         private static uint directoryReadyToRun = 1;
         private static uint fileReadyToRun = 1;
         private static int filesProcessed;
+        private static bool overrideFormat = false;
         private static uint phraseReadyToRun = 1;
         private static int reversePalette = 0;
         private readonly static string[] warnings =
@@ -64,7 +65,7 @@ namespace FLogS
             InitializeComponent();
         }
 
-        private void ChangeStyle(DependencyObject? sender)
+        private static void ChangeStyle(DependencyObject? sender)
         {
             if (sender is null)
                 return;
@@ -119,7 +120,21 @@ namespace FLogS
             return;
         }
 
-        private void ComboBox_Update(object? sender, RoutedEventArgs e)
+        private void ComboBoxFormat_Update(object? sender, RoutedEventArgs e)
+        {
+            if (DirectorySaveFormat is null || PhraseSaveFormat is null || SaveFormat is null)
+                return;
+
+            DirectorySaveFormat.SelectedIndex = (sender as ComboBox).SelectedIndex;
+            PhraseSaveFormat.SelectedIndex = (sender as ComboBox).SelectedIndex;
+            SaveFormat.SelectedIndex = (sender as ComboBox).SelectedIndex;
+
+            overrideFormat = true;
+
+            return;
+        }
+
+        private void ComboBoxTruncated_Update(object? sender, RoutedEventArgs e)
         {
             if (DirectorySaveTruncated is null || PhraseSaveTruncated is null || SaveTruncated is null)
                 return;
@@ -186,7 +201,9 @@ namespace FLogS
                 MessagePool.dtBefore = DirectoryBeforeDate.SelectedDate ?? DateTime.UtcNow;
                 string[] files = DirectorySource.Text.Split(';');
                 filesProcessed = files.Length;
+                overrideFormat = false;
                 MessagePool.phrase = string.Empty;
+                Common.plaintext = DirectorySaveFormat.SelectedIndex != 1;
                 MessagePool.saveTruncated = DirectorySaveTruncated.SelectedIndex != 0;
                 MessagePool.totalSize = new();
 
@@ -246,6 +263,8 @@ namespace FLogS
         {
             try
             {
+                overrideFormat = false;
+
                 if (File.Exists(Common.errorFile))
                     File.Delete(Common.errorFile);
 
@@ -266,6 +285,13 @@ namespace FLogS
             RegExLink.Foreground = brushCombos[8][brushPalette];
             if (RegExLink.IsMouseOver)
                 RegExLink.Foreground = brushCombos[3][brushPalette];
+
+            if (!overrideFormat && DirectoryOutput.Text.EndsWith(".html"))
+                DirectorySaveFormat.SelectedIndex = 1;
+            if (!overrideFormat && PhraseOutput.Text.EndsWith(".html"))
+                PhraseSaveFormat.SelectedIndex = 1;
+            if (!overrideFormat && FileOutput.Text.EndsWith(".html"))
+                SaveFormat.SelectedIndex = 1;
         }
 
         private void PhraseRunButton_Click(object? sender, RoutedEventArgs e)
@@ -281,7 +307,9 @@ namespace FLogS
                 MessagePool.destDir = PhraseOutput.Text;
                 string[] files = PhraseSource.Text.Split(';');
                 filesProcessed = files.Length;
+                overrideFormat = false;
                 MessagePool.phrase = PhraseSearch.Text;
+                Common.plaintext = PhraseSaveFormat.SelectedIndex != 1;
                 MessagePool.saveTruncated = PhraseSaveTruncated.SelectedIndex != 0;
                 MessagePool.totalSize = new();
 
@@ -328,7 +356,9 @@ namespace FLogS
                 MessagePool.dtAfter = AfterDate.SelectedDate ?? Common.DTFromStamp(1);
                 MessagePool.dtBefore = BeforeDate.SelectedDate ?? DateTime.UtcNow;
                 filesProcessed = 1;
+                overrideFormat = false;
                 MessagePool.phrase = string.Empty;
+                Common.plaintext = SaveFormat.SelectedIndex != 1;
                 MessagePool.saveTruncated = SaveTruncated.SelectedIndex != 0;
                 MessagePool.srcFile = FileSource.Text;
 
@@ -497,7 +527,7 @@ namespace FLogS
                 WarningLabel.Foreground = brushCombos[4][brushPalette];
         }
 
-        private void TransitionEnableables(DependencyObject sender, bool enabled)
+        private static void TransitionEnableables(DependencyObject sender, bool enabled)
         {
             if (sender is null)
                 return;

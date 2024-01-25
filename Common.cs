@@ -150,6 +150,7 @@ namespace FLogS
         public readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
         private readonly static DateTime epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         public readonly static string errorFile = "FLogS_ERROR.txt";
+        public static bool plaintext = true;
         public static string lastException = string.Empty;
         public static uint lastTimestamp;
         public readonly static string[] prefixes = { "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q" }; // Always futureproof...

@@ -1,3 +1,6 @@
+# 1.1.0 - 25/01/2024
+- HTML output! At long last. It's still experimental, though.
+
 # 1.0.9.2 - 26/12/2023
 - Empty strings are now handled in a more memory-safe way.
 - Progress updates are now more efficient, leading to a minor speedup in bulk translations.

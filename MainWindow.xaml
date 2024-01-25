@@ -57,9 +57,13 @@
                                     <DatePicker x:Name="BeforeDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                                 </StackPanel>
                             </StackPanel>
-                            <ComboBox x:Name="SaveTruncated" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,40,0,0" IsEnabled="True" SelectionChanged="ComboBox_Update">
+                            <ComboBox x:Name="SaveTruncated" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,40,0,0" IsEnabled="True" SelectionChanged="ComboBoxTruncated_Update">
                                 <ComboBoxItem x:Name="DNSNonIntact" IsSelected="True">Do not save non-intact messages</ComboBoxItem>
                                 <ComboBoxItem x:Name="SNonIntact">Save non-intact messages</ComboBoxItem>
+                            </ComboBox>
+                            <ComboBox x:Name="SaveFormat" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,40,0,0" IsEnabled="True" SelectionChanged="ComboBoxFormat_Update">
+                                <ComboBoxItem x:Name="SaveText" IsSelected="True">Save to plaintext</ComboBoxItem>
+                                <ComboBoxItem x:Name="SaveHTML">Save to HTML</ComboBoxItem>
                             </ComboBox>
                         </StackPanel>
                     </Grid>
@@ -86,7 +90,7 @@
                                     <ProgressBar x:Name="FileProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                                 </StackPanel>
                             </Grid>
-                            <Label x:Name="FileVersionNumber" Content="FLogS — Version 1.0.9.2 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
+                            <Label x:Name="FileVersionNumber" Content="FLogS — Version 1.1.0 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -139,9 +143,13 @@
                                     <DatePicker x:Name="DirectoryBeforeDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                                 </StackPanel>
                             </StackPanel>
-                            <ComboBox x:Name="DirectorySaveTruncated" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,40,0,0" IsEnabled="True" SelectionChanged="ComboBox_Update">
+                            <ComboBox x:Name="DirectorySaveTruncated" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,40,0,0" IsEnabled="True" SelectionChanged="ComboBoxTruncated_Update">
                                 <ComboBoxItem x:Name="DirectoryDNSNonIntact" IsSelected="True">Do not save non-intact messages</ComboBoxItem>
                                 <ComboBoxItem x:Name="DirectorySNonIntact">Save non-intact messages</ComboBoxItem>
+                            </ComboBox>
+                            <ComboBox x:Name="DirectorySaveFormat" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,40,0,0" IsEnabled="True" SelectionChanged="ComboBoxFormat_Update">
+                                <ComboBoxItem x:Name="DirectorySaveText" IsSelected="True">Save to plaintext</ComboBoxItem>
+                                <ComboBoxItem x:Name="DirectorySaveHTML">Save to HTML</ComboBoxItem>
                             </ComboBox>
                         </StackPanel>
                     </Grid>
@@ -168,7 +176,7 @@
                                     <ProgressBar x:Name="DirectoryProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                                 </StackPanel>
                             </Grid>
-                            <Label x:Name="DirectoryVersionNumber" Content="FLogS — Version 1.0.9.2 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
+                            <Label x:Name="DirectoryVersionNumber" Content="FLogS — Version 1.1.0 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -206,29 +214,33 @@
                                 <Button x:Name="SrcPhraseButton" Width="20" Height="20" HorizontalAlignment="Center" Margin="-15,0,10,0" Background="Beige" IsEnabled="True" Click="SrcPhraseButton_Click" Content="..."/>
                                 <TextBox x:Name="PhraseSource" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
                             </StackPanel>
-                            <Label x:Name="PhraseOutputLabel" FontFamily="Arial" FontSize="14" Width="300" Height="26" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Margin="15,20,0,0" Content="Path to Destination Log Directory"/>
+                            <Label x:Name="PhraseOutputLabel" FontFamily="Arial" FontSize="14" Width="300" Height="26" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Margin="15,10,0,0" Content="Path to Destination Log Directory"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <Button x:Name="DstPhraseButton" Width="20" Height="20" HorizontalAlignment="Center" Margin="-15,0,10,0" Background="Beige" IsEnabled="True" Click="DstPhraseButton_Click" Content="..."/>
                                 <TextBox x:Name="PhraseOutput" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
                             </StackPanel>
-                            <Label x:Name="PhraseSearchLabel" FontFamily="Arial" FontSize="14" Width="300" Height="26" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Margin="15,20,0,0" Content="Target Word or Phrase"/>
+                            <Label x:Name="PhraseSearchLabel" FontFamily="Arial" FontSize="14" Width="300" Height="26" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Margin="15,10,0,0" Content="Target Word or Phrase"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <CheckBox x:Name="RegexCheckBox" Width="16" Height="16" HorizontalAlignment="Center" Margin="-12,0,10,0" Background="Beige" Checked="TextboxUpdated" Unchecked="TextboxUpdated" IsEnabled="True" IsChecked="False"/>
                                 <TextBox x:Name="PhraseSearch" Width="300" Height="20" HorizontalAlignment="Center" Margin="2,0,0,0" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="20,5,0,0">
                                 <StackPanel>
-                                    <Label x:Name="PhraseAfterDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages after..."/>
+                                    <Label x:Name="PhraseAfterDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,20,0,0" Foreground="Black" Content="Select messages after..."/>
                                     <DatePicker x:Name="PhraseAfterDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                                 </StackPanel>
                                 <StackPanel Margin="25,0,0,0">
-                                    <Label x:Name="PhraseBeforeDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages before..."/>
+                                    <Label x:Name="PhraseBeforeDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,20,0,0" Foreground="Black" Content="Select messages before..."/>
                                     <DatePicker x:Name="PhraseBeforeDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                                 </StackPanel>
                             </StackPanel>
-                            <ComboBox x:Name="PhraseSaveTruncated" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,30,0,0" IsEnabled="True" SelectionChanged="ComboBox_Update">
+                            <ComboBox x:Name="PhraseSaveTruncated" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,30,0,0" IsEnabled="True" SelectionChanged="ComboBoxTruncated_Update">
                                 <ComboBoxItem x:Name="PhraseDNSNonIntact" IsSelected="True">Do not save non-intact messages</ComboBoxItem>
                                 <ComboBoxItem x:Name="PhraseSNonIntact">Save non-intact messages</ComboBoxItem>
+                            </ComboBox>
+                            <ComboBox x:Name="PhraseSaveFormat" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,30,0,0" IsEnabled="True" SelectionChanged="ComboBoxFormat_Update">
+                                <ComboBoxItem x:Name="PhraseSaveText" IsSelected="True">Save to plaintext</ComboBoxItem>
+                                <ComboBoxItem x:Name="PhraseSaveHTML">Save to HTML</ComboBoxItem>
                             </ComboBox>
                         </StackPanel>
                     </Grid>
@@ -255,7 +267,7 @@
                                     <ProgressBar x:Name="PhraseProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                                 </StackPanel>
                             </Grid>
-                            <Label x:Name="PhraseVersionNumber" Content="FLogS — Version 1.0.9.2 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
+                            <Label x:Name="PhraseVersionNumber" Content="FLogS — Version 1.1.0 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -282,7 +294,7 @@
                             <Bold>FLogS</Bold> cannot repair log corruption, but is capable of scanning a user's logs and picking out messages that remain intact, saving them elsewhere in plaintext format.<LineBreak/><LineBreak/>
                             <Bold>FLogS</Bold> does not distinguish partially from fully corrupted data.
                             An option is provided to save corrupted data in case it contains something readable, but by default, <Bold>FLogS</Bold> will only save what is entirely clean.<LineBreak/>
-                            The program will note in its output where some data could not be read - typically, it's only a few bytes at a time.<LineBreak/>
+                            Viewing HTML output can be very resource-intensive if the source file is particularly large. Take caution when translating very old logs to HTML format.<LineBreak/>
                             <Span x:Name="ADLWarning" Foreground="Red"><Bold>FLogS</Bold> is not a substitute for ADL</Span>: Plaintext logs generated by this program <Italic>cannot</Italic> be accepted by F-List staff in case of a dispute, even if the source file is completely intact.
                             </TextBlock>
                         </StackPanel>
@@ -298,7 +310,8 @@
                             Or, you may enter a path manually.<LineBreak/>
                             Select a destination file or folder by clicking the second "..." button or entering a manual path.<LineBreak/>
                             You may optionally enter an inclusive range of dates to scan for messages - <Bold>FLogS</Bold> will discard messages outside this range.<LineBreak/>
-                            Finally, hit the Run button!<LineBreak/><LineBreak/>
+                            You may also choose whether to save to plaintext or to HTML format.<LineBreak/>
+                                <LineBreak/>
                             <Bold>For advanced searching:</Bold><LineBreak/>
                             Select the <Bold>Phrase</Bold> tab at the top.<LineBreak/>
                             Follow the above procedure, and enter a word or phrase to search for in the labelled text box.<LineBreak/>
@@ -310,7 +323,7 @@
                     </Grid>
                     <Grid Grid.Row="1" Grid.Column="1" VerticalAlignment="Bottom" Margin="2,2">
                         <StackPanel Background="LightGray" Margin="2,2">
-                            <Label x:Name="HelpVersionNumber" Content="FLogS — Version 1.0.9.2 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
+                            <Label x:Name="HelpVersionNumber" Content="FLogS — Version 1.1.0 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>

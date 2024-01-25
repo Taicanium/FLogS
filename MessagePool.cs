@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -29,10 +30,51 @@ namespace FLogS
         public static bool saveTruncated;
         private static bool scanIDX;
         public static string? srcFile;
+        private static readonly Dictionary<string, string> tagClosings = new()
+        {
+            { "b", "</b>" },
+            { "i", "</i>" },
+            { "s", "</s>" },
+            { "u", "</u>" },
+            { "sub", "</sub>" },
+            { "sup", "</sup>" },
+            { "big", "</span>" },
+            { "noparse", "</script>" },
+            { "url", "</a>" },
+            { "icon", ".png\" /></a>" },
+            { "eicon", ".gif\" />" },
+            { "user", "</span></a>" },
+            { "spoiler", "</span>" },
+            { "color", "</span>" },
+        };
+        private static readonly Dictionary<string, int> tagCounts = new()
+        {
+            { "b", 0 },
+            { "i", 0 },
+            { "s", 0 },
+            { "u", 0 },
+            { "sub", 0 },
+            { "sup", 0 },
+            { "big", 0 },
+            { "noparse", 0 },
+            { "url", 0 },
+            { "icon", 0 },
+            { "eicon", 0 },
+            { "user", 0 },
+            { "spoiler", 0 },
+            { "color", 0 },
+        };
         public static ByteCount totalSize;
         public static ByteCount truncatedBytes;
         public static uint truncatedMessages;
         public static ByteCount unreadBytes;
+
+        private static void AdjustMessageData(ref string messageIn, string addition, int index, ref int adjustment)
+        {
+            int iStrMod = addition.Length;
+            adjustment += iStrMod;
+            messageIn = messageIn.Insert(index + adjustment - iStrMod, addition);
+        }
 
         public static void BatchProcess(object? sender, DoWorkEventArgs e)
         {
@@ -44,7 +86,11 @@ namespace FLogS
                 foreach (string logfile in files)
                 {
                     srcFile = logfile;
-                    destFile = Path.Join(destDir, Path.GetFileNameWithoutExtension(srcFile) + ".txt");
+                    destFile = Path.Join(destDir, Path.GetFileNameWithoutExtension(srcFile));
+                    if (!Common.plaintext)
+                        destFile += ".html";
+                    else
+                        destFile += ".txt";
                     lastPosition = 0U;
 
                     DoWork(sender, e);
@@ -99,6 +145,28 @@ namespace FLogS
                 Common.lastTimestamp = 0;
                 DateTime lastUpdate = DateTime.Now;
 
+                if (!Common.plaintext) // HTML.
+                    dstFS.Write(@"
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                        <meta charset=""UTF-8"" />
+                        <title>F-Chat Exported Logs</title>
+                        <style>
+                        body { padding: 10px; background-color: #191932; font-family: Arial; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #ededf6; text-align: left; }
+                        script { display: block; }
+                        .profile { color: #6565b2; text-decoration: none; }
+                        .url { color: #FFFFFF; text-decoration: underline; }
+                        .warning { color: #909090; }
+                        .timestamp { color: #C0C0C0; }
+                        .eicon { width: 50px. height: 50px; vertical-align: middle; display: inline; }
+                        .spoiler { background-color: #0D0D0F; color: #0D0D0F; }
+                        .spoiler:hover { background-color: #0D0D0F; color: #FFFFFF; }
+                        </style>
+                        </head>
+                        <body>
+                        ");
+
                 while (srcFS.Position < srcFS.Length - 1)
                 {
                     TranslateMessage(srcFS, dstFS);
@@ -121,6 +189,12 @@ namespace FLogS
                             break;
                     }
                 }
+
+                if (!Common.plaintext) // HTML.
+                    dstFS.Write(@"
+                        </body>
+                        </html>
+                        ");
             }
 
             srcFS.Close();
@@ -223,6 +297,11 @@ namespace FLogS
             bool withinRange = true;
             bool written = false;
 
+            foreach (string key in tagCounts.Keys)
+            {
+                tagCounts[key] = 0;
+            }
+
             try
             {
                 discrepancy = (int)srcFS.Position - (int)lastPosition; // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
@@ -237,7 +316,11 @@ namespace FLogS
                 {
                     Common.lastTimestamp = timestamp;
                     thisDT = Common.DTFromStamp(timestamp);
+                    if (!Common.plaintext)
+                        messageData.Add("<span class=\"timestamp\">");
                     messageData.Add("[" + thisDT.ToString(Common.dateFormat) + "]");
+                    if (!Common.plaintext)
+                        messageData[^1] += "</span>";
                     if (thisDT.CompareTo(dtBefore) > 0 || thisDT.CompareTo(dtAfter) < 0)
                         withinRange = false;
                 }
@@ -245,7 +328,11 @@ namespace FLogS
                 {
                     corruptTimestamps++;
                     intact = false;
+                    if (!Common.plaintext)
+                        messageData.Add("<span class=\"warning\">");
                     messageData.Add("[BAD TIMESTAMP]");
+                    if (!Common.plaintext)
+                        messageData[^1] += "</span>";
                     if (timestamp > 0 && timestamp < Common.UNIXTimestamp())
                         Common.lastTimestamp = timestamp; // On the very off chance an otherwise-valid set of messages was made non-sequential, say, by F-Chat's client while trying to repair corruption.
                                                           // This should never happen, but you throw 100% of the exceptions you don't catch.
@@ -266,11 +353,22 @@ namespace FLogS
                         intact = false;
                         truncatedBytes += result;
                         truncatedMessages++;
+                        if (!Common.plaintext)
+                            messageData[^1] += "<span class=\"warning\">";
                         messageData.Add("[TRUNCATED MESSAGE]");
+                        if (!Common.plaintext)
+                            messageData[^1] += "</span>";
                     }
 
                     profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
-                    messageData.Add(profileName);
+                    if (!Common.plaintext)
+                    {
+                        messageData.Add("<a class=\"profile\" target=\"_blank\" href=\"https://f-list.net/c/" + profileName + "\">" + profileName + "</a>");
+                        if (msId == MessageType.Me)
+                            messageData[^1] = "*" + messageData[^1];
+                    }
+                    else
+                        messageData.Add(profileName);
                     switch (msId)
                     {
                         case MessageType.EOF:
@@ -298,7 +396,11 @@ namespace FLogS
                 {
                     emptyMessages++;
                     intact = false;
+                    if (!Common.plaintext)
+                        messageData[^1] += "<span class=\"warning\">";
                     messageData.Add("[EMPTY MESSAGE]");
+                    if (!Common.plaintext)
+                        messageData[^1] += "</span>";
                 }
                 else
                 {
@@ -308,7 +410,11 @@ namespace FLogS
                     {
                         emptyMessages++;
                         intact = false;
+                        if (!Common.plaintext)
+                            messageData[^1] += "<span class=\"warning\">";
                         messageData.Add("[EMPTY MESSAGE]");
+                        if (!Common.plaintext)
+                            messageData[^1] += "</span>";
                     }
                     else
                     {
@@ -318,7 +424,11 @@ namespace FLogS
                             intact = false;
                             truncatedBytes += result;
                             truncatedMessages++;
+                            if (!Common.plaintext)
+                                messageData[^1] += "<span class=\"warning\">";
                             messageData.Add("[TRUNCATED MESSAGE]");
+                            if (!Common.plaintext)
+                                messageData[^1] += "</span>";
                         }
                         messageData.Add(Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length));
                     }
@@ -342,10 +452,20 @@ namespace FLogS
 
                     if (lastDiscrepancy > 0)
                     {
+                        if (!Common.plaintext)
+                            dstFS.Write("<span class=\"warning\">");
                         dstFS.Write(string.Format("({0:#,0} missing bytes)", lastDiscrepancy));
+                        if (!Common.plaintext)
+                            dstFS.Write("</span><br />");
                         dstFS.Write(dstFS.NewLine);
                     }
+                    if (!Common.plaintext)
+                        messageOut = TranslateTags(messageOut);
+                    messageOut = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(messageOut)); // There's an odd quirk with East Asian printable characters that requires us to reformat them once.
+                    messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Once more, remove everything that's not a printable, newline, or format character.
                     dstFS.Write(messageOut);
+                    if (!Common.plaintext)
+                        dstFS.Write("<br />");
                     dstFS.Write(dstFS.NewLine);
                     lastDiscrepancy = 0;
                     written = true;
@@ -397,6 +517,263 @@ namespace FLogS
             }
 
             return written;
+        }
+
+        private static string TranslateTags(string message)
+        {
+            int anchorIndex = 0;
+            int indexAdj = 0;
+            string lastTag;
+            string messageOut = message;
+            bool noParse = false;
+            Stack<string> tagHistory = new();
+            MatchCollection tags = Regex.Matches(messageOut, @"\[/*(\p{L}+)(?:=+([^\p{Co}\]]*))*?\]");
+            string URL = "";
+
+            for (int i = 0; i < tags.Count; i++)
+            {
+                string arg = "";
+                string tag = tags[i].Groups[1].Value.ToLower();
+                bool validTag = true;
+                if (tags[i].Groups.Count > 2)
+                    arg = tags[i].Groups[2].Value;
+
+                if (noParse)
+                {
+                    if (tag.Equals("noparse"))
+                    {
+                        AdjustMessageData(ref messageOut, "</script>", tags[i].Index, ref indexAdj);
+                        noParse = false;
+                        continue;
+                    }
+                    AdjustMessageData(ref messageOut, "\u200B", tags[i].Index + 1, ref indexAdj);
+                    continue;
+                }
+
+                switch (tag)
+                {
+                    case "b":
+                    case "i":
+                    case "s":
+                    case "u":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            {
+                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                tagCounts[lastTag]++;
+                            }
+                            AdjustMessageData(ref messageOut, "</" + tag + ">", tags[i].Index, ref indexAdj);
+                            break;
+                        }
+                        AdjustMessageData(ref messageOut, "<" + tag + ">", tags[i].Index, ref indexAdj);
+                        tagHistory.Push(tag);
+                        break;
+                    case "big":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            {
+                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                tagCounts[lastTag]++;
+                            }
+                            AdjustMessageData(ref messageOut, "</span>", tags[i].Index, ref indexAdj);
+                            break;
+                        }
+                        AdjustMessageData(ref messageOut, "<span style=\"font-size: 1.5rem\">", tags[i].Index, ref indexAdj);
+                        tagHistory.Push(tag);
+                        break;
+                    case "sub":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            {
+                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                tagCounts[lastTag]++;
+                            }
+                            AdjustMessageData(ref messageOut, "</sub>", tags[i].Index, ref indexAdj);
+                            break;
+                        }
+                        AdjustMessageData(ref messageOut, "<sub>", tags[i].Index, ref indexAdj);
+                        tagHistory.Push(tag);
+                        break;
+                    case "sup":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            {
+                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                tagCounts[lastTag]++;
+                            }
+                            AdjustMessageData(ref messageOut, "</sup>", tags[i].Index, ref indexAdj);
+                            break;
+                        }
+                        AdjustMessageData(ref messageOut, "<sup>", tags[i].Index, ref indexAdj);
+                        tagHistory.Push(tag);
+                        break;
+                    case "noparse":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            {
+                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                tagCounts[lastTag]++;
+                            }
+                            AdjustMessageData(ref messageOut, "</script>", tags[i].Index, ref indexAdj);
+                            noParse = false;
+                            break;
+                        }
+                        AdjustMessageData(ref messageOut, "<script type=\"text/plain\">", tags[i].Index, ref indexAdj);
+                        noParse = true;
+                        tagHistory.Push(tag);
+                        break;
+                    case "url":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            {
+                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                tagCounts[lastTag]++;
+                            }
+                            if (anchorIndex + indexAdj + URL.Length + 6 == tags[i].Index + indexAdj) // If the url tag contained a link but no label text, the client's practice is to display the URL itself.
+                                                                                                     // The extra '6' here is the five '[url=' characters plus the closing bracket.
+                                AdjustMessageData(ref messageOut, URL, tags[i].Index, ref indexAdj);
+                            AdjustMessageData(ref messageOut, "</a>", tags[i].Index, ref indexAdj);
+                            break;
+                        }
+                        AdjustMessageData(ref messageOut, "<a class=\"url\" target=\"_blank\" href=\"" + arg + "\">", tags[i].Index, ref indexAdj); // Yes, the arg can be empty. That's okay.
+                        anchorIndex = tags[i].Index;
+                        URL = arg;
+                        tagHistory.Push(tag);
+                        break;
+                    case "icon":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            URL = messageOut[(anchorIndex + 97)..(tags[i].Index + indexAdj)];
+                            AdjustMessageData(ref messageOut, "<a class=\"profile\" target=\"_blank\" href=\"https://f-list.net/c/" + URL + "\">", anchorIndex - indexAdj, ref indexAdj);
+                            AdjustMessageData(ref messageOut, ".png\" /></a>", tags[i].Index, ref indexAdj);
+                            messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),
+                                messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
+                                messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
+                            break;
+                        }
+                        anchorIndex = tags[i].Index + indexAdj;
+                        AdjustMessageData(ref messageOut, "<img class=\"eicon\" width=\"50px\" height=\"50px\" src=\"https://static.f-list.net/images/avatar/", tags[i].Index, ref indexAdj);
+                        tagHistory.Push(tag);
+                        break;
+                    case "eicon":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            AdjustMessageData(ref messageOut, ".gif\" />", tags[i].Index, ref indexAdj);
+                            messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),
+                                messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
+                                messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
+                            break;
+                        }
+                        anchorIndex = tags[i].Index + indexAdj;
+                        AdjustMessageData(ref messageOut, "<img class=\"eicon\" width=\"50px\" height=\"50px\" src=\"https://static.f-list.net/images/eicon/", tags[i].Index, ref indexAdj);
+                        tagHistory.Push(tag);
+                        break;
+                    case "user":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            URL = messageOut[(anchorIndex + 62)..(tags[i].Index + indexAdj)];
+                            AdjustMessageData(ref messageOut, "\">" + URL + "</a>", tags[i].Index, ref indexAdj);
+                            break;
+                        }
+                        anchorIndex = tags[i].Index + indexAdj;
+                        AdjustMessageData(ref messageOut, "<a class=\"profile\" target=\"_blank\" href=\"https://f-list.net/c/", tags[i].Index, ref indexAdj);
+                        tagHistory.Push(tag);
+                        break;
+                    case "spoiler":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            {
+                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                tagCounts[lastTag]++;
+                            }
+                            AdjustMessageData(ref messageOut, "</span>", tags[i].Index, ref indexAdj);
+                            break;
+                        }
+                        AdjustMessageData(ref messageOut, "<span class=\"spoiler\">", tags[i].Index, ref indexAdj);
+                        tagHistory.Push(tag);
+                        break;
+                    case "color":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            {
+                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                tagCounts[lastTag]++;
+                            }
+                            AdjustMessageData(ref messageOut, "</span>", tags[i].Index, ref indexAdj);
+                            break;
+                        }
+                        switch (arg)
+                        {
+                            case "black":
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #000000; text-shadow: 1px 1px 0 #FFFFFF, -1px 1px 0 #FFFFFF, -1px -1px 0 #FFFFFF, 1px -1px 0 #FFFFFF;\">", tags[i].Index, ref indexAdj);
+                                break;
+                            case "blue":
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #0000FF\">", tags[i].Index, ref indexAdj);
+                                break;
+                            case "brown":
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #8A6D3B\">", tags[i].Index, ref indexAdj);
+                                break;
+                            case "cyan":
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #00FFFF\">", tags[i].Index, ref indexAdj);
+                                break;
+                            case "gray":
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #B0B0B0\">", tags[i].Index, ref indexAdj);
+                                break;
+                            case "green":
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #00FF00\">", tags[i].Index, ref indexAdj);
+                                break;
+                            case "orange":
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #FFA500\">", tags[i].Index, ref indexAdj);
+                                break;
+                            case "pink":
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #FFC0CB\">", tags[i].Index, ref indexAdj);
+                                break;
+                            case "purple":
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #5B0CE6\">", tags[i].Index, ref indexAdj);
+                                break;
+                            case "red":
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #FF0000\">", tags[i].Index, ref indexAdj);
+                                break;
+                            case "yellow":
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #FFFF00\">", tags[i].Index, ref indexAdj);
+                                break;
+                            case "white":
+                            default:
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #FFFFFF\">", tags[i].Index, ref indexAdj);
+                                break;
+                        }
+                        tagHistory.Push(tag);
+                        break;
+                    default:
+                        validTag = false;
+                        break;
+                }
+                if (validTag)
+                    tagCounts[tag]++;
+            }
+            while (tagHistory.Count > 0)
+            {
+                lastTag = tagHistory.Pop();
+                if (tagCounts[lastTag] % 2 == 1 && lastTag.Equals("icon") == false && lastTag.Equals("eicon") == false)
+                {
+                    indexAdj = 0;
+                    AdjustMessageData(ref messageOut, tagClosings[lastTag], messageOut.Length, ref indexAdj);
+                }
+                tagCounts[lastTag]++;
+            }
+
+            messageOut = Regex.Replace(messageOut, @"\[/*\p{L}+=+[^\p{Co}\]]*\]", "");
+            messageOut = Regex.Replace(messageOut, @"\[/*\p{L}+\]", "");
+
+            return messageOut;
         }
     }
 }
