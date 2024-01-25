@@ -153,9 +153,9 @@ namespace FLogS
                         <meta charset=""UTF-8"" />
                         <title>F-Chat Exported Logs</title>
                         <style>
-                        body { padding: 10px; background-color: #191932; font-family: Arial; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #ededf6; text-align: left; }
+                        body { padding: 10px; background-color: #1A1930; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #EDEDF5; text-align: left; }
                         script { display: block; }
-                        .profile { color: #6565b2; text-decoration: none; }
+                        .profile { color: #6766AD; text-decoration: none; font-weight: bold; }
                         .url { color: #FFFFFF; text-decoration: underline; }
                         .warning { color: #909090; }
                         .timestamp { color: #C0C0C0; }
@@ -713,37 +713,37 @@ namespace FLogS
                         switch (arg)
                         {
                             case "black":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #000000; text-shadow: 1px 1px 0 #FFFFFF, -1px 1px 0 #FFFFFF, -1px -1px 0 #FFFFFF, 1px -1px 0 #FFFFFF;\">", tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #000000; text-shadow: 1px 1px 0 #8887BF, -1px 1px 0 #8887BF, -1px -1px 0 #8887BF, 1px -1px 0 #8887BF;\">", tags[i].Index, ref indexAdj);
                                 break;
                             case "blue":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #0000FF\">", tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #3D67F7\">", tags[i].Index, ref indexAdj);
                                 break;
                             case "brown":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #8A6D3B\">", tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #836E42\">", tags[i].Index, ref indexAdj);
                                 break;
                             case "cyan":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #00FFFF\">", tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #8BFCFD\">", tags[i].Index, ref indexAdj);
                                 break;
                             case "gray":
                                 AdjustMessageData(ref messageOut, "<span style=\"color: #B0B0B0\">", tags[i].Index, ref indexAdj);
                                 break;
                             case "green":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #00FF00\">", tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #87FB4A\">", tags[i].Index, ref indexAdj);
                                 break;
                             case "orange":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #FFA500\">", tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #E46F2B\">", tags[i].Index, ref indexAdj);
                                 break;
                             case "pink":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #FFC0CB\">", tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #EB9ECA\">", tags[i].Index, ref indexAdj);
                                 break;
                             case "purple":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #5B0CE6\">", tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #8B3EF6\">", tags[i].Index, ref indexAdj);
                                 break;
                             case "red":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #FF0000\">", tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #E03121\">", tags[i].Index, ref indexAdj);
                                 break;
                             case "yellow":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #FFFF00\">", tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #FDFE52\">", tags[i].Index, ref indexAdj);
                                 break;
                             case "white":
                             default:
