@@ -90,7 +90,7 @@
                                     <ProgressBar x:Name="FileProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                                 </StackPanel>
                             </Grid>
-                            <Label x:Name="FileVersionNumber" Content="FLogS — Version 1.1.0 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
+                            <Label x:Name="FileVersionNumber" Content="FLogS — Version 1.1.2 © Taica, 2024" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -176,7 +176,7 @@
                                     <ProgressBar x:Name="DirectoryProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                                 </StackPanel>
                             </Grid>
-                            <Label x:Name="DirectoryVersionNumber" Content="FLogS — Version 1.1.0 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
+                            <Label x:Name="DirectoryVersionNumber" Content="FLogS — Version 1.1.2 © Taica, 2024" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -267,7 +267,7 @@
                                     <ProgressBar x:Name="PhraseProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                                 </StackPanel>
                             </Grid>
-                            <Label x:Name="PhraseVersionNumber" Content="FLogS — Version 1.1.0 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
+                            <Label x:Name="PhraseVersionNumber" Content="FLogS — Version 1.1.2 © Taica, 2024" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -323,7 +323,7 @@
                     </Grid>
                     <Grid Grid.Row="1" Grid.Column="1" VerticalAlignment="Bottom" Margin="2,2">
                         <StackPanel Background="LightGray" Margin="2,2">
-                            <Label x:Name="HelpVersionNumber" Content="FLogS — Version 1.1.0 © Taica, 2023" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
+                            <Label x:Name="HelpVersionNumber" Content="FLogS — Version 1.1.2 © Taica, 2024" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>

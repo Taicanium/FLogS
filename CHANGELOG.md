@@ -1,3 +1,12 @@
+# 1.1.2 - 27/01/2024
+- We now prevent the application from reading files with the same name but different extensions, to prevent overlap in the output.
+- Fixed icons and eicons not closing properly in HTML output.
+- More minor HTML styling changes.
+
+# 1.1.1 - 25/01/2024
+- Unlabeled minor release.
+- Day-one changes to the styling of HTML outputs.
+
 # 1.1.0 - 25/01/2024
 - HTML output! At long last. It's still experimental, though.
 

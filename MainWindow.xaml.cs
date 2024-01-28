@@ -292,6 +292,8 @@ namespace FLogS
                 PhraseSaveFormat.SelectedIndex = 1;
             if (!overrideFormat && FileOutput.Text.EndsWith(".html"))
                 SaveFormat.SelectedIndex = 1;
+
+            Common.plaintext = DirectorySaveFormat.SelectedIndex != 1;
         }
 
         private void PhraseRunButton_Click(object? sender, RoutedEventArgs e)
@@ -457,11 +459,16 @@ namespace FLogS
                 {
                     foreach (string file in DirectorySource.Text.Split(';'))
                     {
+                        string outFile = Path.Join(DirectoryOutput.Text, Path.GetFileNameWithoutExtension(file));
+                        if (!Common.plaintext)
+                            outFile += ".html";
+                        else
+                            outFile += ".txt";
                         if (!File.Exists(file))
                             directoryReadyToRun = 5;
-                        else if (file.Equals(Path.Join(DirectoryOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
+                        else if (file.Equals(outFile))
                             directoryReadyToRun = 6;
-                        else if (directoryReadyToRun == 0 && File.Exists(Path.Join(DirectoryOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
+                        else if (directoryReadyToRun == 0 && File.Exists(outFile))
                             directoryReadyToRun = 0x11;
                     }
                 }
@@ -497,11 +504,16 @@ namespace FLogS
                 {
                     foreach (string file in PhraseSource.Text.Split(';'))
                     {
+                        string outFile = Path.Join(PhraseOutput.Text, Path.GetFileNameWithoutExtension(file));
+                        if (!Common.plaintext)
+                            outFile += ".html";
+                        else
+                            outFile += ".txt";
                         if (!File.Exists(file))
                             phraseReadyToRun = 5;
-                        else if (file.Equals(Path.Join(PhraseOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
+                        else if (file.Equals(outFile))
                             phraseReadyToRun = 6;
-                        else if (phraseReadyToRun == 0 && File.Exists(Path.Join(PhraseOutput.Text, Path.GetFileNameWithoutExtension(file) + ".txt")))
+                        else if (phraseReadyToRun == 0 && File.Exists(outFile))
                             phraseReadyToRun = 0x11;
                     }
                 }

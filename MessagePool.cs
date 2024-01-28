@@ -21,6 +21,7 @@ namespace FLogS
         public static DateTime? dtAfter;
         public static DateTime? dtBefore;
         public static uint emptyMessages;
+        private static List<string> filesDone;
         public static ByteCount intactBytes;
         public static uint intactMessages;
         private static int lastDiscrepancy;
@@ -81,12 +82,18 @@ namespace FLogS
             try
             {
                 string[]? files = (string[]?)e.Argument;
+                filesDone = new();
                 scanIDX = true;
 
                 foreach (string logfile in files)
                 {
                     srcFile = logfile;
-                    destFile = Path.Join(destDir, Path.GetFileNameWithoutExtension(srcFile));
+                    string fileName = Path.GetFileNameWithoutExtension(srcFile);
+                    if (filesDone.Contains(fileName))
+                        continue;
+                    filesDone.Add(fileName);
+
+                    destFile = Path.Join(destDir, fileName);
                     if (!Common.plaintext)
                         destFile += ".html";
                     else
@@ -311,14 +318,19 @@ namespace FLogS
                 if (srcFS.Read(idBuffer, 0, 4) < 4) // Read the timestamp.
                     return written;
 
+                if (!Common.plaintext)
+                    messageData.Add("<br />\n");
+                else
+                    messageData.Add("\n");
+
                 timestamp = Common.BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
                 if (Common.IsValidTimestamp(timestamp))
                 {
                     Common.lastTimestamp = timestamp;
                     thisDT = Common.DTFromStamp(timestamp);
                     if (!Common.plaintext)
-                        messageData.Add("<span class=\"timestamp\">");
-                    messageData.Add("[" + thisDT.ToString(Common.dateFormat) + "]");
+                        messageData[^1] += "<span class=\"timestamp\">";
+                    messageData[^1] += "[" + thisDT.ToString(Common.dateFormat) + "]";
                     if (!Common.plaintext)
                         messageData[^1] += "</span>";
                     if (thisDT.CompareTo(dtBefore) > 0 || thisDT.CompareTo(dtAfter) < 0)
@@ -329,8 +341,8 @@ namespace FLogS
                     corruptTimestamps++;
                     intact = false;
                     if (!Common.plaintext)
-                        messageData.Add("<span class=\"warning\">");
-                    messageData.Add("[BAD TIMESTAMP]");
+                        messageData[^1] += "<span class=\"warning\">";
+                    messageData[^1] += "[BAD TIMESTAMP]";
                     if (!Common.plaintext)
                         messageData[^1] += "</span>";
                     if (timestamp > 0 && timestamp < Common.UNIXTimestamp())
@@ -464,9 +476,6 @@ namespace FLogS
                     messageOut = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(messageOut)); // There's an odd quirk with East Asian printable characters that requires us to reformat them once.
                     messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Once more, remove everything that's not a printable, newline, or format character.
                     dstFS.Write(messageOut);
-                    if (!Common.plaintext)
-                        dstFS.Write("<br />");
-                    dstFS.Write(dstFS.NewLine);
                     lastDiscrepancy = 0;
                     written = true;
                 }
@@ -655,6 +664,8 @@ namespace FLogS
                             messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),
                                 messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
                                 messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
+                            if (tagHistory.Peek().Equals(tag))
+                                tagHistory.Pop();
                             break;
                         }
                         anchorIndex = tags[i].Index + indexAdj;
@@ -668,6 +679,8 @@ namespace FLogS
                             messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),
                                 messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
                                 messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
+                            if (tagHistory.Peek().Equals(tag))
+                                tagHistory.Pop();
                             break;
                         }
                         anchorIndex = tags[i].Index + indexAdj;
