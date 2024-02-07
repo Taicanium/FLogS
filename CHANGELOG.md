@@ -1,3 +1,7 @@
+# 1.1.2.1 - 06/02/2024
+- HTML entities are now securely handled. Now such things as <w< won't cause cascading lack of tag closures.
+- Fixed an issue causing tags to reopen if they were manually (and mistakenly) closed twice by users. Niche error, but one that has been shown to happen.
+
 # 1.1.2 - 27/01/2024
 - We now prevent the application from reading files with the same name but different extensions, to prevent overlap in the output.
 - Fixed icons and eicons not closing properly in HTML output.

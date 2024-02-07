@@ -22,6 +22,19 @@ namespace FLogS
         public static DateTime? dtBefore;
         public static uint emptyMessages;
         private static List<string> filesDone;
+        private static readonly Dictionary<string, string> htmlEntities = new()
+        {
+            { "\"", "&quot;" },
+            { "\'", "&apos;" },
+            { "<", "&lt;" },
+            { ">", "&gt;" },
+            { "¢", "&cent;" },
+            { "£", "&pound;" },
+            { "¥", "&yen;" },
+            { "€", "&euro;" },
+            { "©", "&copu;" },
+            { "®", "&reg;" },
+        };
         public static ByteCount intactBytes;
         public static uint intactMessages;
         private static int lastDiscrepancy;
@@ -305,9 +318,7 @@ namespace FLogS
             bool written = false;
 
             foreach (string key in tagCounts.Keys)
-            {
                 tagCounts[key] = 0;
-            }
 
             try
             {
@@ -381,6 +392,7 @@ namespace FLogS
                     }
                     else
                         messageData.Add(profileName);
+
                     switch (msId)
                     {
                         case MessageType.EOF:
@@ -442,7 +454,11 @@ namespace FLogS
                             if (!Common.plaintext)
                                 messageData[^1] += "</span>";
                         }
-                        messageData.Add(Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length));
+
+                        messageOut = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
+                        foreach (KeyValuePair<string, string> entity in htmlEntities)
+                            messageOut = Regex.Replace(messageOut, entity.Key, entity.Value);
+                        messageData.Add(messageOut);
                     }
                 }
 
@@ -473,8 +489,10 @@ namespace FLogS
                     }
                     if (!Common.plaintext)
                         messageOut = TranslateTags(messageOut);
+
                     messageOut = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(messageOut)); // There's an odd quirk with East Asian printable characters that requires us to reformat them once.
                     messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Once more, remove everything that's not a printable, newline, or format character.
+
                     dstFS.Write(messageOut);
                     lastDiscrepancy = 0;
                     written = true;
@@ -488,6 +506,7 @@ namespace FLogS
                     nextByte = srcFS.ReadByte();
                     if (nextByte == -1)
                         return written;
+
                     srcFS.Seek(-6, SeekOrigin.Current);
                     if (nextByte < 7)
                     {
@@ -506,6 +525,7 @@ namespace FLogS
                         nextByte = srcFS.ReadByte();
                         if (nextByte == -1)
                             return written;
+
                         srcFS.Seek(-7, SeekOrigin.Current);
                         srcFS.ReadByte();
                         srcFS.ReadByte();
@@ -532,6 +552,7 @@ namespace FLogS
         {
             int anchorIndex = 0;
             int indexAdj = 0;
+            bool isClosing = false;
             string lastTag;
             string messageOut = message;
             bool noParse = false;
@@ -547,6 +568,9 @@ namespace FLogS
                 if (tags[i].Groups.Count > 2)
                     arg = tags[i].Groups[2].Value;
 
+                if (tags[i].Value.Substring(1, 1).Equals("/"))
+                    isClosing = true;
+
                 if (noParse)
                 {
                     if (tag.Equals("noparse"))
@@ -558,6 +582,9 @@ namespace FLogS
                     AdjustMessageData(ref messageOut, "\u200B", tags[i].Index + 1, ref indexAdj);
                     continue;
                 }
+
+                if (isClosing && tagCounts.ContainsKey(tag) && tagCounts[tag] % 2 == 0)
+                    continue;
 
                 switch (tag)
                 {
