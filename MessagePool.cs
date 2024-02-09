@@ -456,8 +456,9 @@ namespace FLogS
                         }
 
                         messageOut = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
-                        foreach (KeyValuePair<string, string> entity in htmlEntities)
-                            messageOut = Regex.Replace(messageOut, entity.Key, entity.Value);
+                        if (!Common.plaintext)
+                            foreach (KeyValuePair<string, string> entity in htmlEntities)
+                                messageOut = Regex.Replace(messageOut, entity.Key, entity.Value);
                         messageData.Add(messageOut);
                     }
                 }

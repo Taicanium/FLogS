@@ -1,3 +1,6 @@
+# 1.1.2.2 - 09/02/2024
+- Quick fix: HTML entities are no longer handled in plaintext output. Oops.
+
 # 1.1.2.1 - 06/02/2024
 - HTML entities are now securely handled. Now such things as <w< won't cause cascading lack of tag closures.
 - Fixed an issue causing tags to reopen if they were manually (and mistakenly) closed twice by users. Niche error, but one that has been shown to happen.
