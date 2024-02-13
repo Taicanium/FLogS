@@ -21,7 +21,7 @@ namespace FLogS
         public static DateTime? dtAfter;
         public static DateTime? dtBefore;
         public static uint emptyMessages;
-        private static List<string> filesDone;
+        private static List<string>? filesDone;
         private static readonly Dictionary<string, string> htmlEntities = new()
         {
             { "\"", "&quot;" },
@@ -34,6 +34,7 @@ namespace FLogS
             { "€", "&euro;" },
             { "©", "&copu;" },
             { "®", "&reg;" },
+            { "\n", "<br />" },
         };
         public static ByteCount intactBytes;
         public static uint intactMessages;
@@ -167,25 +168,24 @@ namespace FLogS
 
                 if (!Common.plaintext) // HTML.
                     dstFS.Write(@"
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                        <meta charset=""UTF-8"" />
-                        <title>F-Chat Exported Logs</title>
-                        <style>
-                        body { padding: 10px; background-color: #1A1930; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #EDEDF5; text-align: left; }
-                        script { display: block; }
-                        .profile { color: #6766AD; text-decoration: none; font-weight: bold; }
-                        .url { color: #FFFFFF; text-decoration: underline; }
-                        .warning { color: #909090; }
-                        .timestamp { color: #C0C0C0; }
-                        .eicon { width: 50px. height: 50px; vertical-align: middle; display: inline; }
-                        .spoiler { background-color: #0D0D0F; color: #0D0D0F; }
-                        .spoiler:hover { background-color: #0D0D0F; color: #FFFFFF; }
-                        </style>
-                        </head>
-                        <body>
-                        ");
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=""UTF-8"" />
+<title>F-Chat Exported Logs</title>
+<style>
+body { padding: 10px; background-color: #1A1930; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #EDEDF5; text-align: left; }
+script { display: block; }
+.profile { color: #6766AD; text-decoration: none; font-weight: bold; }
+.url { color: #FFFFFF; text-decoration: underline; }
+.warning { color: #909090; }
+.timestamp { color: #C0C0C0; }
+.eicon { width: 50px. height: 50px; vertical-align: middle; display: inline; }
+.spoiler { background-color: #0D0D0F; color: #0D0D0F; }
+.spoiler:hover { background-color: #0D0D0F; color: #FFFFFF; }
+</style>
+</head>
+<body>");
 
                 while (srcFS.Position < srcFS.Length - 1)
                 {
@@ -328,11 +328,8 @@ namespace FLogS
 
                 if (srcFS.Read(idBuffer, 0, 4) < 4) // Read the timestamp.
                     return written;
-
-                if (!Common.plaintext)
-                    messageData.Add("<br />\n");
-                else
-                    messageData.Add("\n");
+                
+                messageData.Add(string.Empty);
 
                 timestamp = Common.BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
                 if (Common.IsValidTimestamp(timestamp))
@@ -459,6 +456,8 @@ namespace FLogS
                         if (!Common.plaintext)
                             foreach (KeyValuePair<string, string> entity in htmlEntities)
                                 messageOut = Regex.Replace(messageOut, entity.Key, entity.Value);
+                        if (msId == MessageType.Me || msId == MessageType.DiceRoll)
+                            messageOut = messageOut.TrimStart();
                         messageData.Add(messageOut);
                     }
                 }
@@ -495,6 +494,9 @@ namespace FLogS
                     messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Once more, remove everything that's not a printable, newline, or format character.
 
                     dstFS.Write(messageOut);
+                    if (!Common.plaintext)
+                        dstFS.Write("<br />");
+                    dstFS.Write(dstFS.NewLine);
                     lastDiscrepancy = 0;
                     written = true;
                 }
@@ -553,7 +555,6 @@ namespace FLogS
         {
             int anchorIndex = 0;
             int indexAdj = 0;
-            bool isClosing = false;
             string lastTag;
             string messageOut = message;
             bool noParse = false;
@@ -565,6 +566,7 @@ namespace FLogS
             {
                 string arg = "";
                 string tag = tags[i].Groups[1].Value.ToLower();
+                bool isClosing = false;
                 bool validTag = true;
                 if (tags[i].Groups.Count > 2)
                     arg = tags[i].Groups[2].Value;

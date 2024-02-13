@@ -1,3 +1,7 @@
+# 1.1.2.3 - 12/02/2024
+- Fixed a major error whereby only the first tag in a message was handled in HTML format. Yes, really.
+- Newlines are now handled correctly in HTML output after being broken.
+
 # 1.1.2.2 - 09/02/2024
 - Quick fix: HTML entities are no longer handled in plaintext output. Oops.
 

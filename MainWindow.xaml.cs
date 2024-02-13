@@ -293,6 +293,13 @@ namespace FLogS
             if (!overrideFormat && FileOutput.Text.EndsWith(".html"))
                 SaveFormat.SelectedIndex = 1;
 
+            if (!overrideFormat && DirectoryOutput.Text.EndsWith(".txt"))
+                DirectorySaveFormat.SelectedIndex = 0;
+            if (!overrideFormat && PhraseOutput.Text.EndsWith(".txt"))
+                PhraseSaveFormat.SelectedIndex = 0;
+            if (!overrideFormat && FileOutput.Text.EndsWith(".txt"))
+                SaveFormat.SelectedIndex = 0;
+
             Common.plaintext = DirectorySaveFormat.SelectedIndex != 1;
         }
 
