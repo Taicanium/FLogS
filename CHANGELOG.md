@@ -1,3 +1,7 @@
+# 1.1.3 - 16/02/2024
+- The option is now available to divide logs up by daily messages, thereby reducing resource load when opening HTML logs.
+- Reformatted certain options to use checkboxes instead of dropdown menus.
+
 # 1.1.2.3 - 12/02/2024
 - Fixed a major error whereby only the first tag in a message was handled in HTML format. Yes, really.
 - Newlines are now handled correctly in HTML output after being broken.

@@ -18,10 +18,14 @@ namespace FLogS
         public static uint corruptTimestamps;
         public static string? destDir;
         public static string? destFile;
+        public static bool? divide = false;
+        private static StringBuilder? dstSB;
         public static DateTime? dtAfter;
         public static DateTime? dtBefore;
         public static uint emptyMessages;
         private static List<string>? filesDone;
+        private static bool footerWritten = false;
+        private static bool headerWritten = false;
         private static readonly Dictionary<string, string> htmlEntities = new()
         {
             { "\"", "&quot;" },
@@ -32,13 +36,36 @@ namespace FLogS
             { "£", "&pound;" },
             { "¥", "&yen;" },
             { "€", "&euro;" },
-            { "©", "&copu;" },
+            { "©", "&copy;" },
             { "®", "&reg;" },
             { "\n", "<br />" },
         };
+        private static readonly string htmlFooter = "</body>\n</html>";
+        private static readonly string htmlHeader = @"
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=""UTF-8"" />
+<title>F-Chat Exported Logs</title>
+<style>
+body { padding: 10px; background-color: #1A1930; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #EDEDF5; text-align: left; }
+script { display: block; }
+.profile { color: #6766AD; text-decoration: none; font-weight: bold; }
+.url { color: #FFFFFF; text-decoration: underline; }
+.warning { color: #909090; }
+.timestamp { color: #C0C0C0; }
+.eicon { width: 50px. height: 50px; vertical-align: middle; display: inline; }
+.spoiler { background-color: #0D0D0F; color: #0D0D0F; }
+.spoiler:hover { background-color: #0D0D0F; color: #FFFFFF; }
+</style>
+</head>
+<body>";
         public static ByteCount intactBytes;
         public static uint intactMessages;
+        private static uint lastDate = 0U;
         private static int lastDiscrepancy;
+        private static string? lastFile;
+        private static uint lastMessageCount = 0U;
         private static uint lastPosition;
         public static string? phrase;
         public static bool regex;
@@ -79,6 +106,7 @@ namespace FLogS
             { "spoiler", 0 },
             { "color", 0 },
         };
+        private static uint thisDate = 1U;
         public static ByteCount totalSize;
         public static ByteCount truncatedBytes;
         public static uint truncatedMessages;
@@ -93,8 +121,6 @@ namespace FLogS
 
         public static void BatchProcess(object? sender, DoWorkEventArgs e)
         {
-            try
-            {
                 string[]? files = (string[]?)e.Argument;
                 filesDone = new();
                 scanIDX = true;
@@ -114,112 +140,95 @@ namespace FLogS
                         destFile += ".txt";
                     lastPosition = 0U;
 
-                    DoWork(sender, e);
+                    BeginRoutine(sender, e);
                     bytesRead += new FileInfo(logfile).Length;
 
                     if (!Common.lastException.Equals(string.Empty))
                         break;
                 }
+
+            return;
+        }
+
+        public static void BeginRoutine(object? sender, DoWorkEventArgs e)
+        {
+            if (dtBefore < dtAfter)
+                (dtAfter, dtBefore) = (dtBefore, dtAfter);
+
+            try
+            {
+                if (scanIDX) // We only want to scan for an IDX channel name during a batch process.
+                             // The user supplies their own filename during single-file translation, so it's moot in those cases.
+                {
+                    string[] idxOptions = {
+                    Path.Join(Path.GetDirectoryName(srcFile), Path.GetFileNameWithoutExtension(srcFile)) + ".idx", // Search first for an IDX file matching just the log file's name. e.g. "pokefurs.idx".
+                    srcFile + ".idx", // As a fallback, also search for an IDX that matches the log's name and extension. e.g. "pokefurs.log.idx".
+                };
+                    bool idxFound = false;
+
+                    foreach (string idx in idxOptions)
+                    {
+                        if (!idxFound && File.Exists(idx))
+                        {
+                            FileStream srcIDX = File.OpenRead(idx);
+                            idxFound = TranslateIDX(srcIDX);
+                            srcIDX.Close();
+                        }
+                    }
+                }
+
+                if (File.Exists(destFile))
+                    File.Delete(destFile);
+
+                FileStream srcFS = File.OpenRead(srcFile);
+
+                using (StreamWriter dstFS = divide == true ? StreamWriter.Null : new(destFile, true))
+                {
+                    dstSB = new();
+                    lastDiscrepancy = 0;
+                    lastPosition = 0U;
+                    Common.lastTimestamp = 0;
+                    DateTime lastUpdate = DateTime.Now;
+
+                    while (srcFS.Position < srcFS.Length - 1)
+                    {
+                        TranslateMessage(srcFS, dstFS);
+
+                        if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 20)
+                        {
+                            ByteCount progress = bytesRead + srcFS.Position;
+                            progress.Simplify();
+                            totalSize.Simplify();
+                            if (progress.prefix > totalSize.prefix - 2)
+                            {
+                                totalSize.Magnitude(1); // We'll look at the progress values with more precision to keep the bar from "jerking".
+                                progress.Adjust(totalSize.prefix);
+                                (sender as BackgroundWorker).ReportProgress((int)progress.bytes);
+                            }
+                            else
+                                (sender as BackgroundWorker).ReportProgress(0);
+                            lastUpdate = DateTime.Now;
+                            if (!Common.lastException.Equals(string.Empty))
+                                break;
+                        }
+                    }
+
+                    if (!Common.plaintext)
+                    {
+                        dstFS.Write(htmlFooter);
+                        if (divide == true)
+                            File.AppendAllText(lastFile, htmlFooter);
+                    }
+                }
+
+                srcFS.Close();
+                if (lastMessageCount == 0U) // This will only happen if the source file was empty or no messages matched our search phrase.
+                    File.Delete(destFile);
             }
             catch (Exception ex)
             {
                 Common.LogException(ex);
             }
-
-            return;
-        }
-
-        public static void DoWork(object? sender, DoWorkEventArgs e)
-        {
-            if (dtBefore < dtAfter)
-                (dtAfter, dtBefore) = (dtBefore, dtAfter);
-
-            if (scanIDX) // We only want to scan for an IDX channel name during a batch process.
-                         // The user supplies their own filename during single-file translation, so it's moot in those cases.
-            {
-                string[] idxOptions = {
-                    Path.Join(Path.GetDirectoryName(srcFile), Path.GetFileNameWithoutExtension(srcFile)) + ".idx", // Search first for an IDX file matching just the log file's name. e.g. "pokefurs.idx".
-                    srcFile + ".idx", // As a fallback, also search for an IDX that matches the log's name and extension. e.g. "pokefurs.log.idx".
-                };
-                bool idxFound = false;
-
-                foreach (string idx in idxOptions)
-                {
-                    if (!idxFound && File.Exists(idx))
-                    {
-                        FileStream srcIDX = File.OpenRead(idx);
-                        idxFound = TranslateIDX(srcIDX);
-                        srcIDX.Close();
-                    }
-                }
-            }
-
-            if (File.Exists(destFile))
-                File.Delete(destFile);
-
-            FileStream srcFS = File.OpenRead(srcFile);
-
-            using (StreamWriter dstFS = new(destFile, true))
-            {
-                lastDiscrepancy = 0;
-                lastPosition = 0U;
-                Common.lastTimestamp = 0;
-                DateTime lastUpdate = DateTime.Now;
-
-                if (!Common.plaintext) // HTML.
-                    dstFS.Write(@"
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset=""UTF-8"" />
-<title>F-Chat Exported Logs</title>
-<style>
-body { padding: 10px; background-color: #1A1930; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #EDEDF5; text-align: left; }
-script { display: block; }
-.profile { color: #6766AD; text-decoration: none; font-weight: bold; }
-.url { color: #FFFFFF; text-decoration: underline; }
-.warning { color: #909090; }
-.timestamp { color: #C0C0C0; }
-.eicon { width: 50px. height: 50px; vertical-align: middle; display: inline; }
-.spoiler { background-color: #0D0D0F; color: #0D0D0F; }
-.spoiler:hover { background-color: #0D0D0F; color: #FFFFFF; }
-</style>
-</head>
-<body>");
-
-                while (srcFS.Position < srcFS.Length - 1)
-                {
-                    TranslateMessage(srcFS, dstFS);
-
-                    if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 20)
-                    {
-                        ByteCount progress = bytesRead + srcFS.Position;
-                        progress.Simplify();
-                        totalSize.Simplify();
-                        if (progress.prefix > totalSize.prefix - 2)
-                        {
-                            totalSize.Magnitude(1); // We'll look at the progress values with more precision to keep the bar from "jerking".
-                            progress.Adjust(totalSize.prefix);
-                            (sender as BackgroundWorker).ReportProgress((int)progress.bytes);
-                        }
-                        else
-                            (sender as BackgroundWorker).ReportProgress(0);
-                        lastUpdate = DateTime.Now;
-                        if (!Common.lastException.Equals(string.Empty))
-                            break;
-                    }
-                }
-
-                if (!Common.plaintext) // HTML.
-                    dstFS.Write(@"
-                        </body>
-                        </html>
-                        ");
-            }
-
-            srcFS.Close();
-            if (new FileInfo(destFile).Length == 0) // This will only happen if the source file was empty or no messages matched our search phrase.
-                File.Delete(destFile);
 
             return;
         }
@@ -231,6 +240,9 @@ script { display: block; }
             emptyMessages = 0U;
             intactBytes = new();
             intactMessages = 0U;
+            lastDate = 0U;
+            lastFile = "";
+            lastMessageCount = 0U;
             lastPosition = 0U;
             scanIDX = false;
             truncatedBytes = new();
@@ -295,7 +307,6 @@ script { display: block; }
         /// Read from the source log file and convert a single message to plaintext, then conditionally write it to the destination. This function seeks to the next valid message before returning.
         /// </summary>
         /// <param name="srcFS">A FileStream opened to the source log file.</param>
-        /// <param name="dstFS">A StreamWriter opened to the destination file.</param>
         /// <returns>'true' if a message was written to file; 'false' if, for any reason, that did not occur.</returns>
         private static bool TranslateMessage(FileStream srcFS, StreamWriter dstFS)
         {
@@ -312,7 +323,7 @@ script { display: block; }
             string profileName;
             int result;
             byte[]? streamBuffer;
-            DateTime thisDT;
+            DateTime thisDT = new();
             uint timestamp;
             bool withinRange = true;
             bool written = false;
@@ -320,100 +331,145 @@ script { display: block; }
             foreach (string key in tagCounts.Keys)
                 tagCounts[key] = 0;
 
-            try
+            discrepancy = (int)srcFS.Position - (int)lastPosition; // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
+            lastDiscrepancy += discrepancy;
+            unreadBytes += discrepancy;
+
+            if (srcFS.Read(idBuffer, 0, 4) < 4) // Read the timestamp.
+                return written;
+
+            messageData.Add(string.Empty);
+
+            timestamp = Common.BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
+            if (Common.IsValidTimestamp(timestamp))
             {
-                discrepancy = (int)srcFS.Position - (int)lastPosition; // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
-                lastDiscrepancy += discrepancy;
-                unreadBytes += discrepancy;
+                Common.lastTimestamp = timestamp;
+                thisDT = Common.DTFromStamp(timestamp);
+                if (!Common.plaintext)
+                    messageData[^1] += "<span class=\"timestamp\">";
+                messageData[^1] += "[" + thisDT.ToString(Common.dateFormat) + "]";
+                if (!Common.plaintext)
+                    messageData[^1] += "</span>";
+                if (thisDT.CompareTo(dtBefore) > 0 || thisDT.CompareTo(dtAfter) < 0)
+                    withinRange = false;
+            }
+            else
+            {
+                corruptTimestamps++;
+                intact = false;
+                if (!Common.plaintext)
+                    messageData[^1] += "<span class=\"warning\">";
+                messageData[^1] += "[BAD TIMESTAMP]";
+                if (!Common.plaintext)
+                    messageData[^1] += "</span>";
+                if (timestamp > 0 && timestamp < Common.UNIXTimestamp())
+                    Common.lastTimestamp = timestamp; // On the very off chance an otherwise-valid set of messages was made non-sequential, say, by F-Chat's client while trying to repair corruption.
+                                                      // This should never happen, but you throw 100% of the exceptions you don't catch.
+            }
 
-                if (srcFS.Read(idBuffer, 0, 4) < 4) // Read the timestamp.
-                    return written;
-                
-                messageData.Add(string.Empty);
-
-                timestamp = Common.BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
-                if (Common.IsValidTimestamp(timestamp))
+            if (divide == true)
+            {
+                thisDate = timestamp - (timestamp % 86400);
+                if (thisDate != lastDate)
                 {
-                    Common.lastTimestamp = timestamp;
-                    thisDT = Common.DTFromStamp(timestamp);
-                    if (!Common.plaintext)
-                        messageData[^1] += "<span class=\"timestamp\">";
-                    messageData[^1] += "[" + thisDT.ToString(Common.dateFormat) + "]";
-                    if (!Common.plaintext)
-                        messageData[^1] += "</span>";
-                    if (thisDT.CompareTo(dtBefore) > 0 || thisDT.CompareTo(dtAfter) < 0)
-                        withinRange = false;
+                    if (lastDate != 0U)
+                    {
+                        if (!Common.plaintext && !headerWritten)
+                            dstSB.Insert(0, htmlHeader);
+                        if (!Common.plaintext && !footerWritten)
+                            dstSB.Append(htmlFooter);
+                        File.AppendAllText(lastFile, dstSB.ToString());
+                        dstSB.Clear();
+
+                        if (lastMessageCount == 0U)
+                            File.Delete(lastFile);
+                    }
+
+                    if (!Directory.Exists(Path.Combine(Path.GetDirectoryName(destFile), Path.GetFileNameWithoutExtension(destFile))))
+                        Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(destFile), Path.GetFileNameWithoutExtension(destFile)));
+
+                    string newName = Path.Combine(Path.GetDirectoryName(destFile), Path.GetFileNameWithoutExtension(destFile), Path.GetFileNameWithoutExtension(destFile) + "_" + thisDT.ToString("yyyy-MM-dd") + Path.GetExtension(destFile));
+                    if (File.Exists(newName))
+                        File.Delete(newName);
+
+                    footerWritten = false;
+                    headerWritten = false;
+                    lastDate = thisDate;
+                    lastFile = newName;
+                    lastMessageCount = 0U;
                 }
-                else
+            }
+
+            msId = (MessageType)srcFS.ReadByte(); // Message delimiter.
+            nextByte = srcFS.ReadByte(); // 1-byte length of profile name. Headless messages have a null terminator here.
+
+            if (msId == MessageType.EOF || nextByte == -1)
+                return written;
+
+            if (msId != MessageType.Headless)
+            {
+                streamBuffer = new byte[nextByte];
+
+                if ((result = srcFS.Read(streamBuffer, 0, nextByte)) < nextByte) // Read the profile name.
                 {
-                    corruptTimestamps++;
                     intact = false;
+                    truncatedBytes += result;
+                    truncatedMessages++;
                     if (!Common.plaintext)
                         messageData[^1] += "<span class=\"warning\">";
-                    messageData[^1] += "[BAD TIMESTAMP]";
+                    messageData.Add("[TRUNCATED MESSAGE]");
                     if (!Common.plaintext)
                         messageData[^1] += "</span>";
-                    if (timestamp > 0 && timestamp < Common.UNIXTimestamp())
-                        Common.lastTimestamp = timestamp; // On the very off chance an otherwise-valid set of messages was made non-sequential, say, by F-Chat's client while trying to repair corruption.
-                                                          // This should never happen, but you throw 100% of the exceptions you don't catch.
                 }
 
-                msId = (MessageType)srcFS.ReadByte(); // Message delimiter.
-                nextByte = srcFS.ReadByte(); // 1-byte length of profile name. Headless messages have a null terminator here.
+                profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
 
-                if (msId == MessageType.EOF || nextByte == -1)
-                    return written;
+                if (!Common.plaintext)
+                    messageData.Add("<a class=\"profile\" target=\"_blank\" href=\"https://f-list.net/c/" + profileName + "\">" + profileName + "</a>");
+                else
+                    messageData.Add(profileName);
 
-                if (msId != MessageType.Headless)
+                if (msId == MessageType.Me)
+                    messageData[^1] = "*" + messageData[^1];
+
+                switch (msId)
                 {
-                    streamBuffer = new byte[nextByte];
+                    case MessageType.EOF:
+                        return written;
+                    case MessageType.Regular:
+                        messageData[^1] += ":"; // This prevents us from putting a space before the colon later.
+                        break;
+                    case MessageType.Me:
+                    case MessageType.DiceRoll: // These also include bottle spins and other 'fun' commands.
 
-                    if ((result = srcFS.Read(streamBuffer, 0, nextByte)) < nextByte) // Read the profile name.
-                    {
-                        intact = false;
-                        truncatedBytes += result;
-                        truncatedMessages++;
-                        if (!Common.plaintext)
-                            messageData[^1] += "<span class=\"warning\">";
-                        messageData.Add("[TRUNCATED MESSAGE]");
-                        if (!Common.plaintext)
-                            messageData[^1] += "</span>";
-                    }
-
-                    profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
-                    if (!Common.plaintext)
-                    {
-                        messageData.Add("<a class=\"profile\" target=\"_blank\" href=\"https://f-list.net/c/" + profileName + "\">" + profileName + "</a>");
-                        if (msId == MessageType.Me)
-                            messageData[^1] = "*" + messageData[^1];
-                    }
-                    else
-                        messageData.Add(profileName);
-
-                    switch (msId)
-                    {
-                        case MessageType.EOF:
-                            return written;
-                        case MessageType.Regular:
-                            messageData[^1] += ":"; // This prevents us from putting a space before the colon later.
-                            break;
-                        case MessageType.Me:
-                        case MessageType.DiceRoll: // These also include bottle spins and other 'fun' commands.
-                            // messageData.Add(string.Empty);
-                            break;
-                        case MessageType.Ad:
-                            messageData.Add("(ad):");
-                            break;
-                        case MessageType.Warning:
-                            messageData.Add("(warning):");
-                            break;
-                        case MessageType.Announcement:
-                            messageData.Add("(announcement):");
-                            break;
-                    }
+                        break;
+                    case MessageType.Ad:
+                        messageData.Add("(ad):");
+                        break;
+                    case MessageType.Warning:
+                        messageData.Add("(warning):");
+                        break;
+                    case MessageType.Announcement:
+                        messageData.Add("(announcement):");
+                        break;
                 }
+            }
 
-                if (srcFS.Read(idBuffer, 0, 2) < 2) // 2-byte length of message.
+            if (srcFS.Read(idBuffer, 0, 2) < 2) // 2-byte length of message.
+            {
+                emptyMessages++;
+                intact = false;
+                if (!Common.plaintext)
+                    messageData[^1] += "<span class=\"warning\">";
+                messageData.Add("[EMPTY MESSAGE]");
+                if (!Common.plaintext)
+                    messageData[^1] += "</span>";
+            }
+            else
+            {
+                idBuffer[2] = 0;
+                idBuffer[3] = 0;
+                if ((messageLength = Common.BEInt(idBuffer)) < 1)
                 {
                     emptyMessages++;
                     intact = false;
@@ -425,127 +481,122 @@ script { display: block; }
                 }
                 else
                 {
-                    idBuffer[2] = 0;
-                    idBuffer[3] = 0;
-                    if ((messageLength = Common.BEInt(idBuffer)) < 1)
+                    streamBuffer = new byte[messageLength];
+                    if ((result = srcFS.Read(streamBuffer, 0, (int)messageLength)) < messageLength) // Read the message text.
                     {
-                        emptyMessages++;
                         intact = false;
+                        truncatedBytes += result;
+                        truncatedMessages++;
                         if (!Common.plaintext)
                             messageData[^1] += "<span class=\"warning\">";
-                        messageData.Add("[EMPTY MESSAGE]");
+                        messageData.Add("[TRUNCATED MESSAGE]");
                         if (!Common.plaintext)
                             messageData[^1] += "</span>";
                     }
-                    else
-                    {
-                        streamBuffer = new byte[messageLength];
-                        if ((result = srcFS.Read(streamBuffer, 0, (int)messageLength)) < messageLength) // Read the message text.
-                        {
-                            intact = false;
-                            truncatedBytes += result;
-                            truncatedMessages++;
-                            if (!Common.plaintext)
-                                messageData[^1] += "<span class=\"warning\">";
-                            messageData.Add("[TRUNCATED MESSAGE]");
-                            if (!Common.plaintext)
-                                messageData[^1] += "</span>";
-                        }
 
-                        messageOut = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
-                        if (!Common.plaintext)
-                            foreach (KeyValuePair<string, string> entity in htmlEntities)
-                                messageOut = Regex.Replace(messageOut, entity.Key, entity.Value);
-                        if (msId == MessageType.Me || msId == MessageType.DiceRoll)
-                            messageOut = messageOut.TrimStart();
-                        messageData.Add(messageOut);
-                    }
+                    messageOut = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
+                    if (!Common.plaintext)
+                        foreach (KeyValuePair<string, string> entity in htmlEntities)
+                            messageOut = Regex.Replace(messageOut, entity.Key, entity.Value);
+                    if (msId == MessageType.Me || msId == MessageType.DiceRoll)
+                        messageOut = messageOut.TrimStart();
+                    messageData.Add(messageOut);
+                }
+            }
+
+            messageOut = string.Join(' ', messageData.ToArray());
+            messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Remove everything that's not a printable, newline, or format character.
+
+            if (phrase is null
+                || (!regex && messageOut.Contains(phrase, StringComparison.OrdinalIgnoreCase)) // Either the profile name or the message body can contain our search text.
+                || (regex && Regex.IsMatch(messageOut, phrase)))
+                matchPhrase = true;
+
+            if (matchPhrase && withinRange && (intact || saveTruncated))
+            {
+                if (!Common.plaintext && !headerWritten)
+                {
+                    dstSB.Append(htmlHeader);
+                    headerWritten = true;
                 }
 
-                messageOut = string.Join(' ', messageData.ToArray());
-                messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Remove everything that's not a printable, newline, or format character.
-
-                if (phrase is null
-                    || (!regex && messageOut.Contains(phrase, StringComparison.OrdinalIgnoreCase)) // Either the profile name or the message body can contain our search text.
-                    || (regex && Regex.IsMatch(messageOut, phrase)))
-                    matchPhrase = true;
-
-                if (matchPhrase && withinRange && (intact || saveTruncated))
+                if (intact)
                 {
-                    if (intact)
-                    {
-                        intactMessages++;
-                        intactBytes += messageOut.Length;
-                    }
-
-                    if (lastDiscrepancy > 0)
-                    {
-                        if (!Common.plaintext)
-                            dstFS.Write("<span class=\"warning\">");
-                        dstFS.Write(string.Format("({0:#,0} missing bytes)", lastDiscrepancy));
-                        if (!Common.plaintext)
-                            dstFS.Write("</span><br />");
-                        dstFS.Write(dstFS.NewLine);
-                    }
-                    if (!Common.plaintext)
-                        messageOut = TranslateTags(messageOut);
-
-                    messageOut = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(messageOut)); // There's an odd quirk with East Asian printable characters that requires us to reformat them once.
-                    messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Once more, remove everything that's not a printable, newline, or format character.
-
-                    dstFS.Write(messageOut);
-                    if (!Common.plaintext)
-                        dstFS.Write("<br />");
-                    dstFS.Write(dstFS.NewLine);
-                    lastDiscrepancy = 0;
-                    written = true;
+                    intactMessages++;
+                    intactBytes += messageOut.Length;
                 }
 
-                lastPosition = (uint)srcFS.Position;
-                while (!nextTimestamp) // Search for the next message by locating its timestamp and delimiter. It's the latter we're *really* looking for; the timestamp just helps us identify it.
+                if (lastDiscrepancy > 0)
                 {
+                    if (!Common.plaintext)
+                        dstSB.Append("<span class=\"warning\">");
+                    dstSB.Append(string.Format("({0:#,0} missing bytes)", lastDiscrepancy));
+                    if (!Common.plaintext)
+                        dstSB.Append("</span><br />");
+                    dstSB.Append(dstFS.NewLine);
+                }
+                if (!Common.plaintext)
+                    messageOut = TranslateTags(messageOut);
+
+                messageOut = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(messageOut)); // There's an odd quirk with East Asian printable characters that requires us to reformat them once.
+                messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Once more, remove everything that's not a printable, newline, or format character.
+
+                dstSB.Append(messageOut);
+                if (!Common.plaintext)
+                    dstSB.Append("<br />");
+                dstSB.Append(dstFS.NewLine);
+
+                if (divide == false)
+                {
+                    dstFS.Write(dstSB.ToString());
+                    dstSB.Clear();
+                }
+
+                lastDiscrepancy = 0;
+                lastMessageCount++;
+                written = true;
+            }
+
+            lastPosition = (uint)srcFS.Position;
+            while (!nextTimestamp) // Search for the next message by locating its timestamp and delimiter. It's the latter we're *really* looking for; the timestamp just helps us identify it.
+            {
+                srcFS.ReadByte();
+                srcFS.Read(idBuffer, 0, 4);
+                nextByte = srcFS.ReadByte();
+                if (nextByte == -1)
+                    return written;
+
+                srcFS.Seek(-6, SeekOrigin.Current);
+                if (nextByte < 7)
+                {
+                    discrepancy = (int)srcFS.Position - (int)lastPosition;
+                    lastDiscrepancy += discrepancy;
+                    lastPosition = (uint)srcFS.Position;
+                    nextTimestamp = true;
+                    unreadBytes += discrepancy;
+                    srcFS.ReadByte();
+                }
+                else
+                {
+                    srcFS.ReadByte();
                     srcFS.ReadByte();
                     srcFS.Read(idBuffer, 0, 4);
                     nextByte = srcFS.ReadByte();
                     if (nextByte == -1)
                         return written;
 
-                    srcFS.Seek(-6, SeekOrigin.Current);
+                    srcFS.Seek(-7, SeekOrigin.Current);
+                    srcFS.ReadByte();
+                    srcFS.ReadByte();
                     if (nextByte < 7)
                     {
-                        discrepancy = (int)srcFS.Position - (int)lastPosition;
+                        discrepancy = (int)srcFS.Position - (int)lastPosition - 2;
                         lastDiscrepancy += discrepancy;
                         lastPosition = (uint)srcFS.Position;
                         nextTimestamp = true;
                         unreadBytes += discrepancy;
-                        srcFS.ReadByte();
-                    }
-                    else
-                    {
-                        srcFS.ReadByte();
-                        srcFS.ReadByte();
-                        srcFS.Read(idBuffer, 0, 4);
-                        nextByte = srcFS.ReadByte();
-                        if (nextByte == -1)
-                            return written;
-
-                        srcFS.Seek(-7, SeekOrigin.Current);
-                        srcFS.ReadByte();
-                        srcFS.ReadByte();
-                        if (nextByte < 7)
-                        {
-                            discrepancy = (int)srcFS.Position - (int)lastPosition - 2;
-                            lastDiscrepancy += discrepancy;
-                            lastPosition = (uint)srcFS.Position;
-                            nextTimestamp = true;
-                            unreadBytes += discrepancy;
-                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Common.LogException(ex);
             }
 
             return written;
@@ -756,7 +807,7 @@ script { display: block; }
                         switch (arg)
                         {
                             case "black":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #000000; text-shadow: 1px 1px 0 #8887BF, -1px 1px 0 #8887BF, -1px -1px 0 #8887BF, 1px -1px 0 #8887BF;\">", tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, "<span style=\"color: #000000; text-shadow: 1px 1px 1px #8887BF, -1px 1px 1px #8887BF, -1px -1px 1px #8887BF, 1px -1px 1px #8887BF;\">", tags[i].Index, ref indexAdj);
                                 break;
                             case "blue":
                                 AdjustMessageData(ref messageOut, "<span style=\"color: #3D67F7\">", tags[i].Index, ref indexAdj);

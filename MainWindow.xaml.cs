@@ -120,32 +120,6 @@ namespace FLogS
             return;
         }
 
-        private void ComboBoxFormat_Update(object? sender, RoutedEventArgs e)
-        {
-            if (DirectorySaveFormat is null || PhraseSaveFormat is null || SaveFormat is null)
-                return;
-
-            DirectorySaveFormat.SelectedIndex = (sender as ComboBox).SelectedIndex;
-            PhraseSaveFormat.SelectedIndex = (sender as ComboBox).SelectedIndex;
-            SaveFormat.SelectedIndex = (sender as ComboBox).SelectedIndex;
-
-            overrideFormat = true;
-
-            return;
-        }
-
-        private void ComboBoxTruncated_Update(object? sender, RoutedEventArgs e)
-        {
-            if (DirectorySaveTruncated is null || PhraseSaveTruncated is null || SaveTruncated is null)
-                return;
-
-            DirectorySaveTruncated.SelectedIndex = (sender as ComboBox).SelectedIndex;
-            PhraseSaveTruncated.SelectedIndex = (sender as ComboBox).SelectedIndex;
-            SaveTruncated.SelectedIndex = (sender as ComboBox).SelectedIndex;
-
-            return;
-        }
-
         private void DatePicker_Update(object? sender, RoutedEventArgs e)
         {
             if ((sender as DatePicker).Name.Contains("BeforeDate"))
@@ -197,14 +171,15 @@ namespace FLogS
             try
             {
                 MessagePool.destDir = DirectoryOutput.Text;
+                MessagePool.divide = DirectoryDivideLogsCheckbox.IsChecked;
                 MessagePool.dtAfter = DirectoryAfterDate.SelectedDate ?? Common.DTFromStamp(1);
                 MessagePool.dtBefore = DirectoryBeforeDate.SelectedDate ?? DateTime.UtcNow;
                 string[] files = DirectorySource.Text.Split(';');
                 filesProcessed = files.Length;
                 overrideFormat = false;
                 MessagePool.phrase = string.Empty;
-                Common.plaintext = DirectorySaveFormat.SelectedIndex != 1;
-                MessagePool.saveTruncated = DirectorySaveTruncated.SelectedIndex != 0;
+                Common.plaintext = DirectorySaveHTMLCheckbox.IsChecked == false;
+                MessagePool.saveTruncated = DirectorySaveTruncatedCheckbox.IsChecked == true;
                 MessagePool.totalSize = new();
 
                 foreach (string logfile in files)
@@ -253,6 +228,36 @@ namespace FLogS
             PhraseOutput.Text = DialogFolderSelect();
         }
 
+        private void FormatOverride(object? sender, RoutedEventArgs e)
+        {
+            if (sender is null)
+                return;
+
+            if ((sender as CheckBox).Name.Contains("DivideLogs"))
+            {
+                DivideLogsCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                DirectoryDivideLogsCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                PhraseDivideLogsCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                return;
+            }
+
+            if ((sender as CheckBox).Name.Contains("SaveTruncated"))
+            {
+                SaveTruncatedCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                DirectorySaveTruncatedCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                PhraseSaveTruncatedCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                return;
+            }
+
+            if ((sender as CheckBox).Name.Contains("SaveHTML"))
+            {
+                SaveHTMLCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                DirectorySaveHTMLCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                PhraseSaveHTMLCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                return;
+            }
+        }
+
         private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
         {
             Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
@@ -287,20 +292,18 @@ namespace FLogS
                 RegExLink.Foreground = brushCombos[3][brushPalette];
 
             if (!overrideFormat && DirectoryOutput.Text.EndsWith(".html"))
-                DirectorySaveFormat.SelectedIndex = 1;
+                DirectorySaveHTMLCheckbox.IsChecked = true;
             if (!overrideFormat && PhraseOutput.Text.EndsWith(".html"))
-                PhraseSaveFormat.SelectedIndex = 1;
+                PhraseSaveHTMLCheckbox.IsChecked = true;
             if (!overrideFormat && FileOutput.Text.EndsWith(".html"))
-                SaveFormat.SelectedIndex = 1;
+                SaveHTMLCheckbox.IsChecked = true;
 
             if (!overrideFormat && DirectoryOutput.Text.EndsWith(".txt"))
-                DirectorySaveFormat.SelectedIndex = 0;
+                DirectorySaveHTMLCheckbox.IsChecked = false;
             if (!overrideFormat && PhraseOutput.Text.EndsWith(".txt"))
-                PhraseSaveFormat.SelectedIndex = 0;
+                PhraseSaveHTMLCheckbox.IsChecked = false;
             if (!overrideFormat && FileOutput.Text.EndsWith(".txt"))
-                SaveFormat.SelectedIndex = 0;
-
-            Common.plaintext = DirectorySaveFormat.SelectedIndex != 1;
+                SaveHTMLCheckbox.IsChecked = false;
         }
 
         private void PhraseRunButton_Click(object? sender, RoutedEventArgs e)
@@ -314,12 +317,13 @@ namespace FLogS
                 MessagePool.dtAfter = PhraseAfterDate.SelectedDate ?? Common.DTFromStamp(1);
                 MessagePool.dtBefore = PhraseBeforeDate.SelectedDate ?? DateTime.UtcNow;
                 MessagePool.destDir = PhraseOutput.Text;
+                MessagePool.divide = PhraseDivideLogsCheckbox.IsChecked;
                 string[] files = PhraseSource.Text.Split(';');
                 filesProcessed = files.Length;
                 overrideFormat = false;
                 MessagePool.phrase = PhraseSearch.Text;
-                Common.plaintext = PhraseSaveFormat.SelectedIndex != 1;
-                MessagePool.saveTruncated = PhraseSaveTruncated.SelectedIndex != 0;
+                Common.plaintext = PhraseSaveHTMLCheckbox.IsChecked == false;
+                MessagePool.saveTruncated = PhraseSaveTruncatedCheckbox.IsChecked == true;
                 MessagePool.totalSize = new();
 
                 foreach (string logfile in files)
@@ -362,13 +366,14 @@ namespace FLogS
             try
             {
                 MessagePool.destFile = FileOutput.Text;
+                MessagePool.divide = DivideLogsCheckbox.IsChecked;
                 MessagePool.dtAfter = AfterDate.SelectedDate ?? Common.DTFromStamp(1);
                 MessagePool.dtBefore = BeforeDate.SelectedDate ?? DateTime.UtcNow;
                 filesProcessed = 1;
                 overrideFormat = false;
                 MessagePool.phrase = string.Empty;
-                Common.plaintext = SaveFormat.SelectedIndex != 1;
-                MessagePool.saveTruncated = SaveTruncated.SelectedIndex != 0;
+                Common.plaintext = SaveHTMLCheckbox.IsChecked == false;
+                MessagePool.saveTruncated = SaveTruncatedCheckbox.IsChecked == true;
                 MessagePool.srcFile = FileSource.Text;
 
                 MessagePool.totalSize = new();
@@ -389,7 +394,7 @@ namespace FLogS
                     WorkerReportsProgress = true,
                     WorkerSupportsCancellation = true
                 };
-                worker.DoWork += MessagePool.DoWork;
+                worker.DoWork += MessagePool.BeginRoutine;
                 worker.ProgressChanged += Worker_ProgressChanged;
                 worker.RunWorkerCompleted += Worker_Completed;
 
@@ -551,7 +556,7 @@ namespace FLogS
             if (sender is null)
                 return;
 
-            if ((sender.GetValue(TagProperty) ?? string.Empty).Equals("Enableable"))
+            if ((sender.GetValue(TagProperty) ?? string.Empty).Equals("Enableable") || !Common.lastException.Equals(string.Empty))
                 sender.SetValue(IsEnabledProperty, enabled);
 
             foreach (object dp in LogicalTreeHelper.GetChildren(sender))

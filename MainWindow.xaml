@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:FLogS"
         mc:Ignorable="d"
         Loaded="MainGrid_Loaded"
-        Title="FLogS" Height="600" Width="800" ResizeMode="NoResize">
+        Title="FLogS" Height="700" Width="800" ResizeMode="NoResize">
     <Grid x:Name="MainGrid" Background="DarkGray" MouseMove="MainGrid_MouseMove">
         <TabControl x:Name="TabMenu" Background="DarkGray" BorderThickness="0">
             <TabItem x:Name="TabFile" Header="File">
@@ -21,7 +21,7 @@
                     </Grid.RowDefinitions>
                     <Grid Tag="PanelGrid" Grid.Row="0" Grid.Column="0" Background="Beige" Margin="2,0">
                         <StackPanel Background="LightGray" Margin="2,2">
-                            <ListBox x:Name="LogWindow" IsHitTestVisible="False" Width="350" Height="355" Margin="0,21" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1">
+                            <ListBox x:Name="LogWindow" IsHitTestVisible="False" Width="350" Height="430" Margin="0,21" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1">
                                 <ListBoxItem x:Name="HeaderBox">Ready to receive data.</ListBoxItem>
                                 <ListBoxItem Margin="10" Visibility="Hidden"></ListBoxItem>
                                 <ListBoxItem x:Name="IMBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
@@ -57,14 +57,18 @@
                                     <DatePicker x:Name="BeforeDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                                 </StackPanel>
                             </StackPanel>
-                            <ComboBox x:Name="SaveTruncated" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,40,0,0" IsEnabled="True" SelectionChanged="ComboBoxTruncated_Update">
-                                <ComboBoxItem x:Name="DNSNonIntact" IsSelected="True">Do not save non-intact messages</ComboBoxItem>
-                                <ComboBoxItem x:Name="SNonIntact">Save non-intact messages</ComboBoxItem>
-                            </ComboBox>
-                            <ComboBox x:Name="SaveFormat" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,40,0,0" IsEnabled="True" SelectionChanged="ComboBoxFormat_Update">
-                                <ComboBoxItem x:Name="SaveText" IsSelected="True">Save to plaintext</ComboBoxItem>
-                                <ComboBoxItem x:Name="SaveHTML">Save to HTML</ComboBoxItem>
-                            </ComboBox>
+                            <StackPanel HorizontalAlignment="Center" Margin="0,30,0,0" Orientation="Horizontal">
+                                <Label x:Name="DivideLogsLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Divide logs by date?"/>
+                                <CheckBox x:Name="DivideLogsCheckbox" VerticalAlignment="Center" IsChecked="False" Tag="Enableable"  Click="FormatOverride"/>
+                            </StackPanel>
+                            <StackPanel HorizontalAlignment="Center" Margin="0,20,0,0" Orientation="Horizontal">
+                                <Label x:Name="SaveTruncatedLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Save non-intact messages?"/>
+                                <CheckBox x:Name="SaveTruncatedCheckbox" VerticalAlignment="Center" IsChecked="False" Tag="Enableable"  Click="FormatOverride"/>
+                            </StackPanel>
+                            <StackPanel HorizontalAlignment="Center" Margin="0,20,0,0" Orientation="Horizontal">
+                                <Label x:Name="SaveHTMLLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Save to HTML?"/>
+                                <CheckBox x:Name="SaveHTMLCheckbox" VerticalAlignment="Center" IsChecked="False" Tag="Enableable" Click="FormatOverride"/>
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
                     <Grid Tag="PanelGrid" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Background="Beige" Margin="2,4,2,2">
@@ -90,7 +94,7 @@
                                     <ProgressBar x:Name="FileProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                                 </StackPanel>
                             </Grid>
-                            <Label x:Name="FileVersionNumber" Content="FLogS — Version 1.1.2.3 © Taica, 2024" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
+                            <Label x:Name="FileVersionNumber" Content="FLogS — Version 1.1.3 © Taica, 2024" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,30" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -107,7 +111,7 @@
                     </Grid.RowDefinitions>
                     <Grid Tag="PanelGrid" Grid.Row="0" Grid.Column="0" Background="Beige" Margin="2,0">
                         <StackPanel Background="LightGray" Margin="2,2">
-                            <ListBox x:Name="DirectoryLogWindow" IsHitTestVisible="False" Width="350" Height="355" Margin="0,21" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1">
+                            <ListBox x:Name="DirectoryLogWindow" IsHitTestVisible="False" Width="350" Height="430" Margin="0,21" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1">
                                 <ListBoxItem x:Name="DirectoryHeaderBox">Ready to receive data.</ListBoxItem>
                                 <ListBoxItem Margin="10" Visibility="Hidden"></ListBoxItem>
                                 <ListBoxItem x:Name="DirectoryIMBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
@@ -143,14 +147,18 @@
                                     <DatePicker x:Name="DirectoryBeforeDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                                 </StackPanel>
                             </StackPanel>
-                            <ComboBox x:Name="DirectorySaveTruncated" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,40,0,0" IsEnabled="True" SelectionChanged="ComboBoxTruncated_Update">
-                                <ComboBoxItem x:Name="DirectoryDNSNonIntact" IsSelected="True">Do not save non-intact messages</ComboBoxItem>
-                                <ComboBoxItem x:Name="DirectorySNonIntact">Save non-intact messages</ComboBoxItem>
-                            </ComboBox>
-                            <ComboBox x:Name="DirectorySaveFormat" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,40,0,0" IsEnabled="True" SelectionChanged="ComboBoxFormat_Update">
-                                <ComboBoxItem x:Name="DirectorySaveText" IsSelected="True">Save to plaintext</ComboBoxItem>
-                                <ComboBoxItem x:Name="DirectorySaveHTML">Save to HTML</ComboBoxItem>
-                            </ComboBox>
+                            <StackPanel HorizontalAlignment="Center" Margin="0,30,0,0" Orientation="Horizontal">
+                                <Label x:Name="DirectoryDivideLogsLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Divide logs by date?"/>
+                                <CheckBox x:Name="DirectoryDivideLogsCheckbox" VerticalAlignment="Center" IsChecked="False" Tag="Enableable"  Click="FormatOverride"/>
+                            </StackPanel>
+                            <StackPanel HorizontalAlignment="Center" Margin="0,20,0,0" Orientation="Horizontal">
+                                <Label x:Name="DirectorySaveTruncatedLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Save non-intact messages?"/>
+                                <CheckBox x:Name="DirectorySaveTruncatedCheckbox" VerticalAlignment="Center" IsChecked="False" Tag="Enableable"  Click="FormatOverride"/>
+                            </StackPanel>
+                            <StackPanel HorizontalAlignment="Center" Margin="0,20,0,0" Orientation="Horizontal">
+                                <Label x:Name="DirectorySaveHTMLLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Save to HTML?"/>
+                                <CheckBox x:Name="DirectorySaveHTMLCheckbox" VerticalAlignment="Center" IsChecked="False" Tag="Enableable" Click="FormatOverride"/>
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
                     <Grid Tag="PanelGrid" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Background="Beige" Margin="2,4,2,2">
@@ -176,7 +184,7 @@
                                     <ProgressBar x:Name="DirectoryProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                                 </StackPanel>
                             </Grid>
-                            <Label x:Name="DirectoryVersionNumber" Content="FLogS — Version 1.1.2.3 © Taica, 2024" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
+                            <Label x:Name="DirectoryVersionNumber" Content="FLogS — Version 1.1.3 © Taica, 2024" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,30" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -193,7 +201,7 @@
                     </Grid.RowDefinitions>
                     <Grid Tag="PanelGrid" Grid.Row="0" Grid.Column="0" Background="Beige" Margin="2,0">
                         <StackPanel Background="LightGray" Margin="2,2">
-                            <ListBox x:Name="PhraseLogWindow" IsHitTestVisible="False" Width="350" Height="355" Margin="0,21" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1">
+                            <ListBox x:Name="PhraseLogWindow" IsHitTestVisible="False" Width="350" Height="430" Margin="0,21" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1">
                                 <ListBoxItem x:Name="PhraseHeaderBox">Ready to receive data.</ListBoxItem>
                                 <ListBoxItem Margin="10" Visibility="Hidden"></ListBoxItem>
                                 <ListBoxItem x:Name="PhraseIMBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
@@ -214,34 +222,38 @@
                                 <Button x:Name="SrcPhraseButton" Width="20" Height="20" HorizontalAlignment="Center" Margin="-15,0,10,0" Background="Beige" IsEnabled="True" Click="SrcPhraseButton_Click" Content="..."/>
                                 <TextBox x:Name="PhraseSource" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
                             </StackPanel>
-                            <Label x:Name="PhraseOutputLabel" FontFamily="Arial" FontSize="14" Width="300" Height="26" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Margin="15,10,0,0" Content="Path to Destination Log Directory"/>
+                            <Label x:Name="PhraseOutputLabel" FontFamily="Arial" FontSize="14" Width="300" Height="26" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Margin="15,20,0,0" Content="Path to Destination Log Directory"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <Button x:Name="DstPhraseButton" Width="20" Height="20" HorizontalAlignment="Center" Margin="-15,0,10,0" Background="Beige" IsEnabled="True" Click="DstPhraseButton_Click" Content="..."/>
                                 <TextBox x:Name="PhraseOutput" Width="300" Height="20" HorizontalAlignment="Center" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
                             </StackPanel>
-                            <Label x:Name="PhraseSearchLabel" FontFamily="Arial" FontSize="14" Width="300" Height="26" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Margin="15,10,0,0" Content="Target Word or Phrase"/>
+                            <Label x:Name="PhraseSearchLabel" FontFamily="Arial" FontSize="14" Width="300" Height="26" HorizontalAlignment="Center" HorizontalContentAlignment="Center" Margin="15,20,0,0" Content="Target Word or Phrase"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                 <CheckBox x:Name="RegexCheckBox" Width="16" Height="16" HorizontalAlignment="Center" Margin="-12,0,10,0" Background="Beige" Checked="TextboxUpdated" Unchecked="TextboxUpdated" IsEnabled="True" IsChecked="False"/>
                                 <TextBox x:Name="PhraseSearch" Width="300" Height="20" HorizontalAlignment="Center" Margin="2,0,0,0" BorderBrush="#FF333333" BorderThickness="1" TextChanged="TextboxUpdated"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="20,5,0,0">
                                 <StackPanel>
-                                    <Label x:Name="PhraseAfterDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,20,0,0" Foreground="Black" Content="Select messages after..."/>
+                                    <Label x:Name="PhraseAfterDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages after..."/>
                                     <DatePicker x:Name="PhraseAfterDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                                 </StackPanel>
                                 <StackPanel Margin="25,0,0,0">
-                                    <Label x:Name="PhraseBeforeDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,20,0,0" Foreground="Black" Content="Select messages before..."/>
+                                    <Label x:Name="PhraseBeforeDateLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,30,0,0" Foreground="Black" Content="Select messages before..."/>
                                     <DatePicker x:Name="PhraseBeforeDate" Width="120" SelectedDateChanged="DatePicker_Update" Background="White" BorderBrush="#FF333333"/>
                                 </StackPanel>
                             </StackPanel>
-                            <ComboBox x:Name="PhraseSaveTruncated" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,30,0,0" IsEnabled="True" SelectionChanged="ComboBoxTruncated_Update">
-                                <ComboBoxItem x:Name="PhraseDNSNonIntact" IsSelected="True">Do not save non-intact messages</ComboBoxItem>
-                                <ComboBoxItem x:Name="PhraseSNonIntact">Save non-intact messages</ComboBoxItem>
-                            </ComboBox>
-                            <ComboBox x:Name="PhraseSaveFormat" Width="300" Height="26" HorizontalAlignment="Center" Margin="16,30,0,0" IsEnabled="True" SelectionChanged="ComboBoxFormat_Update">
-                                <ComboBoxItem x:Name="PhraseSaveText" IsSelected="True">Save to plaintext</ComboBoxItem>
-                                <ComboBoxItem x:Name="PhraseSaveHTML">Save to HTML</ComboBoxItem>
-                            </ComboBox>
+                            <StackPanel HorizontalAlignment="Center" Margin="0,30,0,0" Orientation="Horizontal">
+                                <Label x:Name="PhraseDivideLogsLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Divide logs by date?"/>
+                                <CheckBox x:Name="PhraseDivideLogsCheckbox" VerticalAlignment="Center" IsChecked="False" Tag="Enableable"  Click="FormatOverride"/>
+                            </StackPanel>
+                            <StackPanel HorizontalAlignment="Center" Margin="0,20,0,0" Orientation="Horizontal">
+                                <Label x:Name="PhraseSaveTruncatedLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Save non-intact messages?"/>
+                                <CheckBox x:Name="PhraseSaveTruncatedCheckbox" VerticalAlignment="Center" IsChecked="False" Tag="Enableable"  Click="FormatOverride"/>
+                            </StackPanel>
+                            <StackPanel HorizontalAlignment="Center" Margin="0,20,0,0" Orientation="Horizontal">
+                                <Label x:Name="PhraseSaveHTMLLabel" FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Save to HTML?"/>
+                                <CheckBox x:Name="PhraseSaveHTMLCheckbox" VerticalAlignment="Center" IsChecked="False" Tag="Enableable" Click="FormatOverride"/>
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
                     <Grid Tag="PanelGrid" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Background="Beige" Margin="2,4,2,2">
@@ -267,7 +279,7 @@
                                     <ProgressBar x:Name="PhraseProgress" Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="100"/>
                                 </StackPanel>
                             </Grid>
-                            <Label x:Name="PhraseVersionNumber" Content="FLogS — Version 1.1.2.3 © Taica, 2024" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,5" FontWeight="Thin"/>
+                            <Label x:Name="PhraseVersionNumber" Content="FLogS — Version 1.1.3 © Taica, 2024" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,30" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
@@ -323,7 +335,7 @@
                     </Grid>
                     <Grid Grid.Row="1" Grid.Column="1" VerticalAlignment="Bottom" Margin="2,2">
                         <StackPanel Background="LightGray" Margin="2,2">
-                            <Label x:Name="HelpVersionNumber" Content="FLogS — Version 1.1.2.3 © Taica, 2024" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
+                            <Label x:Name="HelpVersionNumber" Content="FLogS — Version 1.1.3 © Taica, 2024" HorizontalAlignment="Right" FontStyle="Italic" Margin="10,3" FontWeight="Thin"/>
                         </StackPanel>
                     </Grid>
                 </Grid>
