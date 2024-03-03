@@ -618,6 +618,7 @@ script { display: block; }
             string lastTag;
             string messageOut = message;
             bool noParse = false;
+            string partialParse = string.Empty;
             Stack<string> tagHistory = new();
             MatchCollection tags = Regex.Matches(messageOut, @"\[/*(\p{L}+)(?:=+([^\p{Co}\]]*))*?\]");
             string URL = "";
@@ -727,6 +728,8 @@ script { display: block; }
                         tagHistory.Push(tag);
                         break;
                     case "url":
+                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
+                            continue;
                         if (tagCounts[tag] % 2 == 1)
                         {
                             while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
@@ -738,14 +741,18 @@ script { display: block; }
                                                                                                      // The extra '6' here is the five '[url=' characters plus the closing bracket.
                                 AdjustMessageData(ref messageOut, URL, tags[i].Index, ref indexAdj);
                             AdjustMessageData(ref messageOut, "</a>", tags[i].Index, ref indexAdj);
+                            partialParse = string.Empty;
                             break;
                         }
                         AdjustMessageData(ref messageOut, "<a class=\"url\" href=\"" + arg + "\">", tags[i].Index, ref indexAdj); // Yes, the arg can be empty. That's okay.
                         anchorIndex = tags[i].Index;
                         URL = arg;
                         tagHistory.Push(tag);
+                        partialParse = tag;
                         break;
                     case "icon":
+                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
+                            continue;
                         if (tagCounts[tag] % 2 == 1)
                         {
                             // The img tag must be wrapped in the anchor and not the other way around.
@@ -759,13 +766,17 @@ script { display: block; }
                                 messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
                             if (tagHistory.Peek().Equals(tag))
                                 tagHistory.Pop();
+                            partialParse = string.Empty;
                             break;
                         }
                         anchorIndex = tags[i].Index + indexAdj;
                         AdjustMessageData(ref messageOut, "<img class=\"ec\" src=\"https://static.f-list.net/images/avatar/", tags[i].Index, ref indexAdj);
                         tagHistory.Push(tag);
+                        partialParse = tag;
                         break;
                     case "eicon":
+                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
+                            continue;
                         if (tagCounts[tag] % 2 == 1)
                         {
                             URL = messageOut[(anchorIndex + 67)..(tags[i].Index + indexAdj)];
@@ -775,23 +786,29 @@ script { display: block; }
                                 messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
                             if (tagHistory.Peek().Equals(tag))
                                 tagHistory.Pop();
+                            partialParse = string.Empty;
                             break;
                         }
                         anchorIndex = tags[i].Index + indexAdj;
                         AdjustMessageData(ref messageOut, "<img class=\"ec\" src=\"https://static.f-list.net/images/eicon/", tags[i].Index, ref indexAdj);
                         tagHistory.Push(tag);
+                        partialParse = tag;
                         break;
                     case "user":
+                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
+                            continue;
                         if (tagCounts[tag] % 2 == 1)
                         {
                             // 42 for the anchor we inserted below, and 5 for the BBCode tag which is still there.
                             URL = messageOut[(anchorIndex + 47)..(tags[i].Index + indexAdj)];
                             AdjustMessageData(ref messageOut, "\">" + URL + "</a>", tags[i].Index, ref indexAdj);
+                            partialParse = string.Empty;
                             break;
                         }
                         anchorIndex = tags[i].Index + indexAdj;
                         AdjustMessageData(ref messageOut, "<a class=\"pf\" href=\"https://f-list.net/c/", tags[i].Index, ref indexAdj);
                         tagHistory.Push(tag);
+                        partialParse = tag;
                         break;
                     case "spoiler":
                         if (tagCounts[tag] % 2 == 1)
@@ -875,6 +892,8 @@ script { display: block; }
                     indexAdj = 0;
                     AdjustMessageData(ref messageOut, tagClosings[lastTag], messageOut.Length, ref indexAdj);
                 }
+                if (partialParse.Equals(lastTag))
+                    partialParse = string.Empty;
                 tagCounts[lastTag]++;
             }
 

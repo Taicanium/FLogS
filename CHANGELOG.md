@@ -1,4 +1,7 @@
 # 1.1.3.1 - 03/03/2024
+- Fixed a niche error that occurred when 'anchor' tags, such as user and url, mistakenly contain other similar tags.
+
+# 1.1.3.1 - 03/03/2024
 - HTML styling is now handled more efficiently. Shortening some IDs and applying some base tags allows for up to 20% file size savings.
 - Profile names, icons, and URLs are now properly hidden by spoilers and reveal upon hovering as ordinary text does.
 
