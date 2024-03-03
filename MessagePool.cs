@@ -28,6 +28,7 @@ namespace FLogS
         private static bool headerWritten = false;
         private static readonly Dictionary<string, string> htmlEntities = new()
         {
+            { "&", "&amp;" },
             { "\"", "&quot;" },
             { "\'", "&apos;" },
             { "<", "&lt;" },
@@ -46,17 +47,25 @@ namespace FLogS
 <html>
 <head>
 <meta charset=""UTF-8"" />
+<base target=""_blank"">
 <title>F-Chat Exported Logs</title>
 <style>
 body { padding: 10px; background-color: #1A1930; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #EDEDF5; text-align: left; }
 script { display: block; }
-.profile { color: #6766AD; text-decoration: none; font-weight: bold; }
+.pf { color: #6766AD; text-decoration: none; font-weight: bold; }
 .url { color: #FFFFFF; text-decoration: underline; }
-.warning { color: #909090; }
-.timestamp { color: #C0C0C0; }
-.eicon { width: 50px. height: 50px; vertical-align: middle; display: inline; }
-.spoiler { background-color: #0D0D0F; color: #0D0D0F; }
-.spoiler:hover { background-color: #0D0D0F; color: #FFFFFF; }
+.warn { color: #909090; }
+.ts { color: #C0C0C0; }
+.ec { width: 50px; height: 50px; vertical-align: middle; display: inline; }
+.sp { background-color: #0D0D0F; color: #0D0D0F; }
+.sp * { background-color: #0D0D0F; color: #0D0D0F; }
+.sp .ec { filter: brightness(0%); }
+.sp:hover { color: #FFFFFF; }
+.sp:hover .ts { color: #C0C0C0; }
+.sp:hover .pf { color: #6766AD; }
+.sp:hover .url { color: #FFFFFF; }
+.sp:hover .warn { color: #909090; }
+.sp:hover .ec { filter: brightness(100%); }
 </style>
 </head>
 <body>";
@@ -121,31 +130,31 @@ script { display: block; }
 
         public static void BatchProcess(object? sender, DoWorkEventArgs e)
         {
-                string[]? files = (string[]?)e.Argument;
-                filesDone = new();
-                scanIDX = true;
+            string[]? files = (string[]?)e.Argument;
+            filesDone = new();
+            scanIDX = true;
 
-                foreach (string logfile in files)
-                {
-                    srcFile = logfile;
-                    string fileName = Path.GetFileNameWithoutExtension(srcFile);
-                    if (filesDone.Contains(fileName))
-                        continue;
-                    filesDone.Add(fileName);
+            foreach (string logfile in files)
+            {
+                srcFile = logfile;
+                string fileName = Path.GetFileNameWithoutExtension(srcFile);
+                if (filesDone.Contains(fileName))
+                    continue;
+                filesDone.Add(fileName);
 
-                    destFile = Path.Join(destDir, fileName);
-                    if (!Common.plaintext)
-                        destFile += ".html";
-                    else
-                        destFile += ".txt";
-                    lastPosition = 0U;
+                destFile = Path.Join(destDir, fileName);
+                if (!Common.plaintext)
+                    destFile += ".html";
+                else
+                    destFile += ".txt";
+                lastPosition = 0U;
 
-                    BeginRoutine(sender, e);
-                    bytesRead += new FileInfo(logfile).Length;
+                BeginRoutine(sender, e);
+                bytesRead += new FileInfo(logfile).Length;
 
-                    if (!Common.lastException.Equals(string.Empty))
-                        break;
-                }
+                if (!Common.lastException.Equals(string.Empty))
+                    break;
+            }
 
             return;
         }
@@ -346,7 +355,7 @@ script { display: block; }
                 Common.lastTimestamp = timestamp;
                 thisDT = Common.DTFromStamp(timestamp);
                 if (!Common.plaintext)
-                    messageData[^1] += "<span class=\"timestamp\">";
+                    messageData[^1] += "<span class=\"ts\">";
                 messageData[^1] += "[" + thisDT.ToString(Common.dateFormat) + "]";
                 if (!Common.plaintext)
                     messageData[^1] += "</span>";
@@ -358,7 +367,7 @@ script { display: block; }
                 corruptTimestamps++;
                 intact = false;
                 if (!Common.plaintext)
-                    messageData[^1] += "<span class=\"warning\">";
+                    messageData[^1] += "<span class=\"warn\">";
                 messageData[^1] += "[BAD TIMESTAMP]";
                 if (!Common.plaintext)
                     messageData[^1] += "</span>";
@@ -385,8 +394,8 @@ script { display: block; }
                             File.Delete(lastFile);
                     }
 
-                    if (!Directory.Exists(Path.Combine(Path.GetDirectoryName(destFile), Path.GetFileNameWithoutExtension(destFile))))
-                        Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(destFile), Path.GetFileNameWithoutExtension(destFile)));
+                    if (!Directory.Exists(Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN")))
+                        Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN"));
 
                     string newName = Path.Combine(Path.GetDirectoryName(destFile), Path.GetFileNameWithoutExtension(destFile), Path.GetFileNameWithoutExtension(destFile) + "_" + thisDT.ToString("yyyy-MM-dd") + Path.GetExtension(destFile));
                     if (File.Exists(newName))
@@ -416,7 +425,7 @@ script { display: block; }
                     truncatedBytes += result;
                     truncatedMessages++;
                     if (!Common.plaintext)
-                        messageData[^1] += "<span class=\"warning\">";
+                        messageData[^1] += "<span class=\"warn\">";
                     messageData.Add("[TRUNCATED MESSAGE]");
                     if (!Common.plaintext)
                         messageData[^1] += "</span>";
@@ -425,7 +434,7 @@ script { display: block; }
                 profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
 
                 if (!Common.plaintext)
-                    messageData.Add("<a class=\"profile\" target=\"_blank\" href=\"https://f-list.net/c/" + profileName + "\">" + profileName + "</a>");
+                    messageData.Add("<a class=\"pf\" href=\"https://f-list.net/c/" + profileName + "\">" + profileName + "</a>");
                 else
                     messageData.Add(profileName);
 
@@ -460,7 +469,7 @@ script { display: block; }
                 emptyMessages++;
                 intact = false;
                 if (!Common.plaintext)
-                    messageData[^1] += "<span class=\"warning\">";
+                    messageData[^1] += "<span class=\"warn\">";
                 messageData.Add("[EMPTY MESSAGE]");
                 if (!Common.plaintext)
                     messageData[^1] += "</span>";
@@ -474,7 +483,7 @@ script { display: block; }
                     emptyMessages++;
                     intact = false;
                     if (!Common.plaintext)
-                        messageData[^1] += "<span class=\"warning\">";
+                        messageData[^1] += "<span class=\"warn\">";
                     messageData.Add("[EMPTY MESSAGE]");
                     if (!Common.plaintext)
                         messageData[^1] += "</span>";
@@ -488,7 +497,7 @@ script { display: block; }
                         truncatedBytes += result;
                         truncatedMessages++;
                         if (!Common.plaintext)
-                            messageData[^1] += "<span class=\"warning\">";
+                            messageData[^1] += "<span class=\"warn\">";
                         messageData.Add("[TRUNCATED MESSAGE]");
                         if (!Common.plaintext)
                             messageData[^1] += "</span>";
@@ -529,7 +538,7 @@ script { display: block; }
                 if (lastDiscrepancy > 0)
                 {
                     if (!Common.plaintext)
-                        dstSB.Append("<span class=\"warning\">");
+                        dstSB.Append("<span class=\"warn\">");
                     dstSB.Append(string.Format("({0:#,0} missing bytes)", lastDiscrepancy));
                     if (!Common.plaintext)
                         dstSB.Append("</span><br />");
@@ -633,7 +642,7 @@ script { display: block; }
                         noParse = false;
                         continue;
                     }
-                    AdjustMessageData(ref messageOut, "\u200B", tags[i].Index + 1, ref indexAdj);
+                    AdjustMessageData(ref messageOut, "\u200B", tags[i].Index + 1, ref indexAdj); // For strict safety purposes: In addition to enclosing noparse'd tags in a plaintext script, we will also 'break' the tag by inserting a zero-width space directly after its bracket.
                     continue;
                 }
 
@@ -731,7 +740,7 @@ script { display: block; }
                             AdjustMessageData(ref messageOut, "</a>", tags[i].Index, ref indexAdj);
                             break;
                         }
-                        AdjustMessageData(ref messageOut, "<a class=\"url\" target=\"_blank\" href=\"" + arg + "\">", tags[i].Index, ref indexAdj); // Yes, the arg can be empty. That's okay.
+                        AdjustMessageData(ref messageOut, "<a class=\"url\" href=\"" + arg + "\">", tags[i].Index, ref indexAdj); // Yes, the arg can be empty. That's okay.
                         anchorIndex = tags[i].Index;
                         URL = arg;
                         tagHistory.Push(tag);
@@ -739,9 +748,12 @@ script { display: block; }
                     case "icon":
                         if (tagCounts[tag] % 2 == 1)
                         {
-                            URL = messageOut[(anchorIndex + 97)..(tags[i].Index + indexAdj)];
-                            AdjustMessageData(ref messageOut, "<a class=\"profile\" target=\"_blank\" href=\"https://f-list.net/c/" + URL + "\">", anchorIndex - indexAdj, ref indexAdj);
-                            AdjustMessageData(ref messageOut, ".png\" /></a>", tags[i].Index, ref indexAdj);
+                            // The img tag must be wrapped in the anchor and not the other way around.
+                            // As such, indexAdj cannot be tied to the anchor, and we have to insert it manually.
+                            URL = messageOut[(anchorIndex + 67)..(tags[i].Index + indexAdj)];
+                            messageOut = messageOut.Insert(anchorIndex, "<a class=\"pf\" href=\"https://f-list.net/c/" + URL + "\">");
+                            indexAdj += URL.Length;
+                            AdjustMessageData(ref messageOut, ".png\" title=\"" + URL + "\" /></a>", tags[i].Index, ref indexAdj);
                             messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),
                                 messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
                                 messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
@@ -750,13 +762,14 @@ script { display: block; }
                             break;
                         }
                         anchorIndex = tags[i].Index + indexAdj;
-                        AdjustMessageData(ref messageOut, "<img class=\"eicon\" width=\"50px\" height=\"50px\" src=\"https://static.f-list.net/images/avatar/", tags[i].Index, ref indexAdj);
+                        AdjustMessageData(ref messageOut, "<img class=\"ec\" src=\"https://static.f-list.net/images/avatar/", tags[i].Index, ref indexAdj);
                         tagHistory.Push(tag);
                         break;
                     case "eicon":
                         if (tagCounts[tag] % 2 == 1)
                         {
-                            AdjustMessageData(ref messageOut, ".gif\" />", tags[i].Index, ref indexAdj);
+                            URL = messageOut[(anchorIndex + 67)..(tags[i].Index + indexAdj)];
+                            AdjustMessageData(ref messageOut, ".gif\" title=\"" + URL + "\" />", tags[i].Index, ref indexAdj);
                             messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),
                                 messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
                                 messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
@@ -765,18 +778,19 @@ script { display: block; }
                             break;
                         }
                         anchorIndex = tags[i].Index + indexAdj;
-                        AdjustMessageData(ref messageOut, "<img class=\"eicon\" width=\"50px\" height=\"50px\" src=\"https://static.f-list.net/images/eicon/", tags[i].Index, ref indexAdj);
+                        AdjustMessageData(ref messageOut, "<img class=\"ec\" src=\"https://static.f-list.net/images/eicon/", tags[i].Index, ref indexAdj);
                         tagHistory.Push(tag);
                         break;
                     case "user":
                         if (tagCounts[tag] % 2 == 1)
                         {
-                            URL = messageOut[(anchorIndex + 62)..(tags[i].Index + indexAdj)];
+                            // 42 for the anchor we inserted below, and 5 for the BBCode tag which is still there.
+                            URL = messageOut[(anchorIndex + 47)..(tags[i].Index + indexAdj)];
                             AdjustMessageData(ref messageOut, "\">" + URL + "</a>", tags[i].Index, ref indexAdj);
                             break;
                         }
                         anchorIndex = tags[i].Index + indexAdj;
-                        AdjustMessageData(ref messageOut, "<a class=\"profile\" target=\"_blank\" href=\"https://f-list.net/c/", tags[i].Index, ref indexAdj);
+                        AdjustMessageData(ref messageOut, "<a class=\"pf\" href=\"https://f-list.net/c/", tags[i].Index, ref indexAdj);
                         tagHistory.Push(tag);
                         break;
                     case "spoiler":
@@ -790,7 +804,7 @@ script { display: block; }
                             AdjustMessageData(ref messageOut, "</span>", tags[i].Index, ref indexAdj);
                             break;
                         }
-                        AdjustMessageData(ref messageOut, "<span class=\"spoiler\">", tags[i].Index, ref indexAdj);
+                        AdjustMessageData(ref messageOut, "<span class=\"sp\">", tags[i].Index, ref indexAdj);
                         tagHistory.Push(tag);
                         break;
                     case "color":

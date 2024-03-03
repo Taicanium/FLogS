@@ -1,2 +1,3 @@
 # Known Issues
 - Ads are read correctly as they are in later versions, but much older clients didn't record ads as uniquely ID'd messages - they appear to have just been plaintext, with no delimiter. Reading them causes patches of garbage.
+- Consider including 10x10 profile avatars in messages as F-Chat Rising does. They're useful for differentiating similar names since we don't/can't color according to gender.

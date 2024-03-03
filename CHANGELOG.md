@@ -1,3 +1,7 @@
+# 1.1.3.1 - 
+- HTML styling is now handled more efficiently. Shortening some IDs and applying some base tags allows for up to 20% file size savings.
+- Profile names, icons, and URLs are now properly hidden by spoilers and reveal upon hovering as ordinary text does.
+
 # 1.1.3 - 16/02/2024
 - The option is now available to divide logs up by daily messages, thereby reducing resource load when opening HTML logs.
 - Reformatted certain options to use checkboxes instead of dropdown menus.

@@ -12,4 +12,4 @@ Check the Releases tab for the latest binaries!
 
 This application does not alter or modify a user's log files in any fashion. Its output cannot be accepted by F-List staff in case of a dispute.
 
-Neither this application nor its developer is affiliated with F-List, F-Chat, or Bad Dragon Enterprises. It has, however, been given the green light by site staff, and its use is not a breach of F-Chat's terms of service. tl;dr: You won't get in trouble for using it.
+Neither this application nor its developer is affiliated with F-List, F-Chat, or Bad Dragon Enterprises. It has, however, been given the greenlight by site staff, and its use is not a breach of F-Chat's terms of service.
