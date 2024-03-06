@@ -1,4 +1,7 @@
-# 1.1.3.1 - 03/03/2024
+# 1.1.3.3 - 05/03/2024
+- HTML output now features small character avatars next to each message, as seen in the F-Chat Rising client. These are especially useful for FLogS as they allow easier visual differentiation of profile names.
+
+# 1.1.3.2 - 03/03/2024
 - Fixed a niche error that occurred when 'anchor' tags, such as user and url, mistakenly contain other similar tags.
 
 # 1.1.3.1 - 03/03/2024

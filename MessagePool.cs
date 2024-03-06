@@ -57,6 +57,7 @@ script { display: block; }
 .warn { color: #909090; }
 .ts { color: #C0C0C0; }
 .ec { width: 50px; height: 50px; vertical-align: middle; display: inline; }
+.av { width: 15px; height: 15px; vertical-align: middle; display: inline; margin-left: 2px; margin-right: 2px; }
 .sp { background-color: #0D0D0F; color: #0D0D0F; }
 .sp * { background-color: #0D0D0F; color: #0D0D0F; }
 .sp .ec { filter: brightness(0%); }
@@ -121,11 +122,22 @@ script { display: block; }
         public static uint truncatedMessages;
         public static ByteCount unreadBytes;
 
+        private enum MessageType
+        {
+            EOF = -1,
+            Regular = 0,
+            Me = 1,
+            Ad = 2,
+            DiceRoll = 3,
+            Warning = 4,
+            Headless = 5,
+            Announcement = 6,
+        }
+
         private static void AdjustMessageData(ref string messageIn, string addition, int index, ref int adjustment)
         {
-            int iStrMod = addition.Length;
-            adjustment += iStrMod;
-            messageIn = messageIn.Insert(index + adjustment - iStrMod, addition);
+            messageIn = messageIn.Insert(index + adjustment, addition);
+            adjustment += addition.Length;
         }
 
         public static void BatchProcess(object? sender, DoWorkEventArgs e)
@@ -293,15 +305,15 @@ script { display: block; }
                 {
                     if (fileName.Contains('#')) // If the log filename contains a hashtag, it's a public channel.
                     {
-                        destFile = new string(Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + Path.GetExtension(destFile))); // Preserve it as such.
+                        destFile = Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + Path.GetExtension(destFile)); // Preserve it as such.
                         return true;
                     }
 
-                    destFile = new string(Path.Join(Path.GetDirectoryName(destFile), nameString + Path.GetExtension(destFile))); // Otherwise, it's a DM. As before, preserve the name - but this time, leave out the hashtag.
+                    destFile = Path.Join(Path.GetDirectoryName(destFile), nameString + Path.GetExtension(destFile)); // Otherwise, it's a DM. As before, preserve the name - but this time, leave out the hashtag.
                     return true;
                 }
 
-                destFile = new string(Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + " (" + Path.GetFileNameWithoutExtension(destFile) + ")" + Path.GetExtension(destFile))); // In all other cases, it's a private channel. Format it with the channel name followed by its ID.
+                destFile = Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + " (" + Path.GetFileNameWithoutExtension(destFile) + ")" + Path.GetExtension(destFile)); // In all other cases, it's a private channel. Format it with the channel name followed by its ID.
                 return true;
             }
             catch (Exception ex)
@@ -434,7 +446,7 @@ script { display: block; }
                 profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
 
                 if (!Common.plaintext)
-                    messageData.Add("<a class=\"pf\" href=\"https://f-list.net/c/" + profileName + "\">" + profileName + "</a>");
+                    messageData.Add("<a class=\"pf\" href=\"https://f-list.net/c/" + profileName + "\"><img class=\"av\" src=\"https://static.f-list.net/images/avatar/" + profileName.ToLower() + ".png\" />" + profileName + "</a>");
                 else
                     messageData.Add(profileName);
 
@@ -544,6 +556,7 @@ script { display: block; }
                         dstSB.Append("</span><br />");
                     dstSB.Append(dstFS.NewLine);
                 }
+
                 if (!Common.plaintext)
                     messageOut = TranslateTags(messageOut);
 
@@ -587,16 +600,14 @@ script { display: block; }
                 }
                 else
                 {
-                    srcFS.ReadByte();
-                    srcFS.ReadByte();
+                    srcFS.Read(idBuffer, 0, 2);
                     srcFS.Read(idBuffer, 0, 4);
                     nextByte = srcFS.ReadByte();
                     if (nextByte == -1)
                         return written;
 
                     srcFS.Seek(-7, SeekOrigin.Current);
-                    srcFS.ReadByte();
-                    srcFS.ReadByte();
+                    srcFS.Read(idBuffer, 0, 2);
                     if (nextByte < 7)
                     {
                         discrepancy = (int)srcFS.Position - (int)lastPosition - 2;
