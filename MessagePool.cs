@@ -366,11 +366,13 @@ script { display: block; }
             {
                 Common.lastTimestamp = timestamp;
                 thisDT = Common.DTFromStamp(timestamp);
+
                 if (!Common.plaintext)
                     messageData[^1] += "<span class=\"ts\">";
                 messageData[^1] += "[" + thisDT.ToString(Common.dateFormat) + "]";
                 if (!Common.plaintext)
                     messageData[^1] += "</span>";
+
                 if (thisDT.CompareTo(dtBefore) > 0 || thisDT.CompareTo(dtAfter) < 0)
                     withinRange = false;
             }
@@ -378,11 +380,13 @@ script { display: block; }
             {
                 corruptTimestamps++;
                 intact = false;
+
                 if (!Common.plaintext)
                     messageData[^1] += "<span class=\"warn\">";
                 messageData[^1] += "[BAD TIMESTAMP]";
                 if (!Common.plaintext)
                     messageData[^1] += "</span>";
+
                 if (timestamp > 0 && timestamp < Common.UNIXTimestamp())
                     Common.lastTimestamp = timestamp; // On the very off chance an otherwise-valid set of messages was made non-sequential, say, by F-Chat's client while trying to repair corruption.
                                                       // This should never happen, but you throw 100% of the exceptions you don't catch.
@@ -436,6 +440,7 @@ script { display: block; }
                     intact = false;
                     truncatedBytes += result;
                     truncatedMessages++;
+
                     if (!Common.plaintext)
                         messageData[^1] += "<span class=\"warn\">";
                     messageData.Add("[TRUNCATED MESSAGE]");
@@ -480,6 +485,7 @@ script { display: block; }
             {
                 emptyMessages++;
                 intact = false;
+
                 if (!Common.plaintext)
                     messageData[^1] += "<span class=\"warn\">";
                 messageData.Add("[EMPTY MESSAGE]");
@@ -494,6 +500,7 @@ script { display: block; }
                 {
                     emptyMessages++;
                     intact = false;
+
                     if (!Common.plaintext)
                         messageData[^1] += "<span class=\"warn\">";
                     messageData.Add("[EMPTY MESSAGE]");
@@ -508,6 +515,7 @@ script { display: block; }
                         intact = false;
                         truncatedBytes += result;
                         truncatedMessages++;
+
                         if (!Common.plaintext)
                             messageData[^1] += "<span class=\"warn\">";
                         messageData.Add("[TRUNCATED MESSAGE]");
@@ -516,11 +524,14 @@ script { display: block; }
                     }
 
                     messageOut = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
+
                     if (!Common.plaintext)
                         foreach (KeyValuePair<string, string> entity in htmlEntities)
                             messageOut = Regex.Replace(messageOut, entity.Key, entity.Value);
+
                     if (msId == MessageType.Me || msId == MessageType.DiceRoll)
                         messageOut = messageOut.TrimStart();
+
                     messageData.Add(messageOut);
                 }
             }
@@ -558,7 +569,7 @@ script { display: block; }
                 }
 
                 if (!Common.plaintext)
-                    messageOut = TranslateTags(messageOut);
+                    messageOut = TranslateTags(messageOut); // If we're saving to HTML, it's time to convert from BBCode to HTML-style tags.
 
                 messageOut = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(messageOut)); // There's an odd quirk with East Asian printable characters that requires us to reformat them once.
                 messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Once more, remove everything that's not a printable, newline, or format character.
@@ -638,13 +649,13 @@ script { display: block; }
             {
                 string arg = "";
                 string tag = tags[i].Groups[1].Value.ToLower();
-                bool isClosing = false;
-                bool validTag = true;
+                if (tag.Length < 1 || tags[i].Value.Length < 1)
+                    continue;
+
                 if (tags[i].Groups.Count > 2)
                     arg = tags[i].Groups[2].Value;
-
-                if (tags[i].Value.Substring(1, 1).Equals("/"))
-                    isClosing = true;
+                bool isClosing = tags[i].Value.Substring(1, 1).Equals("/");
+                bool validTag = true;
 
                 if (noParse)
                 {
@@ -739,8 +750,9 @@ script { display: block; }
                         tagHistory.Push(tag);
                         break;
                     case "url":
-                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
+                        if (!partialParse.Equals(string.Empty) && !partialParse.Equals(tag))
                             continue;
+
                         if (tagCounts[tag] % 2 == 1)
                         {
                             while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
@@ -748,66 +760,80 @@ script { display: block; }
                                 AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
                                 tagCounts[lastTag]++;
                             }
+
                             if (anchorIndex + indexAdj + URL.Length + 6 == tags[i].Index + indexAdj) // If the url tag contained a link but no label text, the client's practice is to display the URL itself.
                                                                                                      // The extra '6' here is the five '[url=' characters plus the closing bracket.
                                 AdjustMessageData(ref messageOut, URL, tags[i].Index, ref indexAdj);
+
                             AdjustMessageData(ref messageOut, "</a>", tags[i].Index, ref indexAdj);
                             partialParse = string.Empty;
                             break;
                         }
                         AdjustMessageData(ref messageOut, "<a class=\"url\" href=\"" + arg + "\">", tags[i].Index, ref indexAdj); // Yes, the arg can be empty. That's okay.
                         anchorIndex = tags[i].Index;
-                        URL = arg;
-                        tagHistory.Push(tag);
                         partialParse = tag;
+                        tagHistory.Push(tag);
+                        URL = arg;
                         break;
                     case "icon":
                         if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
                             continue;
+
                         if (tagCounts[tag] % 2 == 1)
                         {
                             // The img tag must be wrapped in the anchor and not the other way around.
                             // As such, indexAdj cannot be tied to the anchor, and we have to insert it manually.
+
+                            // 62 for the img tag we inserted below, and 5 for the BBCode tag which is still there.
                             URL = messageOut[(anchorIndex + 67)..(tags[i].Index + indexAdj)];
                             messageOut = messageOut.Insert(anchorIndex, "<a class=\"pf\" href=\"https://f-list.net/c/" + URL + "\">");
                             indexAdj += URL.Length;
                             AdjustMessageData(ref messageOut, ".png\" title=\"" + URL + "\" /></a>", tags[i].Index, ref indexAdj);
+
                             messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),
                                 messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
                                 messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
+
                             if (tagHistory.Peek().Equals(tag))
                                 tagHistory.Pop();
+
                             partialParse = string.Empty;
                             break;
                         }
                         anchorIndex = tags[i].Index + indexAdj;
                         AdjustMessageData(ref messageOut, "<img class=\"ec\" src=\"https://static.f-list.net/images/avatar/", tags[i].Index, ref indexAdj);
-                        tagHistory.Push(tag);
                         partialParse = tag;
+                        tagHistory.Push(tag);
                         break;
                     case "eicon":
                         if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
                             continue;
+
                         if (tagCounts[tag] % 2 == 1)
                         {
+                            // 61 for the img tag we inserted below, and 6 for the BBCode tag which is still there.
                             URL = messageOut[(anchorIndex + 67)..(tags[i].Index + indexAdj)];
                             AdjustMessageData(ref messageOut, ".gif\" title=\"" + URL + "\" />", tags[i].Index, ref indexAdj);
+
                             messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),
                                 messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
                                 messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
+
                             if (tagHistory.Peek().Equals(tag))
                                 tagHistory.Pop();
+
                             partialParse = string.Empty;
                             break;
                         }
                         anchorIndex = tags[i].Index + indexAdj;
                         AdjustMessageData(ref messageOut, "<img class=\"ec\" src=\"https://static.f-list.net/images/eicon/", tags[i].Index, ref indexAdj);
-                        tagHistory.Push(tag);
                         partialParse = tag;
+                        tagHistory.Push(tag);
                         break;
                     case "user":
                         if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
                             continue;
+
                         if (tagCounts[tag] % 2 == 1)
                         {
                             // 42 for the anchor we inserted below, and 5 for the BBCode tag which is still there.
@@ -898,16 +924,21 @@ script { display: block; }
             while (tagHistory.Count > 0)
             {
                 lastTag = tagHistory.Pop();
+                // No matter what, we CANnot auto-close these two specific tags at the end of a message.
+                // Their compound structure just doesn't allow for it in 90% of cases.
                 if (tagCounts[lastTag] % 2 == 1 && lastTag.Equals("icon") == false && lastTag.Equals("eicon") == false)
                 {
                     indexAdj = 0;
                     AdjustMessageData(ref messageOut, tagClosings[lastTag], messageOut.Length, ref indexAdj);
                 }
+
                 if (partialParse.Equals(lastTag))
                     partialParse = string.Empty;
+
                 tagCounts[lastTag]++;
             }
 
+            // Finish things off by removing the BBCode tags, leaving only our fresh HTML behind.
             messageOut = Regex.Replace(messageOut, @"\[/*\p{L}+=+[^\p{Co}\]]*\]", "");
             messageOut = Regex.Replace(messageOut, @"\[/*\p{L}+\]", "");
 
