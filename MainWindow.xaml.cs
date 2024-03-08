@@ -171,7 +171,7 @@ namespace FLogS
             try
             {
                 MessagePool.destDir = DirectoryOutput.Text;
-                MessagePool.divide = DirectoryDivideLogsCheckbox.IsChecked;
+                MessagePool.divide = DirectoryDivideLogsCheckbox.IsChecked == true;
                 MessagePool.dtAfter = DirectoryAfterDate.SelectedDate ?? Common.DTFromStamp(1);
                 MessagePool.dtBefore = DirectoryBeforeDate.SelectedDate ?? DateTime.UtcNow;
                 string[] files = DirectorySource.Text.Split(';');
@@ -317,7 +317,7 @@ namespace FLogS
                 MessagePool.dtAfter = PhraseAfterDate.SelectedDate ?? Common.DTFromStamp(1);
                 MessagePool.dtBefore = PhraseBeforeDate.SelectedDate ?? DateTime.UtcNow;
                 MessagePool.destDir = PhraseOutput.Text;
-                MessagePool.divide = PhraseDivideLogsCheckbox.IsChecked;
+                MessagePool.divide = PhraseDivideLogsCheckbox.IsChecked == true;
                 string[] files = PhraseSource.Text.Split(';');
                 filesProcessed = files.Length;
                 overrideFormat = false;
@@ -366,7 +366,7 @@ namespace FLogS
             try
             {
                 MessagePool.destFile = FileOutput.Text;
-                MessagePool.divide = DivideLogsCheckbox.IsChecked;
+                MessagePool.divide = DivideLogsCheckbox.IsChecked == true;
                 MessagePool.dtAfter = AfterDate.SelectedDate ?? Common.DTFromStamp(1);
                 MessagePool.dtBefore = BeforeDate.SelectedDate ?? DateTime.UtcNow;
                 filesProcessed = 1;

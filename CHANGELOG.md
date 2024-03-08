@@ -1,3 +1,8 @@
+# 1.1.3.4 - 08/03/2024
+- Fixed an issue causing the latest messages in a divided batch process to be omitted, leaving an empty HTML file.
+- The local user's profile is now implicitly deduced from IDX files if they exist, enabling highlighting of their messages in DMs. This does not apply to channel logs, whose IDX files store the channel name and not that of any one character.
+- Session invite tags are now rudimentarily handled, in the form of target-less anchors displaying the channel name and code. 
+
 # 1.1.3.3 - 05/03/2024
 - HTML output now features small character avatars next to each message, as seen in the F-Chat Rising client. These are especially useful for FLogS as they allow easier visual differentiation of profile names.
 

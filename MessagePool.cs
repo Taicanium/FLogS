@@ -15,16 +15,15 @@ namespace FLogS
     internal class MessagePool
     {
         public static ByteCount bytesRead;
-        public static uint corruptTimestamps;
+        public static uint corruptTimestamps = 0U;
         public static string? destDir;
         public static string? destFile;
-        public static bool? divide = false;
+        public static bool divide = false;
         private static StringBuilder? dstSB;
         public static DateTime? dtAfter;
         public static DateTime? dtBefore;
-        public static uint emptyMessages;
+        public static uint emptyMessages = 0U;
         private static List<string>? filesDone;
-        private static bool footerWritten = false;
         private static bool headerWritten = false;
         private static readonly Dictionary<string, string> htmlEntities = new()
         {
@@ -50,11 +49,13 @@ namespace FLogS
 <base target=""_blank"">
 <title>F-Chat Exported Logs</title>
 <style>
-body { padding: 10px; background-color: #1A1930; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #EDEDF5; text-align: left; }
+body { padding: 10px; background-color: #191932; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #EDEDF5; text-align: left; }
 script { display: block; }
 .pf { color: #6766AD; text-decoration: none; font-weight: bold; }
 .url { color: #FFFFFF; text-decoration: underline; }
 .warn { color: #909090; }
+.us { background-color: #2A2A54; padding-top: 3px; padding-bottom: 3px; padding-right: 3px; margin-top: 3px; margin-bottom: 3px; margin-right: 3px; }
+.ss { color: #D6D6FF; text-decoration: underline; }
 .ts { color: #C0C0C0; }
 .ec { width: 50px; height: 50px; vertical-align: middle; display: inline; }
 .av { width: 15px; height: 15px; vertical-align: middle; display: inline; margin-left: 2px; margin-right: 2px; }
@@ -71,15 +72,16 @@ script { display: block; }
 </head>
 <body>";
         public static ByteCount intactBytes;
-        public static uint intactMessages;
+        public static uint intactMessages = 0U;
         private static uint lastDate = 0U;
         private static int lastDiscrepancy;
         private static string? lastFile;
         private static uint lastMessageCount = 0U;
         private static uint lastPosition;
+        private static string opposingProfile = string.Empty;
         public static string? phrase;
-        public static bool regex;
-        public static bool saveTruncated;
+        public static bool regex = false;
+        public static bool saveTruncated = false;
         private static bool scanIDX;
         public static string? srcFile;
         private static readonly Dictionary<string, string> tagClosings = new()
@@ -97,6 +99,7 @@ script { display: block; }
             { "eicon", ".gif\" />" },
             { "user", "</span></a>" },
             { "spoiler", "</span>" },
+            { "session", "</a>" },
             { "color", "</span>" },
         };
         private static readonly Dictionary<string, int> tagCounts = new()
@@ -114,6 +117,7 @@ script { display: block; }
             { "eicon", 0 },
             { "user", 0 },
             { "spoiler", 0 },
+            { "session", 0 },
             { "color", 0 },
         };
         private static uint thisDate = 1U;
@@ -175,26 +179,23 @@ script { display: block; }
         {
             if (dtBefore < dtAfter)
                 (dtAfter, dtBefore) = (dtBefore, dtAfter);
+            opposingProfile = "";
 
             try
             {
-                if (scanIDX) // We only want to scan for an IDX channel name during a batch process.
-                             // The user supplies their own filename during single-file translation, so it's moot in those cases.
-                {
-                    string[] idxOptions = {
+                string[] idxOptions = {
                     Path.Join(Path.GetDirectoryName(srcFile), Path.GetFileNameWithoutExtension(srcFile)) + ".idx", // Search first for an IDX file matching just the log file's name. e.g. "pokefurs.idx".
                     srcFile + ".idx", // As a fallback, also search for an IDX that matches the log's name and extension. e.g. "pokefurs.log.idx".
                 };
-                    bool idxFound = false;
+                bool idxFound = false;
 
-                    foreach (string idx in idxOptions)
+                foreach (string idx in idxOptions)
+                {
+                    if (!idxFound && File.Exists(idx))
                     {
-                        if (!idxFound && File.Exists(idx))
-                        {
-                            FileStream srcIDX = File.OpenRead(idx);
-                            idxFound = TranslateIDX(srcIDX);
-                            srcIDX.Close();
-                        }
+                        FileStream srcIDX = File.OpenRead(idx);
+                        idxFound = TranslateIDX(srcIDX);
+                        srcIDX.Close();
                     }
                 }
 
@@ -203,12 +204,12 @@ script { display: block; }
 
                 FileStream srcFS = File.OpenRead(srcFile);
 
-                using (StreamWriter dstFS = divide == true ? StreamWriter.Null : new(destFile, true))
+                using (StreamWriter dstFS = divide ? StreamWriter.Null : new(destFile, true))
                 {
                     dstSB = new();
                     lastDiscrepancy = 0;
                     lastPosition = 0U;
-                    Common.lastTimestamp = 0;
+                    Common.lastTimestamp = 0U;
                     DateTime lastUpdate = DateTime.Now;
 
                     while (srcFS.Position < srcFS.Length - 1)
@@ -234,17 +235,29 @@ script { display: block; }
                         }
                     }
 
+                    if (dstSB.Length > 0)
+                    {
+                        dstFS.Write(dstSB.ToString());
+                        if (divide)
+                            File.AppendAllText(lastFile, dstSB.ToString());
+                        dstSB.Clear();
+                    }
+
                     if (!Common.plaintext)
                     {
                         dstFS.Write(htmlFooter);
-                        if (divide == true)
+                        if (divide)
                             File.AppendAllText(lastFile, htmlFooter);
                     }
                 }
 
                 srcFS.Close();
                 if (lastMessageCount == 0U) // This will only happen if the source file was empty or no messages matched our search phrase.
+                {
                     File.Delete(destFile);
+                    if (divide)
+                        File.Delete(lastFile);
+                }
             }
             catch (Exception ex)
             {
@@ -298,6 +311,10 @@ script { display: block; }
                     return false;
 
                 nameString = new string(Encoding.UTF8.GetString(streamBuffer).Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).ToLower();
+                opposingProfile = nameString; // Save the name so that we can later mark it as not belonging to the local user. This will later factor into highlighting messages in HTML output.
+
+                if (!scanIDX) // Drop from the function once we have our name string, if we aren't batch processing.
+                    return true;
 
                 if (("#" + nameString).Equals(fileName?.ToLower())
                     || ("#" + nameString).Equals("#" + fileName?.ToLower())) // If the IDX encoded name matches the log file name, we're either working with a public channel or a DM.
@@ -341,7 +358,7 @@ script { display: block; }
             MessageType msId;
             int nextByte;
             bool nextTimestamp = false;
-            string profileName;
+            string profileName = string.Empty;
             int result;
             byte[]? streamBuffer;
             DateTime thisDT = new();
@@ -392,17 +409,19 @@ script { display: block; }
                                                       // This should never happen, but you throw 100% of the exceptions you don't catch.
             }
 
-            if (divide == true)
+            if (divide)
             {
                 thisDate = timestamp - (timestamp % 86400);
                 if (thisDate != lastDate)
                 {
                     if (lastDate != 0U)
                     {
-                        if (!Common.plaintext && !headerWritten)
-                            dstSB.Insert(0, htmlHeader);
-                        if (!Common.plaintext && !footerWritten)
+                        if (!Common.plaintext)
+                        {
+                            if (!headerWritten)
+                                dstSB.Insert(0, htmlHeader);
                             dstSB.Append(htmlFooter);
+                        }
                         File.AppendAllText(lastFile, dstSB.ToString());
                         dstSB.Clear();
 
@@ -417,7 +436,6 @@ script { display: block; }
                     if (File.Exists(newName))
                         File.Delete(newName);
 
-                    footerWritten = false;
                     headerWritten = false;
                     lastDate = thisDate;
                     lastFile = newName;
@@ -451,7 +469,21 @@ script { display: block; }
                 profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
 
                 if (!Common.plaintext)
-                    messageData.Add("<a class=\"pf\" href=\"https://f-list.net/c/" + profileName + "\"><img class=\"av\" src=\"https://static.f-list.net/images/avatar/" + profileName.ToLower() + ".png\" />" + profileName + "</a>");
+                {
+                    messageData.Add("");
+
+                    messageData[^1] = "<a class=\"pf\" href=\"https://f-list.net/c/"
+                        + profileName
+                        + "\"><img class=\"av\" src=\"https://static.f-list.net/images/avatar/"
+                        + profileName.ToLower()
+                        + ".png\" />"
+                        + profileName
+                        + "</a>"
+                        + messageData[^1];
+
+                    if (!opposingProfile.Equals(string.Empty) && !profileName.ToLower().Equals(opposingProfile.ToLower())) // If this is the local user, highlight the message.
+                        messageData.Insert(0, "<span class=\"us\">");
+                }
                 else
                     messageData.Add(profileName);
 
@@ -548,7 +580,7 @@ script { display: block; }
             {
                 if (!Common.plaintext && !headerWritten)
                 {
-                    dstSB.Append(htmlHeader);
+                    dstSB.Insert(0, htmlHeader);
                     headerWritten = true;
                 }
 
@@ -574,12 +606,15 @@ script { display: block; }
                 messageOut = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(messageOut)); // There's an odd quirk with East Asian printable characters that requires us to reformat them once.
                 messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Once more, remove everything that's not a printable, newline, or format character.
 
+                if (!Common.plaintext && !opposingProfile.Equals(string.Empty) && !profileName.ToLower().Equals(opposingProfile.ToLower())) // If this is the local user, close the highlight tag from before.
+                    messageOut += "</span>";
+
                 dstSB.Append(messageOut);
                 if (!Common.plaintext)
                     dstSB.Append("<br />");
                 dstSB.Append(dstFS.NewLine);
 
-                if (divide == false)
+                if (!divide)
                 {
                     dstFS.Write(dstSB.ToString());
                     dstSB.Clear();
@@ -860,6 +895,31 @@ script { display: block; }
                         }
                         AdjustMessageData(ref messageOut, "<span class=\"sp\">", tags[i].Index, ref indexAdj);
                         tagHistory.Push(tag);
+                        break;
+                    case "session":
+                        if (!partialParse.Equals(string.Empty) && !partialParse.Equals(tag))
+                            continue;
+
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            {
+                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                tagCounts[lastTag]++;
+                            }
+
+                            if (!messageOut[anchorIndex..(tags[i].Index + tags[i].Length + indexAdj)].Contains(URL)) // Session tags for public channels already contain their own name instead of a room code. Here we check against doubling them up.
+                                AdjustMessageData(ref messageOut, " (" + URL + ")", tags[i].Index, ref indexAdj);
+
+                            AdjustMessageData(ref messageOut, "</a>", tags[i].Index, ref indexAdj);
+                            partialParse = string.Empty;
+                            break;
+                        }
+                        AdjustMessageData(ref messageOut, "<a class=\"ss\" href=\"#\">", tags[i].Index, ref indexAdj); // TODO: JS-based method for copying a session invite to the user's clipboard?
+                        anchorIndex = tags[i].Index + tags[i].Length + indexAdj;
+                        partialParse = tag;
+                        tagHistory.Push(tag);
+                        URL = arg;
                         break;
                     case "color":
                         if (tagCounts[tag] % 2 == 1)
