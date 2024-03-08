@@ -822,7 +822,7 @@ script { display: block; }
                             // 62 for the img tag we inserted below, and 5 for the BBCode tag which is still there.
                             URL = messageOut[(anchorIndex + 67)..(tags[i].Index + indexAdj)];
                             messageOut = messageOut.Insert(anchorIndex, "<a class=\"pf\" href=\"https://f-list.net/c/" + URL + "\">");
-                            indexAdj += URL.Length;
+                            indexAdj += URL.Length + 43;
                             AdjustMessageData(ref messageOut, ".png\" title=\"" + URL + "\" /></a>", tags[i].Index, ref indexAdj);
 
                             messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),

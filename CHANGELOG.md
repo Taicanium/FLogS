@@ -1,3 +1,6 @@
+# 1.1.3.5 - 08/03/2024
+- Fixed a last-minute calculation error causing icon tags to be mangled after HTML translation.
+
 # 1.1.3.4 - 08/03/2024
 - Fixed an issue causing the latest messages in a divided batch process to be omitted, leaving an empty HTML file.
 - The local user's profile is now implicitly deduced from IDX files if they exist, enabling highlighting of their messages in DMs. This does not apply to channel logs, whose IDX files store the channel name and not that of any one character.
