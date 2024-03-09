@@ -179,7 +179,7 @@ script { display: block; }
         {
             if (dtBefore < dtAfter)
                 (dtAfter, dtBefore) = (dtBefore, dtAfter);
-            opposingProfile = "";
+            opposingProfile = string.Empty;
 
             try
             {
@@ -311,10 +311,6 @@ script { display: block; }
                     return false;
 
                 nameString = new string(Encoding.UTF8.GetString(streamBuffer).Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).ToLower();
-                opposingProfile = nameString; // Save the name so that we can later mark it as not belonging to the local user. This will later factor into highlighting messages in HTML output.
-
-                if (!scanIDX) // Drop from the function once we have our name string, if we aren't batch processing.
-                    return true;
 
                 if (("#" + nameString).Equals(fileName?.ToLower())
                     || ("#" + nameString).Equals("#" + fileName?.ToLower())) // If the IDX encoded name matches the log file name, we're either working with a public channel or a DM.
@@ -322,9 +318,14 @@ script { display: block; }
                 {
                     if (fileName.Contains('#')) // If the log filename contains a hashtag, it's a public channel.
                     {
-                        destFile = Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + Path.GetExtension(destFile)); // Preserve it as such.
+                        if (scanIDX)
+                            destFile = Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + Path.GetExtension(destFile)); // Preserve it as such.
                         return true;
                     }
+
+                    opposingProfile = nameString; // Save the name so that we can later mark it as not belonging to the local user. This will later factor into highlighting messages in HTML output.
+                    if (!scanIDX) // Drop from the function once we have our name string, if we aren't batch processing.
+                        return true;
 
                     destFile = Path.Join(Path.GetDirectoryName(destFile), nameString + Path.GetExtension(destFile)); // Otherwise, it's a DM. As before, preserve the name - but this time, leave out the hashtag.
                     return true;
