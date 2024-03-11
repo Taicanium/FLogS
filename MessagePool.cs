@@ -443,7 +443,10 @@ script { display: block; }
                     }
 
                     string newDir = Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN");
-                    writtenDirectories.Add(newDir);
+
+                    if (writtenDirectories is not null)
+                        writtenDirectories.Add(newDir);
+
                     if (!Directory.Exists(newDir))
                         Directory.CreateDirectory(newDir);
 
@@ -485,7 +488,7 @@ script { display: block; }
 
                 if (!Common.plaintext)
                 {
-                    messageData.Add( "<a class=\"pf\" href=\"https://f-list.net/c/"
+                    messageData.Add("<a class=\"pf\" href=\"https://f-list.net/c/"
                         + profileName
                         + "\"><img class=\"av\" src=\"https://static.f-list.net/images/avatar/"
                         + profileName.ToLower()
