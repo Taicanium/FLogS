@@ -1,3 +1,7 @@
+# 1.1.3.7 - 11/03/2024
+- Messages with corrupted or non-sequential timestamps are no longer given their own files when dividing by date.
+- Destination subdirectories left empty after clearing empty output files from them are now also trimmed along with their files.
+
 # 1.1.3.6 - 10/03/2024
 - Hotfix: Messages in public channels are no longer universally highlighted as if having been sent by the local user.
 - Spoilers no longer fail to un-hide if they contain certain types of formatted text.
@@ -7,14 +11,14 @@
 
 # 1.1.3.4 - 08/03/2024
 - Fixed an issue causing the latest messages in a divided batch process to be omitted, leaving an empty HTML file.
-- The local user's profile is now implicitly deduced from IDX files if they exist, enabling highlighting of their messages in DMs. This does not apply to channel logs, whose IDX files store the channel name and not that of any one character.
+- The local user's profile is now implicitly deduced from IDX files if they exist, enabling highlighting of their messages in DMs. This does not apply to channel logs, whose IDX files store the channel's name and not that of any one character.
 - Session invite tags are now rudimentarily handled, in the form of target-less anchors displaying the channel name and code. 
 
 # 1.1.3.3 - 05/03/2024
-- HTML output now features small character avatars next to each message, as seen in the F-Chat Rising client. These are especially useful for FLogS as they allow easier visual differentiation of profile names.
+- HTML output now features small character avatars next to each message, as seen in the F-Chat Rising third-party client. These are especially useful for FLogS as they allow easier visual differentiation of profile names.
 
 # 1.1.3.2 - 03/03/2024
-- Fixed a niche error that occurred when 'anchor' tags, such as user and url, mistakenly contain other similar tags.
+- Fixed a niche error that occurred when 'anchor' tags, such as user and url, mistakenly contained other similar tags.
 
 # 1.1.3.1 - 03/03/2024
 - HTML styling is now handled more efficiently. Shortening some IDs and applying some base tags allows for up to 20% file size savings.

@@ -126,6 +126,7 @@ script { display: block; }
         public static ByteCount truncatedBytes;
         public static uint truncatedMessages;
         public static ByteCount unreadBytes;
+        private static List<string> writtenDirectories;
 
         private enum MessageType
         {
@@ -150,6 +151,7 @@ script { display: block; }
             string[]? files = (string[]?)e.Argument;
             filesDone = new();
             scanIDX = true;
+            writtenDirectories = new();
 
             foreach (string logfile in files)
             {
@@ -172,6 +174,11 @@ script { display: block; }
                 if (!Common.lastException.Equals(string.Empty))
                     break;
             }
+
+            if (divide)
+                foreach (string dir in writtenDirectories)
+                    if (Directory.Exists(dir) && Directory.GetFiles(dir).Length == 0)
+                        Directory.Delete(dir, true);
 
             return;
         }
@@ -276,7 +283,7 @@ script { display: block; }
             intactBytes = new();
             intactMessages = 0U;
             lastDate = 0U;
-            lastFile = "";
+            lastFile = string.Empty;
             lastMessageCount = 0U;
             lastPosition = 0U;
             scanIDX = false;
@@ -406,22 +413,26 @@ script { display: block; }
                 if (!Common.plaintext)
                     messageData[^1] += "</span>";
 
+                // On the very off chance an otherwise-valid set of messages was made non-sequential, say, by F-Chat's client while trying to repair corruption.
+                // This should never happen, but you throw 100% of the exceptions you don't catch.
                 if (timestamp > 0 && timestamp < Common.UNIXTimestamp())
-                    Common.lastTimestamp = timestamp; // On the very off chance an otherwise-valid set of messages was made non-sequential, say, by F-Chat's client while trying to repair corruption.
-                                                      // This should never happen, but you throw 100% of the exceptions you don't catch.
+                    Common.lastTimestamp = timestamp;
             }
 
             if (divide)
             {
                 thisDate = timestamp - (timestamp % 86400);
-                if (thisDate != lastDate)
+                if (thisDate != lastDate && intact)
                 {
                     if (lastDate != 0U)
                     {
                         if (!Common.plaintext)
                         {
                             if (!headerWritten)
+                            {
                                 dstSB.Insert(0, htmlHeader);
+                                headerWritten = true;
+                            }
                             dstSB.Append(htmlFooter);
                         }
                         File.AppendAllText(lastFile, dstSB.ToString());
@@ -431,10 +442,12 @@ script { display: block; }
                             File.Delete(lastFile);
                     }
 
-                    if (!Directory.Exists(Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN")))
-                        Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN"));
+                    string newDir = Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN");
+                    writtenDirectories.Add(newDir);
+                    if (!Directory.Exists(newDir))
+                        Directory.CreateDirectory(newDir);
 
-                    string newName = Path.Combine(Path.GetDirectoryName(destFile), Path.GetFileNameWithoutExtension(destFile), Path.GetFileNameWithoutExtension(destFile) + "_" + thisDT.ToString("yyyy-MM-dd") + Path.GetExtension(destFile));
+                    string newName = Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN", (Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN") + "_" + thisDT.ToString("yyyy-MM-dd") + Path.GetExtension(destFile) ?? ".txt");
                     if (File.Exists(newName))
                         File.Delete(newName);
 
@@ -472,16 +485,13 @@ script { display: block; }
 
                 if (!Common.plaintext)
                 {
-                    messageData.Add("");
-
-                    messageData[^1] = "<a class=\"pf\" href=\"https://f-list.net/c/"
+                    messageData.Add( "<a class=\"pf\" href=\"https://f-list.net/c/"
                         + profileName
                         + "\"><img class=\"av\" src=\"https://static.f-list.net/images/avatar/"
                         + profileName.ToLower()
                         + ".png\" />"
                         + profileName
-                        + "</a>"
-                        + messageData[^1];
+                        + "</a>");
 
                     if (!opposingProfile.Equals(string.Empty) && !profileName.ToLower().Equals(opposingProfile.ToLower())) // If this is the local user, highlight the message.
                         messageData.Insert(0, "<span class=\"us\">");
@@ -680,11 +690,11 @@ script { display: block; }
             string partialParse = string.Empty;
             Stack<string> tagHistory = new();
             MatchCollection tags = Regex.Matches(messageOut, @"\[/*(\p{L}+)(?:=+([^\p{Co}\]]*))*?\]");
-            string URL = "";
+            string URL = string.Empty;
 
             for (int i = 0; i < tags.Count; i++)
             {
-                string arg = "";
+                string arg = string.Empty;
                 string tag = tags[i].Groups[1].Value.ToLower();
                 if (tag.Length < 1 || tags[i].Value.Length < 1)
                     continue;
@@ -1001,8 +1011,8 @@ script { display: block; }
             }
 
             // Finish things off by removing the BBCode tags, leaving only our fresh HTML behind.
-            messageOut = Regex.Replace(messageOut, @"\[/*\p{L}+=+[^\p{Co}\]]*\]", "");
-            messageOut = Regex.Replace(messageOut, @"\[/*\p{L}+\]", "");
+            messageOut = Regex.Replace(messageOut, @"\[/*\p{L}+=+[^\p{Co}\]]*\]", string.Empty);
+            messageOut = Regex.Replace(messageOut, @"\[/*\p{L}+\]", string.Empty);
 
             return messageOut;
         }
