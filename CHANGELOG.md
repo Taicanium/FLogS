@@ -1,3 +1,7 @@
+# 1.1.3.6 - 10/03/2024
+- Hotfix: Messages in public channels are no longer universally highlighted as if having been sent by the local user.
+- Spoilers no longer fail to un-hide if they contain certain types of formatted text.
+
 # 1.1.3.5 - 08/03/2024
 - Fixed a last-minute calculation error causing icon tags to be mangled after HTML translation.
 

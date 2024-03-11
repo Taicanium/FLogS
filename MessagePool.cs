@@ -63,9 +63,10 @@ script { display: block; }
 .sp * { background-color: #0D0D0F; color: #0D0D0F; }
 .sp .ec { filter: brightness(0%); }
 .sp:hover { color: #FFFFFF; }
+.sp:hover * { color: #FFFFFF; }
 .sp:hover .ts { color: #C0C0C0; }
+.sp:hover .ss { color: #D6D6FF; }
 .sp:hover .pf { color: #6766AD; }
-.sp:hover .url { color: #FFFFFF; }
 .sp:hover .warn { color: #909090; }
 .sp:hover .ec { filter: brightness(100%); }
 </style>
