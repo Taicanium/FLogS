@@ -126,7 +126,14 @@ script { display: block; }
         public static ByteCount truncatedBytes;
         public static uint truncatedMessages;
         public static ByteCount unreadBytes;
-        private static List<string> writtenDirectories;
+        private static List<string>? writtenDirectories;
+
+        private enum ErrorType
+        {
+            Truncated,
+            Empty,
+            Corrupted,
+        }
 
         private enum MessageType
         {
@@ -144,6 +151,28 @@ script { display: block; }
         {
             messageIn = messageIn.Insert(index + adjustment, addition);
             adjustment += addition.Length;
+        }
+
+        private static void AppendError(ref ArrayList messageData, ErrorType format = ErrorType.Truncated)
+        {
+            if (!Common.plaintext)
+                messageData[^1] += "<span class=\"warn\">";
+
+            switch (format)
+            {
+                case ErrorType.Truncated:
+                    messageData.Add("[TRUNCATED MESSAGE]");
+                    break;
+                case ErrorType.Empty:
+                    messageData.Add("[EMPTY MESSAGE]");
+                    break;
+                case ErrorType.Corrupted:
+                    messageData[^1] += "[BAD TIMESTAMP]";
+                    break;
+            }
+
+            if (!Common.plaintext)
+                messageData[^1] += "</span>";
         }
 
         public static void BatchProcess(object? sender, DoWorkEventArgs e)
@@ -301,6 +330,12 @@ script { display: block; }
         /// <returns>'true' if a channel name was successfully extracted from the filestream and appended to MessagePool.destFile; 'false' if, for any reason, that did not occur.</returns>
         private static bool TranslateIDX(FileStream srcFS)
         {
+            /*
+             * I have not reverse-engineered the IDX format beyond reading channel/profile names from it.
+             * It appears to contain 8-byte blocks of numerical data in ascending value; there are more such blocks in IDX files paired with older logs.
+             * I don't know what the blocks represent, but they are almost certainly not timestamps.
+             */
+
             string? fileName = Path.GetFileNameWithoutExtension(srcFile);
             int nameLength;
             string nameString;
@@ -357,6 +392,15 @@ script { display: block; }
         /// <returns>'true' if a message was written to file; 'false' if, for any reason, that did not occur.</returns>
         private static bool TranslateMessage(FileStream srcFS, StreamWriter dstFS)
         {
+            /*
+             * Log files come in a "plaintext-plus" format consisting of sequential blocks in the form:
+             ** 4-byte UNIX timestamp;
+             ** 1-byte message format ID/delimiter (bottle spin, /me message, etc.);
+             ** 1+4-byte profile name (or a null terminator if the message format is headless);
+             ** 2+N-byte message data.
+             ** 1-byte null terminator.
+             */
+
             int discrepancy;
             byte[]? idBuffer = new byte[4];
             bool intact = true;
@@ -406,12 +450,7 @@ script { display: block; }
             {
                 corruptTimestamps++;
                 intact = false;
-
-                if (!Common.plaintext)
-                    messageData[^1] += "<span class=\"warn\">";
-                messageData[^1] += "[BAD TIMESTAMP]";
-                if (!Common.plaintext)
-                    messageData[^1] += "</span>";
+                AppendError(ref messageData, ErrorType.Corrupted);
 
                 // On the very off chance an otherwise-valid set of messages was made non-sequential, say, by F-Chat's client while trying to repair corruption.
                 // This should never happen, but you throw 100% of the exceptions you don't catch.
@@ -435,6 +474,7 @@ script { display: block; }
                             }
                             dstSB.Append(htmlFooter);
                         }
+
                         File.AppendAllText(lastFile, dstSB.ToString());
                         dstSB.Clear();
 
@@ -444,13 +484,16 @@ script { display: block; }
 
                     string newDir = Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN");
 
-                    if (writtenDirectories is not null)
-                        writtenDirectories.Add(newDir);
+                    writtenDirectories?.Add(newDir);
 
                     if (!Directory.Exists(newDir))
                         Directory.CreateDirectory(newDir);
 
-                    string newName = Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN", (Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN") + "_" + thisDT.ToString("yyyy-MM-dd") + Path.GetExtension(destFile) ?? ".txt");
+                    string newName = Path.Combine(
+                        Path.GetDirectoryName(destFile) ?? "C:",
+                        Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN",
+                        (Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN") + "_" + thisDT.ToString("yyyy-MM-dd") + Path.GetExtension(destFile) ?? ".txt");
+
                     if (File.Exists(newName))
                         File.Delete(newName);
 
@@ -476,12 +519,7 @@ script { display: block; }
                     intact = false;
                     truncatedBytes += result;
                     truncatedMessages++;
-
-                    if (!Common.plaintext)
-                        messageData[^1] += "<span class=\"warn\">";
-                    messageData.Add("[TRUNCATED MESSAGE]");
-                    if (!Common.plaintext)
-                        messageData[^1] += "</span>";
+                    AppendError(ref messageData);
                 }
 
                 profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
@@ -532,12 +570,7 @@ script { display: block; }
             {
                 emptyMessages++;
                 intact = false;
-
-                if (!Common.plaintext)
-                    messageData[^1] += "<span class=\"warn\">";
-                messageData.Add("[EMPTY MESSAGE]");
-                if (!Common.plaintext)
-                    messageData[^1] += "</span>";
+                AppendError(ref messageData, ErrorType.Empty);
             }
             else
             {
@@ -547,12 +580,7 @@ script { display: block; }
                 {
                     emptyMessages++;
                     intact = false;
-
-                    if (!Common.plaintext)
-                        messageData[^1] += "<span class=\"warn\">";
-                    messageData.Add("[EMPTY MESSAGE]");
-                    if (!Common.plaintext)
-                        messageData[^1] += "</span>";
+                    AppendError(ref messageData, ErrorType.Empty);
                 }
                 else
                 {
@@ -562,12 +590,7 @@ script { display: block; }
                         intact = false;
                         truncatedBytes += result;
                         truncatedMessages++;
-
-                        if (!Common.plaintext)
-                            messageData[^1] += "<span class=\"warn\">";
-                        messageData.Add("[TRUNCATED MESSAGE]");
-                        if (!Common.plaintext)
-                            messageData[^1] += "</span>";
+                        AppendError(ref messageData);
                     }
 
                     messageOut = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
@@ -691,14 +714,28 @@ script { display: block; }
             string messageOut = message;
             bool noParse = false;
             string partialParse = string.Empty;
+            string tag = string.Empty;
             Stack<string> tagHistory = new();
             MatchCollection tags = Regex.Matches(messageOut, @"\[/*(\p{L}+)(?:=+([^\p{Co}\]]*))*?\]");
             string URL = string.Empty;
 
+            // The best practice is to avoid sub-routines like these where possible.
+            // But with the number of times this code snippet is later called, it's virtually unthinkable not to better organize.
+            bool AdjustHistory(int index)
+            {
+                while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                {
+                    AdjustMessageData(ref messageOut, tagClosings[lastTag], index, ref indexAdj);
+                    tagCounts[lastTag]++;
+                }
+                AdjustMessageData(ref messageOut, tagClosings[tag], index, ref indexAdj);
+                return true;
+            }
+
             for (int i = 0; i < tags.Count; i++)
             {
                 string arg = string.Empty;
-                string tag = tags[i].Groups[1].Value.ToLower();
+                tag = tags[i].Groups[1].Value.ToLower();
                 if (tag.Length < 1 || tags[i].Value.Length < 1)
                     continue;
 
@@ -728,14 +765,11 @@ script { display: block; }
                     case "i":
                     case "s":
                     case "u":
+                    case "sub":
+                    case "sup":
                         if (tagCounts[tag] % 2 == 1)
                         {
-                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
-                            {
-                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
-                                tagCounts[lastTag]++;
-                            }
-                            AdjustMessageData(ref messageOut, "</" + tag + ">", tags[i].Index, ref indexAdj);
+                            AdjustHistory(tags[i].Index);
                             break;
                         }
                         AdjustMessageData(ref messageOut, "<" + tag + ">", tags[i].Index, ref indexAdj);
@@ -744,54 +778,16 @@ script { display: block; }
                     case "big":
                         if (tagCounts[tag] % 2 == 1)
                         {
-                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
-                            {
-                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
-                                tagCounts[lastTag]++;
-                            }
-                            AdjustMessageData(ref messageOut, "</span>", tags[i].Index, ref indexAdj);
+                            AdjustHistory(tags[i].Index);
                             break;
                         }
                         AdjustMessageData(ref messageOut, "<span style=\"font-size: 1.5rem\">", tags[i].Index, ref indexAdj);
                         tagHistory.Push(tag);
                         break;
-                    case "sub":
-                        if (tagCounts[tag] % 2 == 1)
-                        {
-                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
-                            {
-                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
-                                tagCounts[lastTag]++;
-                            }
-                            AdjustMessageData(ref messageOut, "</sub>", tags[i].Index, ref indexAdj);
-                            break;
-                        }
-                        AdjustMessageData(ref messageOut, "<sub>", tags[i].Index, ref indexAdj);
-                        tagHistory.Push(tag);
-                        break;
-                    case "sup":
-                        if (tagCounts[tag] % 2 == 1)
-                        {
-                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
-                            {
-                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
-                                tagCounts[lastTag]++;
-                            }
-                            AdjustMessageData(ref messageOut, "</sup>", tags[i].Index, ref indexAdj);
-                            break;
-                        }
-                        AdjustMessageData(ref messageOut, "<sup>", tags[i].Index, ref indexAdj);
-                        tagHistory.Push(tag);
-                        break;
                     case "noparse":
                         if (tagCounts[tag] % 2 == 1)
                         {
-                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
-                            {
-                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
-                                tagCounts[lastTag]++;
-                            }
-                            AdjustMessageData(ref messageOut, "</script>", tags[i].Index, ref indexAdj);
+                            AdjustHistory(tags[i].Index);
                             noParse = false;
                             break;
                         }
@@ -813,9 +809,8 @@ script { display: block; }
 
                             if (anchorIndex + indexAdj + URL.Length + 6 == tags[i].Index + indexAdj) // If the url tag contained a link but no label text, the client's practice is to display the URL itself.
                                                                                                      // The extra '6' here is the five '[url=' characters plus the closing bracket.
-                                AdjustMessageData(ref messageOut, URL, tags[i].Index, ref indexAdj);
-
-                            AdjustMessageData(ref messageOut, "</a>", tags[i].Index, ref indexAdj);
+                            AdjustMessageData(ref messageOut, URL, tags[i].Index, ref indexAdj);
+                            AdjustMessageData(ref messageOut, tagClosings[tag], tags[i].Index, ref indexAdj);
                             partialParse = string.Empty;
                             break;
                         }
@@ -900,12 +895,7 @@ script { display: block; }
                     case "spoiler":
                         if (tagCounts[tag] % 2 == 1)
                         {
-                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
-                            {
-                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
-                                tagCounts[lastTag]++;
-                            }
-                            AdjustMessageData(ref messageOut, "</span>", tags[i].Index, ref indexAdj);
+                            AdjustHistory(tags[i].Index);
                             break;
                         }
                         AdjustMessageData(ref messageOut, "<span class=\"sp\">", tags[i].Index, ref indexAdj);
@@ -926,7 +916,7 @@ script { display: block; }
                             if (!messageOut[anchorIndex..(tags[i].Index + tags[i].Length + indexAdj)].Contains(URL)) // Session tags for public channels already contain their own name instead of a room code. Here we check against doubling them up.
                                 AdjustMessageData(ref messageOut, " (" + URL + ")", tags[i].Index, ref indexAdj);
 
-                            AdjustMessageData(ref messageOut, "</a>", tags[i].Index, ref indexAdj);
+                            AdjustMessageData(ref messageOut, tagClosings[tag], tags[i].Index, ref indexAdj);
                             partialParse = string.Empty;
                             break;
                         }
@@ -939,12 +929,7 @@ script { display: block; }
                     case "color":
                         if (tagCounts[tag] % 2 == 1)
                         {
-                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
-                            {
-                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
-                                tagCounts[lastTag]++;
-                            }
-                            AdjustMessageData(ref messageOut, "</span>", tags[i].Index, ref indexAdj);
+                            AdjustHistory(tags[i].Index);
                             break;
                         }
                         switch (arg)
