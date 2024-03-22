@@ -1,3 +1,7 @@
+# 1.1.3.8 - 22/03/2024
+- Unrecognized BBCode tags are no longer erased in HTML output. Jokes such as \[REDACTED\] can now be preserved.
+- Small optimizations in repetitive code sequences that should lead to a token speedup when translating to HTML.
+
 # 1.1.3.7 - 11/03/2024
 - Messages with corrupted or non-sequential timestamps are no longer given their own files when dividing by date.
 - Destination subdirectories left empty after clearing empty output files from them are now also trimmed along with their files.

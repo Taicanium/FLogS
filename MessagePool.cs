@@ -764,9 +764,9 @@ script { display: block; }
                     case "b":
                     case "i":
                     case "s":
-                    case "u":
                     case "sub":
                     case "sup":
+                    case "u":
                         if (tagCounts[tag] % 2 == 1)
                         {
                             AdjustHistory(tags[i].Index);
@@ -783,148 +783,6 @@ script { display: block; }
                         }
                         AdjustMessageData(ref messageOut, "<span style=\"font-size: 1.5rem\">", tags[i].Index, ref indexAdj);
                         tagHistory.Push(tag);
-                        break;
-                    case "noparse":
-                        if (tagCounts[tag] % 2 == 1)
-                        {
-                            AdjustHistory(tags[i].Index);
-                            noParse = false;
-                            break;
-                        }
-                        AdjustMessageData(ref messageOut, "<script type=\"text/plain\">", tags[i].Index, ref indexAdj);
-                        noParse = true;
-                        tagHistory.Push(tag);
-                        break;
-                    case "url":
-                        if (!partialParse.Equals(string.Empty) && !partialParse.Equals(tag))
-                            continue;
-
-                        if (tagCounts[tag] % 2 == 1)
-                        {
-                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
-                            {
-                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
-                                tagCounts[lastTag]++;
-                            }
-
-                            if (anchorIndex + indexAdj + URL.Length + 6 == tags[i].Index + indexAdj) // If the url tag contained a link but no label text, the client's practice is to display the URL itself.
-                                                                                                     // The extra '6' here is the five '[url=' characters plus the closing bracket.
-                            AdjustMessageData(ref messageOut, URL, tags[i].Index, ref indexAdj);
-                            AdjustMessageData(ref messageOut, tagClosings[tag], tags[i].Index, ref indexAdj);
-                            partialParse = string.Empty;
-                            break;
-                        }
-                        AdjustMessageData(ref messageOut, "<a class=\"url\" href=\"" + arg + "\">", tags[i].Index, ref indexAdj); // Yes, the arg can be empty. That's okay.
-                        anchorIndex = tags[i].Index;
-                        partialParse = tag;
-                        tagHistory.Push(tag);
-                        URL = arg;
-                        break;
-                    case "icon":
-                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
-                            continue;
-
-                        if (tagCounts[tag] % 2 == 1)
-                        {
-                            // The img tag must be wrapped in the anchor and not the other way around.
-                            // As such, indexAdj cannot be tied to the anchor, and we have to insert it manually.
-
-                            // 62 for the img tag we inserted below, and 5 for the BBCode tag which is still there.
-                            URL = messageOut[(anchorIndex + 67)..(tags[i].Index + indexAdj)];
-                            messageOut = messageOut.Insert(anchorIndex, "<a class=\"pf\" href=\"https://f-list.net/c/" + URL + "\">");
-                            indexAdj += URL.Length + 43;
-                            AdjustMessageData(ref messageOut, ".png\" title=\"" + URL + "\" /></a>", tags[i].Index, ref indexAdj);
-
-                            messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),
-                                messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
-                                messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
-
-                            if (tagHistory.Peek().Equals(tag))
-                                tagHistory.Pop();
-
-                            partialParse = string.Empty;
-                            break;
-                        }
-                        anchorIndex = tags[i].Index + indexAdj;
-                        AdjustMessageData(ref messageOut, "<img class=\"ec\" src=\"https://static.f-list.net/images/avatar/", tags[i].Index, ref indexAdj);
-                        partialParse = tag;
-                        tagHistory.Push(tag);
-                        break;
-                    case "eicon":
-                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
-                            continue;
-
-                        if (tagCounts[tag] % 2 == 1)
-                        {
-                            // 61 for the img tag we inserted below, and 6 for the BBCode tag which is still there.
-                            URL = messageOut[(anchorIndex + 67)..(tags[i].Index + indexAdj)];
-                            AdjustMessageData(ref messageOut, ".gif\" title=\"" + URL + "\" />", tags[i].Index, ref indexAdj);
-
-                            messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),
-                                messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
-                                messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
-
-                            if (tagHistory.Peek().Equals(tag))
-                                tagHistory.Pop();
-
-                            partialParse = string.Empty;
-                            break;
-                        }
-                        anchorIndex = tags[i].Index + indexAdj;
-                        AdjustMessageData(ref messageOut, "<img class=\"ec\" src=\"https://static.f-list.net/images/eicon/", tags[i].Index, ref indexAdj);
-                        partialParse = tag;
-                        tagHistory.Push(tag);
-                        break;
-                    case "user":
-                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
-                            continue;
-
-                        if (tagCounts[tag] % 2 == 1)
-                        {
-                            // 42 for the anchor we inserted below, and 5 for the BBCode tag which is still there.
-                            URL = messageOut[(anchorIndex + 47)..(tags[i].Index + indexAdj)];
-                            AdjustMessageData(ref messageOut, "\">" + URL + "</a>", tags[i].Index, ref indexAdj);
-                            partialParse = string.Empty;
-                            break;
-                        }
-                        anchorIndex = tags[i].Index + indexAdj;
-                        AdjustMessageData(ref messageOut, "<a class=\"pf\" href=\"https://f-list.net/c/", tags[i].Index, ref indexAdj);
-                        tagHistory.Push(tag);
-                        partialParse = tag;
-                        break;
-                    case "spoiler":
-                        if (tagCounts[tag] % 2 == 1)
-                        {
-                            AdjustHistory(tags[i].Index);
-                            break;
-                        }
-                        AdjustMessageData(ref messageOut, "<span class=\"sp\">", tags[i].Index, ref indexAdj);
-                        tagHistory.Push(tag);
-                        break;
-                    case "session":
-                        if (!partialParse.Equals(string.Empty) && !partialParse.Equals(tag))
-                            continue;
-
-                        if (tagCounts[tag] % 2 == 1)
-                        {
-                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
-                            {
-                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
-                                tagCounts[lastTag]++;
-                            }
-
-                            if (!messageOut[anchorIndex..(tags[i].Index + tags[i].Length + indexAdj)].Contains(URL)) // Session tags for public channels already contain their own name instead of a room code. Here we check against doubling them up.
-                                AdjustMessageData(ref messageOut, " (" + URL + ")", tags[i].Index, ref indexAdj);
-
-                            AdjustMessageData(ref messageOut, tagClosings[tag], tags[i].Index, ref indexAdj);
-                            partialParse = string.Empty;
-                            break;
-                        }
-                        AdjustMessageData(ref messageOut, "<a class=\"ss\" href=\"#\">", tags[i].Index, ref indexAdj); // TODO: JS-based method for copying a session invite to the user's clipboard?
-                        anchorIndex = tags[i].Index + tags[i].Length + indexAdj;
-                        partialParse = tag;
-                        tagHistory.Push(tag);
-                        URL = arg;
                         break;
                     case "color":
                         if (tagCounts[tag] % 2 == 1)
@@ -974,8 +832,151 @@ script { display: block; }
                         }
                         tagHistory.Push(tag);
                         break;
+                    case "eicon":
+                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
+                            continue;
+
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            // 61 for the img tag we inserted below, and 6 for the BBCode tag which is still there.
+                            URL = messageOut[(anchorIndex + 67)..(tags[i].Index + indexAdj)];
+                            AdjustMessageData(ref messageOut, ".gif\" title=\"" + URL + "\" />", tags[i].Index, ref indexAdj);
+
+                            messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),
+                                messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
+                                messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
+
+                            if (tagHistory.Peek().Equals(tag))
+                                tagHistory.Pop();
+
+                            partialParse = string.Empty;
+                            break;
+                        }
+                        anchorIndex = tags[i].Index + indexAdj;
+                        AdjustMessageData(ref messageOut, "<img class=\"ec\" src=\"https://static.f-list.net/images/eicon/", tags[i].Index, ref indexAdj);
+                        partialParse = tag;
+                        tagHistory.Push(tag);
+                        break;
+                    case "icon":
+                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
+                            continue;
+
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            // The img tag must be wrapped in the anchor and not the other way around.
+                            // As such, indexAdj cannot be tied to the anchor, and we have to insert it manually.
+
+                            // 62 for the img tag we inserted below, and 5 for the BBCode tag which is still there.
+                            URL = messageOut[(anchorIndex + 67)..(tags[i].Index + indexAdj)];
+                            messageOut = messageOut.Insert(anchorIndex, "<a class=\"pf\" href=\"https://f-list.net/c/" + URL + "\">");
+                            indexAdj += URL.Length + 43;
+                            AdjustMessageData(ref messageOut, ".png\" title=\"" + URL + "\" /></a>", tags[i].Index, ref indexAdj);
+
+                            messageOut = string.Concat(messageOut.AsSpan(0, anchorIndex),
+                                messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
+                                messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
+
+                            if (tagHistory.Peek().Equals(tag))
+                                tagHistory.Pop();
+
+                            partialParse = string.Empty;
+                            break;
+                        }
+                        anchorIndex = tags[i].Index + indexAdj;
+                        AdjustMessageData(ref messageOut, "<img class=\"ec\" src=\"https://static.f-list.net/images/avatar/", tags[i].Index, ref indexAdj);
+                        partialParse = tag;
+                        tagHistory.Push(tag);
+                        break;
+                    case "noparse":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            AdjustHistory(tags[i].Index);
+                            noParse = false;
+                            break;
+                        }
+                        AdjustMessageData(ref messageOut, "<script type=\"text/plain\">", tags[i].Index, ref indexAdj);
+                        noParse = true;
+                        tagHistory.Push(tag);
+                        break;
+                    case "session":
+                        if (!partialParse.Equals(string.Empty) && !partialParse.Equals(tag))
+                            continue;
+
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            {
+                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                tagCounts[lastTag]++;
+                            }
+
+                            if (!messageOut[anchorIndex..(tags[i].Index + tags[i].Length + indexAdj)].Contains(URL)) // Session tags for public channels already contain their own name instead of a room code. Here we check against doubling them up.
+                                AdjustMessageData(ref messageOut, " (" + URL + ")", tags[i].Index, ref indexAdj);
+
+                            AdjustMessageData(ref messageOut, tagClosings[tag], tags[i].Index, ref indexAdj);
+                            partialParse = string.Empty;
+                            break;
+                        }
+                        AdjustMessageData(ref messageOut, "<a class=\"ss\" href=\"#\">", tags[i].Index, ref indexAdj); // TODO: JS-based method for copying a session invite to the user's clipboard?
+                        anchorIndex = tags[i].Index + tags[i].Length + indexAdj;
+                        partialParse = tag;
+                        tagHistory.Push(tag);
+                        URL = arg;
+                        break;
+                    case "spoiler":
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            AdjustHistory(tags[i].Index);
+                            break;
+                        }
+                        AdjustMessageData(ref messageOut, "<span class=\"sp\">", tags[i].Index, ref indexAdj);
+                        tagHistory.Push(tag);
+                        break;
+                    case "url":
+                        if (!partialParse.Equals(string.Empty) && !partialParse.Equals(tag))
+                            continue;
+
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            {
+                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                tagCounts[lastTag]++;
+                            }
+
+                            if (anchorIndex + indexAdj + URL.Length + 6 == tags[i].Index + indexAdj) // If the url tag contained a link but no label text, the client's practice is to display the URL itself.
+                                                                                                     // The extra '6' here is the five '[url=' characters plus the closing bracket.
+                                AdjustMessageData(ref messageOut, URL, tags[i].Index, ref indexAdj);
+                            AdjustMessageData(ref messageOut, tagClosings[tag], tags[i].Index, ref indexAdj);
+                            partialParse = string.Empty;
+                            break;
+                        }
+                        AdjustMessageData(ref messageOut, "<a class=\"url\" href=\"" + arg + "\">", tags[i].Index, ref indexAdj); // Yes, the arg can be empty. That's okay.
+                        anchorIndex = tags[i].Index;
+                        partialParse = tag;
+                        tagHistory.Push(tag);
+                        URL = arg;
+                        break;
+                    case "user":
+                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
+                            continue;
+
+                        if (tagCounts[tag] % 2 == 1)
+                        {
+                            // 42 for the anchor we inserted below, and 5 for the BBCode tag which is still there.
+                            URL = messageOut[(anchorIndex + 47)..(tags[i].Index + indexAdj)];
+                            AdjustMessageData(ref messageOut, "\">" + URL + "</a>", tags[i].Index, ref indexAdj);
+                            partialParse = string.Empty;
+                            break;
+                        }
+                        anchorIndex = tags[i].Index + indexAdj;
+                        AdjustMessageData(ref messageOut, "<a class=\"pf\" href=\"https://f-list.net/c/", tags[i].Index, ref indexAdj);
+                        tagHistory.Push(tag);
+                        partialParse = tag;
+                        break;
                     default:
                         validTag = false;
+                        AdjustMessageData(ref messageOut, "\u200B", tags[i].Index + 1, ref indexAdj); // As before when processing noparse'd tags, we'll break any unrecognized tags so that they won't be deleted at the end of this routine.
                         break;
                 }
                 if (validTag)
