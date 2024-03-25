@@ -266,13 +266,13 @@ namespace FLogS
 
         private void MainGrid_Loaded(object? sender, RoutedEventArgs e)
         {
+            overrideFormat = false;
+
+            if (File.Exists(Common.errorFile))
+                File.Delete(Common.errorFile);
+
             try
             {
-                overrideFormat = false;
-
-                if (File.Exists(Common.errorFile))
-                    File.Delete(Common.errorFile);
-
                 if (ShouldSystemUseDarkMode())
                     ThemeSelector_Click(sender, e);
             }

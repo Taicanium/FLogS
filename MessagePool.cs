@@ -673,6 +673,11 @@ script { display: block; }
                     return written;
 
                 srcFS.Seek(-6, SeekOrigin.Current);
+
+                // Our verification of the next message is rudimentary. We only validate whether the byte occupying the space where a delimiter SHOULD be COULD in fact be a delimiter.
+                // Tying the presence of a message to the timestamp is less reliable, since we can't assume that the timestamp is intact and well-ordered.
+                // In practice, I validated 2.2 million messages across ~250 channel logs, and the occurrence of failed delimiter checks, or issues arising thereof, was 0.
+                // That's unfair, however, because I also know *most* of my logs to be wholly uncorrupted; further testing is necessary with logs that are less intact.
                 if (nextByte < 7)
                 {
                     discrepancy = (int)srcFS.Position - (int)lastPosition;
@@ -1000,8 +1005,7 @@ script { display: block; }
             }
 
             // Finish things off by removing the BBCode tags, leaving only our fresh HTML behind.
-            messageOut = Regex.Replace(messageOut, @"\[/*\p{L}+=+[^\p{Co}\]]*\]", string.Empty);
-            messageOut = Regex.Replace(messageOut, @"\[/*\p{L}+\]", string.Empty);
+            messageOut = Regex.Replace(messageOut, @"\[/*(\p{L}+)(?:=+([^\p{Co}\]]*))*?\]", string.Empty);
 
             return messageOut;
         }

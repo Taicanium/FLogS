@@ -1,3 +1,7 @@
+# 1.1.3.9 - 25/03/2024
+- Removing leftover BBCode tags after we're done translating to HTML has been massively optimized. When I say massive, I mean a literal 250% speedup in pessimistic cases. I'm ashamed of myself for not doing this sooner.
+- Private channel logs are now formatted with their IDX name (if it exists) followed by the user's supplied file name in parentheses.
+
 # 1.1.3.8 - 22/03/2024
 - Unrecognized BBCode tags are no longer erased in HTML output. Jokes such as \[REDACTED\] can now be preserved.
 - Small optimizations in repetitive code sequences that should lead to a token speedup when translating to HTML.
