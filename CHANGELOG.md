@@ -1,4 +1,7 @@
-# 1.1.3.10 - 
+# 1.1.3.11 - 26/03/2024
+- Hotfix: Italic HTML tags are no longer inserted into plaintext.
+
+# 1.1.3.10 - 25/03/2024
 - Fixed a misplaced function causing single-file HTML output to be written without a header or styling.
 - \/me messages are now italicized according to the native client's renderer rather than left plain.
 - Under-the-hood changes to error message selection which are less efficient but also much cleaner.

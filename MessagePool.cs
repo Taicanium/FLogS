@@ -602,7 +602,7 @@ script { display: block; }
                         foreach (KeyValuePair<string, string> entity in htmlEntities)
                             messageOut = Regex.Replace(messageOut, entity.Key, entity.Value);
 
-                    if (msId == MessageType.Me || msId == MessageType.DiceRoll)
+                    if (!Common.plaintext && (msId == MessageType.Me || msId == MessageType.DiceRoll))
                     {
                         messageOut = "<i>" + messageOut;
                         tagHistory.Push("i");
@@ -727,7 +727,7 @@ script { display: block; }
             string messageOut = message;
             bool noParse = false;
             string partialParse = string.Empty;
-            string tag = string.Empty;
+            string tag;
             MatchCollection tags = BBCodeTags().Matches(messageOut);
             string URL = string.Empty;
 
