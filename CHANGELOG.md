@@ -1,3 +1,9 @@
+# 1.1.3.10 - 
+- Fixed a misplaced function causing single-file HTML output to be written without a header or styling.
+- \/me messages are now italicized according to the native client's renderer rather than left plain.
+- Under-the-hood changes to error message selection which are less efficient but also much cleaner.
+- Further optimizations to Regex pattern matching, including compile-time pattern functions.
+
 # 1.1.3.9 - 25/03/2024
 - Removing leftover BBCode tags after we're done translating to HTML has been massively optimized. When I say massive, I mean a literal 250% speedup in pessimistic cases. I'm ashamed of myself for not doing this sooner.
 - Private channel logs are now formatted with their IDX name (if it exists) followed by the user's supplied file name in parentheses.

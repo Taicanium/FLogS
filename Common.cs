@@ -7,7 +7,7 @@ namespace FLogS
     /// <summary>
     /// Static helper functions serving purely logical purposes in either the front- or backend.
     /// </summary>
-    internal class Common
+    internal static class Common
     {
         public readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
         private readonly static DateTime epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);

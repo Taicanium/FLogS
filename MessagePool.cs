@@ -12,9 +12,9 @@ namespace FLogS
     /// <summary>
     /// Static functions serving most of the needs of the actual translation routine. Everything not strictly WPF but still integral to the BackgroundWorker threads goes here.
     /// </summary>
-    internal class MessagePool
+    internal partial class MessagePool
     {
-        public static ByteCount bytesRead;
+        private static ByteCount bytesRead;
         public static uint corruptTimestamps = 0U;
         public static string? destDir;
         public static string? destFile;
@@ -121,6 +121,7 @@ script { display: block; }
             { "session", 0 },
             { "color", 0 },
         };
+        private static Stack<string> tagHistory;
         private static uint thisDate = 1U;
         public static ByteCount totalSize;
         public static ByteCount truncatedBytes;
@@ -244,6 +245,7 @@ script { display: block; }
                 using (StreamWriter dstFS = divide ? StreamWriter.Null : new(destFile, true))
                 {
                     dstSB = new();
+                    headerWritten = false;
                     lastDiscrepancy = 0;
                     lastPosition = 0U;
                     Common.lastTimestamp = 0U;
@@ -346,11 +348,11 @@ script { display: block; }
             {
                 nameLength = srcFS.ReadByte();
                 if (nameLength < 1
-                    || (!Path.GetFileNameWithoutExtension(srcFS.Name).Contains('#') && nameLength > 20)) // F-List profile names cannot be greater than 20 characters in length.
+                    || !Path.GetFileNameWithoutExtension(srcFS.Name).Contains('#') && nameLength > 20) // F-List profile names cannot be greater than 20 characters in length.
                     return false;
 
                 streamBuffer = new byte[nameLength];
-                if ((result = srcFS.Read(streamBuffer, 0, (int)nameLength)) < nameLength)
+                if ((result = srcFS.Read(streamBuffer, 0, nameLength)) < nameLength)
                     return false;
 
                 nameString = new string(Encoding.UTF8.GetString(streamBuffer).Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).ToLower();
@@ -414,6 +416,7 @@ script { display: block; }
             string profileName = string.Empty;
             int result;
             byte[]? streamBuffer;
+            tagHistory = new();
             DateTime thisDT = new();
             uint timestamp;
             bool withinRange = true;
@@ -460,7 +463,7 @@ script { display: block; }
 
             if (divide)
             {
-                thisDate = timestamp - (timestamp % 86400);
+                thisDate = timestamp - timestamp % 86400;
                 if (thisDate != lastDate && intact)
                 {
                     if (lastDate != 0U)
@@ -600,28 +603,27 @@ script { display: block; }
                             messageOut = Regex.Replace(messageOut, entity.Key, entity.Value);
 
                     if (msId == MessageType.Me || msId == MessageType.DiceRoll)
+                    {
+                        messageOut = "<i>" + messageOut;
+                        tagHistory.Push("i");
+                        tagCounts["i"] += 1;
                         messageOut = messageOut.TrimStart();
+                    }
 
                     messageData.Add(messageOut);
                 }
             }
 
             messageOut = string.Join(' ', messageData.ToArray());
-            messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Remove everything that's not a printable, newline, or format character.
+            messageOut = ControlCharacters().Replace(messageOut, string.Empty); // Remove everything that's not a printable, newline, or format character.
 
             if (phrase is null
-                || (!regex && messageOut.Contains(phrase, StringComparison.OrdinalIgnoreCase)) // Either the profile name or the message body can contain our search text.
-                || (regex && Regex.IsMatch(messageOut, phrase)))
+                || !regex && messageOut.Contains(phrase, StringComparison.OrdinalIgnoreCase) // Either the profile name or the message body can contain our search text.
+                || regex && Regex.IsMatch(messageOut, phrase))
                 matchPhrase = true;
 
             if (matchPhrase && withinRange && (intact || saveTruncated))
             {
-                if (!Common.plaintext && !headerWritten)
-                {
-                    dstSB.Insert(0, htmlHeader);
-                    headerWritten = true;
-                }
-
                 if (intact)
                 {
                     intactMessages++;
@@ -642,7 +644,7 @@ script { display: block; }
                     messageOut = TranslateTags(messageOut); // If we're saving to HTML, it's time to convert from BBCode to HTML-style tags.
 
                 messageOut = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(messageOut)); // There's an odd quirk with East Asian printable characters that requires us to reformat them once.
-                messageOut = Regex.Replace(messageOut, @"\p{Co}+", string.Empty); // Once more, remove everything that's not a printable, newline, or format character.
+                messageOut = ControlCharacters().Replace(messageOut, string.Empty); // Once more, remove everything that's not a printable, newline, or format character.
 
                 if (!Common.plaintext && !opposingProfile.Equals(string.Empty) && !profileName.ToLower().Equals(opposingProfile.ToLower())) // If this is the local user, close the highlight tag from before.
                     messageOut += "</span>";
@@ -654,6 +656,12 @@ script { display: block; }
 
                 if (!divide)
                 {
+                    if (!Common.plaintext && !headerWritten)
+                    {
+                        dstSB.Insert(0, htmlHeader);
+                        headerWritten = true;
+                    }
+
                     dstFS.Write(dstSB.ToString());
                     dstSB.Clear();
                 }
@@ -720,8 +728,7 @@ script { display: block; }
             bool noParse = false;
             string partialParse = string.Empty;
             string tag = string.Empty;
-            Stack<string> tagHistory = new();
-            MatchCollection tags = Regex.Matches(messageOut, @"\[/*(\p{L}+)(?:=+([^\p{Co}\]]*))*?\]");
+            MatchCollection tags = BBCodeTags().Matches(messageOut);
             string URL = string.Empty;
 
             // The best practice is to avoid sub-routines like these where possible.
@@ -761,7 +768,7 @@ script { display: block; }
                     continue;
                 }
 
-                if (isClosing && tagCounts.ContainsKey(tag) && tagCounts[tag] % 2 == 0)
+                if (isClosing && tagCounts.TryGetValue(tag, out int tagCount) && tagCount % 2 == 0)
                     continue;
 
                 switch (tag)
@@ -1005,9 +1012,15 @@ script { display: block; }
             }
 
             // Finish things off by removing the BBCode tags, leaving only our fresh HTML behind.
-            messageOut = Regex.Replace(messageOut, @"\[/*(\p{L}+)(?:=+([^\p{Co}\]]*))*?\]", string.Empty);
+            messageOut = BBCodeTags().Replace(messageOut, string.Empty);
 
             return messageOut;
         }
+
+        [GeneratedRegex(@"\[/*(\p{L}+)(?:=+([^\p{Co}\]]*))*?\]")]
+        private static partial Regex BBCodeTags();
+
+        [GeneratedRegex(@"\p{Co}+")]
+        private static partial Regex ControlCharacters();
     }
 }

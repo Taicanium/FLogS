@@ -23,42 +23,49 @@ namespace FLogS
         {   // 0 = Dark mode, 1 = Light mode.
             new SolidColorBrush[] { Brushes.Black, Brushes.White }, // Textboxes
             new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige }, // Buttons
-            new SolidColorBrush[] { new(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray }, // Borders
+            new SolidColorBrush[] { new(new() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray }, // Borders
             new SolidColorBrush[] { Brushes.Pink, Brushes.Red }, // Error messages (And the ADL warning)
             new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkRed }, // Warning messages
-            new SolidColorBrush[] { new(new Color() { A = 0xFF, R = 0x4C, G = 0x4C, B = 0x4C }), Brushes.DarkGray }, // TabControl
+            new SolidColorBrush[] { new(new() { A = 0xFF, R = 0x4C, G = 0x4C, B = 0x4C }), Brushes.DarkGray }, // TabControl
             new SolidColorBrush[] { Brushes.Transparent, new(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }) }, // DatePicker borders
             new SolidColorBrush[] { Brushes.DimGray, Brushes.Beige }, // PanelGrids
             new SolidColorBrush[] { Brushes.LightBlue, Brushes.DarkBlue }, // Hyperlinks
         };
         private static int brushPalette = 1;
-        private static uint directoryReadyToRun = 1;
-        private static uint fileReadyToRun = 1;
+        private static FLogS_ERROR directoryError;
+        private static FLogS_WARNING directoryWarning;
+        private static FLogS_ERROR fileError;
+        private static FLogS_WARNING fileWarning;
         private static int filesProcessed;
         private static bool overrideFormat = false;
-        private static uint phraseReadyToRun = 1;
+        private static FLogS_ERROR phraseError;
+        private static FLogS_WARNING phraseWarning;
         private static int reversePalette = 0;
-        private readonly static string[] warnings =
+
+        private enum FLogS_ERROR
         {
-            string.Empty,
-            "No source log files selected.",
-            "No destination directory selected.",
-            "Destination is not a directory.",
-            "Destination directory does not exist.",
-            "One or more source files do not exist.",
-            "One or more source files exist in the destination.",
-            "No source log file selected.",
-            "Source log file does not exist.",
-            "No destination file selected.",
-            "Destination is not a file.",
-            "Source and destination files are identical.",
-            "No search text entered.",
-            "Search text contains an invalid RegEx pattern.",
-            string.Empty,
-            string.Empty,
-            "Destination file will be overwritten.",
-            "One or more files will be overwritten.",
-        };
+            NONE,
+            NO_SOURCES,
+            NO_DEST_DIR,
+            DEST_NOT_DIRECTORY,
+            DEST_NOT_FOUND,
+            SOURCES_NOT_FOUND,
+            SOURCE_CONFLICT,
+            NO_SOURCE,
+            SOURCE_NOT_FOUND,
+            NO_DEST,
+            DEST_NOT_FILE,
+            SOURCE_EQUALS_DEST,
+            NO_REGEX,
+            BAD_REGEX,
+        }
+
+        private enum FLogS_WARNING
+        {
+            NONE,
+            SINGLE_OVERWRITE,
+            MULTI_OVERWRITE,
+        }
 
         public MainWindow()
         {
@@ -258,6 +265,30 @@ namespace FLogS
             }
         }
 
+        private static string GetErrorMessage(FLogS_ERROR eCode, FLogS_WARNING wCode) => (eCode, wCode) switch
+        {
+            (FLogS_ERROR.BAD_REGEX, _) => "Search text contains an invalid RegEx pattern.",
+            (FLogS_ERROR.DEST_NOT_DIRECTORY, _) => "Destination is not a directory.",
+            (FLogS_ERROR.DEST_NOT_FILE, _) => "Destination is not a file.",
+            (FLogS_ERROR.DEST_NOT_FOUND, _) => "Destination directory does not exist.",
+            (FLogS_ERROR.NO_DEST, _) => "No destination file selected.",
+            (FLogS_ERROR.NO_DEST_DIR, _) => "No destination directory selected.",
+            (FLogS_ERROR.NO_REGEX, _) => "No search text entered.",
+            (FLogS_ERROR.NO_SOURCE, _) => "No source log file selected.",
+            (FLogS_ERROR.NO_SOURCES, _) => "No source log files selected.",
+            (FLogS_ERROR.SOURCE_CONFLICT, _) => "One or more source files exist in the destination.",
+            (FLogS_ERROR.SOURCE_EQUALS_DEST, _) => "Source and destination files are identical.",
+            (FLogS_ERROR.SOURCE_NOT_FOUND, _) => "Source log file does not exist.",
+            (FLogS_ERROR.SOURCES_NOT_FOUND, _) => "One or more source files do not exist.",
+
+            (FLogS_ERROR.NONE, FLogS_WARNING.MULTI_OVERWRITE) => "One or more files will be overwritten.",
+            (FLogS_ERROR.NONE, FLogS_WARNING.SINGLE_OVERWRITE) => "Destination file will be overwritten.",
+            (FLogS_ERROR.NONE, _) => "",
+
+            (_, FLogS_WARNING.NONE) => "An unknown error has occurred.",
+            (_, _) => "An unknown error has occurred.",
+        };
+
         private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
         {
             Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
@@ -434,12 +465,12 @@ namespace FLogS
                 MainGrid.Background = brushCombos[5][brushPalette];
                 RegexCheckBox.Background = brushCombos[1][brushPalette];
 
-                if (directoryReadyToRun > 0xF)
-                    DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
-                if (phraseReadyToRun > 0xF)
-                    PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
-                if (fileReadyToRun > 0xF)
+                if (fileError == FLogS_ERROR.NONE)
                     WarningLabel.Foreground = brushCombos[4][brushPalette];
+                if (directoryError == FLogS_ERROR.NONE)
+                    DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
+                if (phraseError == FLogS_ERROR.NONE)
+                    PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
             }
             catch (Exception ex)
             {
@@ -453,65 +484,68 @@ namespace FLogS
             try
             {
                 MessagePool.regex = RegexCheckBox.IsVisible && (RegexCheckBox.IsChecked ?? false);
-                fileReadyToRun = directoryReadyToRun = phraseReadyToRun = 0;
+                fileError = directoryError = phraseError = FLogS_ERROR.NONE;
+                fileWarning = directoryWarning = phraseWarning = FLogS_WARNING.NONE;
                 PhraseSearchLabel.Content = MessagePool.regex ? "Target Pattern" : "Target Word or Phrase";
                 RunButton.IsEnabled = DirectoryRunButton.IsEnabled = PhraseRunButton.IsEnabled = true;
                 WarningLabel.Content = DirectoryWarningLabel.Content = PhraseWarningLabel.Content = string.Empty;
                 WarningLabel.Foreground = DirectoryWarningLabel.Foreground = PhraseWarningLabel.Foreground = brushCombos[3][brushPalette];
 
                 if (DirectorySource.Text.Length == 0)
-                    directoryReadyToRun = 1;
+                    directoryError = FLogS_ERROR.NO_SOURCES;
                 else if (DirectoryOutput.Text.Length == 0)
-                    directoryReadyToRun = 2;
+                    directoryError = FLogS_ERROR.NO_DEST_DIR;
                 else if (File.Exists(DirectoryOutput.Text))
-                    directoryReadyToRun = 3;
+                    directoryError = FLogS_ERROR.DEST_NOT_DIRECTORY;
                 else if (!Directory.Exists(DirectoryOutput.Text))
-                    directoryReadyToRun = 4;
+                    directoryError = FLogS_ERROR.DEST_NOT_FOUND;
                 else
                 {
                     foreach (string file in DirectorySource.Text.Split(';'))
                     {
                         string outFile = Path.Join(DirectoryOutput.Text, Path.GetFileNameWithoutExtension(file));
+
                         if (!Common.plaintext)
                             outFile += ".html";
                         else
                             outFile += ".txt";
+
                         if (!File.Exists(file))
-                            directoryReadyToRun = 5;
+                            directoryError = FLogS_ERROR.SOURCES_NOT_FOUND;
                         else if (file.Equals(outFile))
-                            directoryReadyToRun = 6;
-                        else if (directoryReadyToRun == 0 && File.Exists(outFile))
-                            directoryReadyToRun = 0x11;
+                            directoryError = FLogS_ERROR.SOURCE_CONFLICT;
+                        else if (directoryError == FLogS_ERROR.NONE && File.Exists(outFile))
+                            directoryWarning = FLogS_WARNING.MULTI_OVERWRITE;
                     }
                 }
 
                 if (FileSource.Text.Length == 0)
-                    fileReadyToRun = 7;
+                    fileError = FLogS_ERROR.NO_SOURCE;
                 else if (!File.Exists(FileSource.Text))
-                    fileReadyToRun = 8;
+                    fileError = FLogS_ERROR.SOURCE_NOT_FOUND;
                 else if (FileOutput.Text.Length == 0)
-                    fileReadyToRun = 9;
+                    fileError = FLogS_ERROR.NO_DEST;
                 else if (Directory.Exists(FileOutput.Text))
-                    fileReadyToRun = 0xA;
+                    fileError = FLogS_ERROR.DEST_NOT_FILE;
                 else if (!Directory.Exists(Path.GetDirectoryName(FileOutput.Text)))
-                    fileReadyToRun = 4;
+                    fileError = FLogS_ERROR.DEST_NOT_FOUND;
                 else if (FileSource.Text.Equals(FileOutput.Text))
-                    fileReadyToRun = 0xB;
+                    fileError = FLogS_ERROR.SOURCE_EQUALS_DEST;
                 else if (File.Exists(FileOutput.Text))
-                    fileReadyToRun = 0x10;
+                    fileWarning = FLogS_WARNING.SINGLE_OVERWRITE;
 
                 if (PhraseSource.Text.Length == 0)
-                    phraseReadyToRun = 1;
+                    phraseError = FLogS_ERROR.NO_SOURCES;
                 else if (PhraseOutput.Text.Length == 0)
-                    phraseReadyToRun = 2;
+                    phraseError = FLogS_ERROR.NO_DEST_DIR;
                 else if (File.Exists(PhraseOutput.Text))
-                    phraseReadyToRun = 3;
+                    phraseError = FLogS_ERROR.DEST_NOT_DIRECTORY;
                 else if (!Directory.Exists(PhraseOutput.Text))
-                    phraseReadyToRun = 4;
+                    phraseError = FLogS_ERROR.DEST_NOT_FOUND;
                 else if (PhraseSearch.Text.Length == 0)
-                    phraseReadyToRun = 0xC;
+                    phraseError = FLogS_ERROR.NO_REGEX;
                 else if (RegexCheckBox.IsChecked == true && !Common.IsValidPattern(PhraseSearch.Text))
-                    phraseReadyToRun = 0xD;
+                    phraseError = FLogS_ERROR.BAD_REGEX;
                 else
                 {
                     foreach (string file in PhraseSource.Text.Split(';'))
@@ -522,11 +556,11 @@ namespace FLogS
                         else
                             outFile += ".txt";
                         if (!File.Exists(file))
-                            phraseReadyToRun = 5;
+                            phraseError = FLogS_ERROR.SOURCES_NOT_FOUND;
                         else if (file.Equals(outFile))
-                            phraseReadyToRun = 6;
-                        else if (phraseReadyToRun == 0 && File.Exists(outFile))
-                            phraseReadyToRun = 0x11;
+                            phraseError = FLogS_ERROR.SOURCE_CONFLICT;
+                        else if (phraseError == FLogS_ERROR.NONE && File.Exists(outFile))
+                            phraseWarning = FLogS_WARNING.MULTI_OVERWRITE;
                     }
                 }
             }
@@ -536,19 +570,19 @@ namespace FLogS
                 return;
             }
 
-            DirectoryWarningLabel.Content = warnings[directoryReadyToRun];
-            DirectoryRunButton.IsEnabled = directoryReadyToRun == 0 || directoryReadyToRun > 0xF;
-            PhraseWarningLabel.Content = warnings[phraseReadyToRun];
-            PhraseRunButton.IsEnabled = phraseReadyToRun == 0 || phraseReadyToRun > 0xF;
-            WarningLabel.Content = warnings[fileReadyToRun];
-            RunButton.IsEnabled = fileReadyToRun == 0 || fileReadyToRun > 0xF;
+            DirectoryWarningLabel.Content = GetErrorMessage(directoryError, directoryWarning);
+            DirectoryRunButton.IsEnabled = directoryError == FLogS_ERROR.NONE;
+            PhraseWarningLabel.Content = GetErrorMessage(phraseError, phraseWarning);
+            PhraseRunButton.IsEnabled = phraseError == FLogS_ERROR.NONE;
+            WarningLabel.Content = GetErrorMessage(fileError, fileWarning);
+            RunButton.IsEnabled = fileError == FLogS_ERROR.NONE;
 
-            if (directoryReadyToRun > 0xF)
-                DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
-            if (phraseReadyToRun > 0xF)
-                PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
-            if (fileReadyToRun > 0xF)
+            if (fileError == FLogS_ERROR.NONE)
                 WarningLabel.Foreground = brushCombos[4][brushPalette];
+            if (directoryError == FLogS_ERROR.NONE)
+                DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
+            if (phraseError == FLogS_ERROR.NONE)
+                PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
         }
 
         private static void TransitionEnableables(DependencyObject sender, bool enabled)
