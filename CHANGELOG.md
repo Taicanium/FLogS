@@ -1,4 +1,4 @@
-# 1.3.1.12 - 27/03/2024
+# 1.1.3.12 - 27/03/2024
 - Hotfix: Recurrence of the previous headlerless HTML issue.
 - HTML messages containing multiple lines of subtext are no longer cut off by line height restrictions.
 
