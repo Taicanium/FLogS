@@ -131,17 +131,11 @@ namespace FLogS
         {
             if ((sender as DatePicker).Name.Contains("BeforeDate"))
             {
-                BeforeDate.SelectedDate = (sender as DatePicker).SelectedDate;
-                DirectoryBeforeDate.SelectedDate = (sender as DatePicker).SelectedDate;
-                PhraseBeforeDate.SelectedDate = (sender as DatePicker).SelectedDate;
-
+                BeforeDate.SelectedDate = DirectoryBeforeDate.SelectedDate = PhraseBeforeDate.SelectedDate = (sender as DatePicker).SelectedDate;
                 return;
             }
 
-            AfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
-            DirectoryAfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
-            PhraseAfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
-
+            AfterDate.SelectedDate = DirectoryAfterDate.SelectedDate = PhraseAfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
             return;
         }
 
@@ -166,6 +160,7 @@ namespace FLogS
             };
             if (folderBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 return folderBrowserDialog.SelectedPath;
+
             return string.Empty;
         }
 
@@ -194,9 +189,7 @@ namespace FLogS
                 MessagePool.totalSize.Simplify();
                 MessagePool.totalSize.Magnitude(1);
 
-                FileProgress.Maximum = MessagePool.totalSize.bytes;
-                DirectoryProgress.Maximum = MessagePool.totalSize.bytes;
-                PhraseProgress.Maximum = MessagePool.totalSize.bytes;
+                DirectoryProgress.Maximum = FileProgress.Maximum = PhraseProgress.Maximum = MessagePool.totalSize.bytes;
 
                 MessagePool.ResetStats();
                 TransitionMenus(false);
@@ -242,25 +235,19 @@ namespace FLogS
 
             if ((sender as CheckBox).Name.Contains("DivideLogs"))
             {
-                DivideLogsCheckbox.IsChecked = (sender as CheckBox).IsChecked;
-                DirectoryDivideLogsCheckbox.IsChecked = (sender as CheckBox).IsChecked;
-                PhraseDivideLogsCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                DivideLogsCheckbox.IsChecked = DirectoryDivideLogsCheckbox.IsChecked = PhraseDivideLogsCheckbox.IsChecked = (sender as CheckBox).IsChecked;
                 return;
             }
 
             if ((sender as CheckBox).Name.Contains("SaveTruncated"))
             {
-                SaveTruncatedCheckbox.IsChecked = (sender as CheckBox).IsChecked;
-                DirectorySaveTruncatedCheckbox.IsChecked = (sender as CheckBox).IsChecked;
-                PhraseSaveTruncatedCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                SaveTruncatedCheckbox.IsChecked = DirectorySaveTruncatedCheckbox.IsChecked = PhraseSaveTruncatedCheckbox.IsChecked = (sender as CheckBox).IsChecked;
                 return;
             }
 
             if ((sender as CheckBox).Name.Contains("SaveHTML"))
             {
-                SaveHTMLCheckbox.IsChecked = (sender as CheckBox).IsChecked;
-                DirectorySaveHTMLCheckbox.IsChecked = (sender as CheckBox).IsChecked;
-                PhraseSaveHTMLCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                SaveHTMLCheckbox.IsChecked = DirectorySaveHTMLCheckbox.IsChecked = PhraseSaveHTMLCheckbox.IsChecked = (sender as CheckBox).IsChecked;
                 return;
             }
         }
@@ -322,19 +309,22 @@ namespace FLogS
             if (RegExLink.IsMouseOver)
                 RegExLink.Foreground = brushCombos[3][brushPalette];
 
-            if (!overrideFormat && DirectoryOutput.Text.EndsWith(".html"))
-                DirectorySaveHTMLCheckbox.IsChecked = true;
-            if (!overrideFormat && PhraseOutput.Text.EndsWith(".html"))
-                PhraseSaveHTMLCheckbox.IsChecked = true;
-            if (!overrideFormat && FileOutput.Text.EndsWith(".html"))
-                SaveHTMLCheckbox.IsChecked = true;
+            if (!overrideFormat)
+            {
+                if (DirectoryOutput.Text.EndsWith(".html"))
+                    DirectorySaveHTMLCheckbox.IsChecked = true;
+                if (PhraseOutput.Text.EndsWith(".html"))
+                    PhraseSaveHTMLCheckbox.IsChecked = true;
+                if (FileOutput.Text.EndsWith(".html"))
+                    SaveHTMLCheckbox.IsChecked = true;
 
-            if (!overrideFormat && DirectoryOutput.Text.EndsWith(".txt"))
-                DirectorySaveHTMLCheckbox.IsChecked = false;
-            if (!overrideFormat && PhraseOutput.Text.EndsWith(".txt"))
-                PhraseSaveHTMLCheckbox.IsChecked = false;
-            if (!overrideFormat && FileOutput.Text.EndsWith(".txt"))
-                SaveHTMLCheckbox.IsChecked = false;
+                if (DirectoryOutput.Text.EndsWith(".txt"))
+                    DirectorySaveHTMLCheckbox.IsChecked = false;
+                if (PhraseOutput.Text.EndsWith(".txt"))
+                    PhraseSaveHTMLCheckbox.IsChecked = false;
+                if (FileOutput.Text.EndsWith(".txt"))
+                    SaveHTMLCheckbox.IsChecked = false;
+            }
         }
 
         private void PhraseRunButton_Click(object? sender, RoutedEventArgs e)
@@ -362,9 +352,7 @@ namespace FLogS
                 MessagePool.totalSize.Simplify();
                 MessagePool.totalSize.Magnitude(1);
 
-                FileProgress.Maximum = MessagePool.totalSize.bytes;
-                DirectoryProgress.Maximum = MessagePool.totalSize.bytes;
-                PhraseProgress.Maximum = MessagePool.totalSize.bytes;
+                DirectoryProgress.Maximum = FileProgress.Maximum = PhraseProgress.Maximum = MessagePool.totalSize.bytes;
 
                 MessagePool.ResetStats();
                 TransitionMenus(false);
@@ -412,9 +400,7 @@ namespace FLogS
                 MessagePool.totalSize.Simplify();
                 MessagePool.totalSize.Magnitude(1);
 
-                DirectoryProgress.Maximum = MessagePool.totalSize.bytes;
-                FileProgress.Maximum = MessagePool.totalSize.bytes;
-                PhraseProgress.Maximum = MessagePool.totalSize.bytes;
+                DirectoryProgress.Maximum = FileProgress.Maximum = PhraseProgress.Maximum = MessagePool.totalSize.bytes;
 
                 MessagePool.ResetStats();
                 TransitionMenus(false);
@@ -571,10 +557,10 @@ namespace FLogS
             }
 
             DirectoryWarningLabel.Content = GetErrorMessage(directoryError, directoryWarning);
-            DirectoryRunButton.IsEnabled = directoryError == FLogS_ERROR.NONE;
             PhraseWarningLabel.Content = GetErrorMessage(phraseError, phraseWarning);
-            PhraseRunButton.IsEnabled = phraseError == FLogS_ERROR.NONE;
             WarningLabel.Content = GetErrorMessage(fileError, fileWarning);
+            DirectoryRunButton.IsEnabled = directoryError == FLogS_ERROR.NONE;
+            PhraseRunButton.IsEnabled = phraseError == FLogS_ERROR.NONE;
             RunButton.IsEnabled = fileError == FLogS_ERROR.NONE;
 
             if (fileError == FLogS_ERROR.NONE)
@@ -605,9 +591,7 @@ namespace FLogS
 
             if (!enabled)
             {
-                DirectoryRunButton.Content = "Scanning...";
-                PhraseRunButton.Content = "Scanning...";
-                RunButton.Content = "Scanning...";
+                DirectoryRunButton.Content = PhraseRunButton.Content = RunButton.Content = "Scanning...";
 
                 Common.lastException = string.Empty;
                 Common.timeBegin = DateTime.Now;
@@ -620,9 +604,7 @@ namespace FLogS
                 return;
             }
 
-            DirectoryRunButton.Content = "Run";
-            PhraseRunButton.Content = "Run";
-            RunButton.Content = "Run";
+            DirectoryRunButton.Content = PhraseRunButton.Content = RunButton.Content = "Run";
 
             if (Common.lastException.Equals(string.Empty))
             {
@@ -679,9 +661,7 @@ namespace FLogS
         {
             try
             {
-                FileProgress.Value = e.ProgressPercentage;
-                DirectoryProgress.Value = e.ProgressPercentage;
-                PhraseProgress.Value = e.ProgressPercentage;
+                FileProgress.Value = DirectoryProgress.Value = PhraseProgress.Value = e.ProgressPercentage;
 
                 UpdateLogs(sender);
             }

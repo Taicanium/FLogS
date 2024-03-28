@@ -51,6 +51,7 @@ namespace FLogS
 <style>
 body { padding: 10px; background-color: #191932; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #EDEDF5; text-align: left; }
 script { display: block; }
+span { position: relative; }
 .pf { color: #6766AD; text-decoration: none; font-weight: bold; }
 .url { color: #FFFFFF; text-decoration: underline; }
 .warn { color: #909090; }
@@ -654,14 +655,14 @@ script { display: block; }
                     dstSB.Append("<br />");
                 dstSB.Append(dstFS.NewLine);
 
+                if (!Common.plaintext && !headerWritten)
+                {
+                    dstSB.Insert(0, htmlHeader);
+                    headerWritten = true;
+                }
+
                 if (!divide)
                 {
-                    if (!Common.plaintext && !headerWritten)
-                    {
-                        dstSB.Insert(0, htmlHeader);
-                        headerWritten = true;
-                    }
-
                     dstFS.Write(dstSB.ToString());
                     dstSB.Clear();
                 }
