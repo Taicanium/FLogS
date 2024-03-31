@@ -40,6 +40,7 @@ namespace FLogS
         private static bool overrideFormat = false;
         private static FLogS_ERROR phraseError;
         private static FLogS_WARNING phraseWarning;
+        private static MessagePool? pool;
         private static int reversePalette = 0;
 
         private enum FLogS_ERROR
@@ -172,39 +173,28 @@ namespace FLogS
 
             try
             {
-                MessagePool.destDir = DirectoryOutput.Text;
-                MessagePool.divide = DirectoryDivideLogsCheckbox.IsChecked == true;
-                MessagePool.dtAfter = DirectoryAfterDate.SelectedDate ?? Common.DTFromStamp(1);
-                MessagePool.dtBefore = DirectoryBeforeDate.SelectedDate ?? DateTime.UtcNow;
                 string[] files = DirectorySource.Text.Split(';');
                 filesProcessed = files.Length;
-                overrideFormat = false;
-                MessagePool.phrase = string.Empty;
                 Common.plaintext = DirectorySaveHTMLCheckbox.IsChecked == false;
-                MessagePool.saveTruncated = DirectorySaveTruncatedCheckbox.IsChecked == true;
-                MessagePool.totalSize = new();
+                pool = new()
+                {
+                    destDir = DirectoryOutput.Text,
+                    divide = DirectoryDivideLogsCheckbox.IsChecked == true,
+                    dtAfter = DirectoryAfterDate.SelectedDate ?? Common.DTFromStamp(1),
+                    dtBefore = DirectoryBeforeDate.SelectedDate ?? DateTime.UtcNow,
+                    phrase = string.Empty,
+                    saveTruncated = DirectorySaveTruncatedCheckbox.IsChecked == true,
+                    srcFile = DirectorySource.Text,
+                    totalSize = new()
+                };
 
                 foreach (string logfile in files)
-                    MessagePool.totalSize += new FileInfo(logfile).Length;
-                MessagePool.totalSize.Simplify();
-                MessagePool.totalSize.Magnitude(1);
-
-                DirectoryProgress.Maximum = FileProgress.Maximum = PhraseProgress.Maximum = MessagePool.totalSize.bytes;
-
-                MessagePool.ResetStats();
-                TransitionMenus(false);
-                UpdateLogs();
-
-                BackgroundWorker worker = new()
                 {
-                    WorkerReportsProgress = true,
-                    WorkerSupportsCancellation = true
-                };
-                worker.DoWork += MessagePool.BatchProcess;
-                worker.ProgressChanged += Worker_ProgressChanged;
-                worker.RunWorkerCompleted += Worker_Completed;
+                    Common.fileListing[logfile] = new(logfile);
+                    pool.totalSize += Common.fileListing[logfile].Length;
+                }
 
-                worker.RunWorkerAsync(files);
+                ProcessFiles(files);
             }
             catch (Exception ex)
             {
@@ -284,7 +274,9 @@ namespace FLogS
 
         private void MainGrid_Loaded(object? sender, RoutedEventArgs e)
         {
+            Common.fileListing = new();
             overrideFormat = false;
+            pool = new();
 
             if (File.Exists(Common.errorFile))
                 File.Delete(Common.errorFile);
@@ -335,45 +327,58 @@ namespace FLogS
 
             try
             {
-                MessagePool.dtAfter = PhraseAfterDate.SelectedDate ?? Common.DTFromStamp(1);
-                MessagePool.dtBefore = PhraseBeforeDate.SelectedDate ?? DateTime.UtcNow;
-                MessagePool.destDir = PhraseOutput.Text;
-                MessagePool.divide = PhraseDivideLogsCheckbox.IsChecked == true;
                 string[] files = PhraseSource.Text.Split(';');
                 filesProcessed = files.Length;
-                overrideFormat = false;
-                MessagePool.phrase = PhraseSearch.Text;
                 Common.plaintext = PhraseSaveHTMLCheckbox.IsChecked == false;
-                MessagePool.saveTruncated = PhraseSaveTruncatedCheckbox.IsChecked == true;
-                MessagePool.totalSize = new();
+                pool = new()
+                {
+                    destDir = PhraseOutput.Text,
+                    divide = PhraseDivideLogsCheckbox.IsChecked == true,
+                    dtAfter = PhraseAfterDate.SelectedDate ?? Common.DTFromStamp(1),
+                    dtBefore = PhraseBeforeDate.SelectedDate ?? DateTime.UtcNow,
+                    phrase = PhraseSearch.Text,
+                    saveTruncated = PhraseSaveTruncatedCheckbox.IsChecked == true,
+                    srcFile = PhraseSource.Text,
+                    totalSize = new()
+                };
 
                 foreach (string logfile in files)
-                    MessagePool.totalSize += new FileInfo(logfile).Length;
-                MessagePool.totalSize.Simplify();
-                MessagePool.totalSize.Magnitude(1);
-
-                DirectoryProgress.Maximum = FileProgress.Maximum = PhraseProgress.Maximum = MessagePool.totalSize.bytes;
-
-                MessagePool.ResetStats();
-                TransitionMenus(false);
-                UpdateLogs();
-
-                BackgroundWorker worker = new()
                 {
-                    WorkerReportsProgress = true,
-                    WorkerSupportsCancellation = true
-                };
-                worker.DoWork += MessagePool.BatchProcess;
-                worker.ProgressChanged += Worker_ProgressChanged;
-                worker.RunWorkerCompleted += Worker_Completed;
+                    Common.fileListing[logfile] = new(logfile);
+                    pool.totalSize += Common.fileListing[logfile].Length;
+                }
 
-                worker.RunWorkerAsync(files);
+                ProcessFiles(files);
             }
             catch (Exception ex)
             {
                 Common.LogException(ex);
                 return;
             }
+        }
+
+        private void ProcessFiles(object? args = null, bool batch = true)
+        {
+            overrideFormat = false;
+
+            pool.totalSize.Simplify();
+            pool.totalSize.Magnitude(1);
+            DirectoryProgress.Maximum = FileProgress.Maximum = PhraseProgress.Maximum = pool.totalSize.bytes;
+
+            pool.ResetStats();
+            TransitionMenus(false);
+            UpdateLogs();
+
+            BackgroundWorker worker = new()
+            {
+                WorkerReportsProgress = true,
+                WorkerSupportsCancellation = true
+            };
+            worker.DoWork += batch ? pool.BatchProcess : pool.BeginRoutine;
+            worker.ProgressChanged += Worker_ProgressChanged;
+            worker.RunWorkerCompleted += Worker_Completed;
+
+            worker.RunWorkerAsync(args);
         }
 
         private void RunButton_Click(object? sender, RoutedEventArgs e)
@@ -384,38 +389,24 @@ namespace FLogS
 
             try
             {
-                MessagePool.destFile = FileOutput.Text;
-                MessagePool.divide = DivideLogsCheckbox.IsChecked == true;
-                MessagePool.dtAfter = AfterDate.SelectedDate ?? Common.DTFromStamp(1);
-                MessagePool.dtBefore = BeforeDate.SelectedDate ?? DateTime.UtcNow;
                 filesProcessed = 1;
-                overrideFormat = false;
-                MessagePool.phrase = string.Empty;
                 Common.plaintext = SaveHTMLCheckbox.IsChecked == false;
-                MessagePool.saveTruncated = SaveTruncatedCheckbox.IsChecked == true;
-                MessagePool.srcFile = FileSource.Text;
-
-                MessagePool.totalSize = new();
-                MessagePool.totalSize += new FileInfo(MessagePool.srcFile).Length;
-                MessagePool.totalSize.Simplify();
-                MessagePool.totalSize.Magnitude(1);
-
-                DirectoryProgress.Maximum = FileProgress.Maximum = PhraseProgress.Maximum = MessagePool.totalSize.bytes;
-
-                MessagePool.ResetStats();
-                TransitionMenus(false);
-                UpdateLogs();
-
-                BackgroundWorker worker = new()
+                pool = new()
                 {
-                    WorkerReportsProgress = true,
-                    WorkerSupportsCancellation = true
+                    destFile = FileOutput.Text,
+                    divide = DivideLogsCheckbox.IsChecked == true,
+                    dtAfter = AfterDate.SelectedDate ?? Common.DTFromStamp(1),
+                    dtBefore = BeforeDate.SelectedDate ?? DateTime.UtcNow,
+                    phrase = string.Empty,
+                    saveTruncated = SaveTruncatedCheckbox.IsChecked == true,
+                    srcFile = FileSource.Text,
+                    totalSize = new()
                 };
-                worker.DoWork += MessagePool.BeginRoutine;
-                worker.ProgressChanged += Worker_ProgressChanged;
-                worker.RunWorkerCompleted += Worker_Completed;
 
-                worker.RunWorkerAsync();
+                Common.fileListing[pool.srcFile] = new(pool.srcFile);
+                pool.totalSize += Common.fileListing[pool.srcFile].Length;
+
+                ProcessFiles(batch: false);
             }
             catch (Exception ex)
             {
@@ -469,10 +460,10 @@ namespace FLogS
         {
             try
             {
-                MessagePool.regex = RegexCheckBox.IsVisible && (RegexCheckBox.IsChecked ?? false);
+                pool.regex = (RegexCheckBox?.IsVisible ?? false) && (RegexCheckBox?.IsChecked ?? false);
                 fileError = directoryError = phraseError = FLogS_ERROR.NONE;
                 fileWarning = directoryWarning = phraseWarning = FLogS_WARNING.NONE;
-                PhraseSearchLabel.Content = MessagePool.regex ? "Target Pattern" : "Target Word or Phrase";
+                PhraseSearchLabel.Content = pool.regex ? "Target Pattern" : "Target Word or Phrase";
                 RunButton.IsEnabled = DirectoryRunButton.IsEnabled = PhraseRunButton.IsEnabled = true;
                 WarningLabel.Content = DirectoryWarningLabel.Content = PhraseWarningLabel.Content = string.Empty;
                 WarningLabel.Foreground = DirectoryWarningLabel.Foreground = PhraseWarningLabel.Foreground = brushCombos[3][brushPalette];
@@ -597,7 +588,7 @@ namespace FLogS
                 Common.timeBegin = DateTime.Now;
 
                 if (filesProcessed == 1)
-                    HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Scanning {Path.GetFileName(MessagePool.srcFile)}...";
+                    HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Scanning {Path.GetFileName(pool.srcFile)}...";
                 else
                     HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Scanning {filesProcessed:N0} files...";
 
@@ -609,7 +600,7 @@ namespace FLogS
             if (Common.lastException.Equals(string.Empty))
             {
                 double timeTaken = DateTime.Now.Subtract(Common.timeBegin).TotalSeconds;
-                string? formattedName = Path.GetFileName(MessagePool.srcFile);
+                string? formattedName = Path.GetFileName(pool.srcFile);
                 if (formattedName?.Length > 16)
                     formattedName = formattedName[..14] + "...";
                 if (filesProcessed == 1)
@@ -623,11 +614,11 @@ namespace FLogS
 
         private void UpdateLogs(object? sender = null)
         {
-            PhraseIMBox.Content = DirectoryIMBox.Content = IMBox.Content = $"Intact Messages: {MessagePool.intactMessages:N0} ({MessagePool.intactBytes:S})";
-            PhraseCTBox.Content = DirectoryCTBox.Content = CTBox.Content = $"Corrupted Timestamps: {MessagePool.corruptTimestamps:N0}";
-            PhraseTMBox.Content = DirectoryTMBox.Content = TMBox.Content = $"Truncated Messages: {MessagePool.truncatedMessages:N0} ({MessagePool.truncatedBytes:S})";
-            PhraseEMBox.Content = DirectoryEMBox.Content = EMBox.Content = $"Empty Messages: {MessagePool.emptyMessages:N0}";
-            PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content = $"Unread Data: {MessagePool.unreadBytes:S}";
+            PhraseIMBox.Content = DirectoryIMBox.Content = IMBox.Content = $"Intact Messages: {pool.intactMessages:N0} ({pool.intactBytes:S})";
+            PhraseCTBox.Content = DirectoryCTBox.Content = CTBox.Content = $"Corrupted Timestamps: {pool.corruptTimestamps:N0}";
+            PhraseTMBox.Content = DirectoryTMBox.Content = TMBox.Content = $"Truncated Messages: {pool.truncatedMessages:N0} ({pool.truncatedBytes:S})";
+            PhraseEMBox.Content = DirectoryEMBox.Content = EMBox.Content = $"Empty Messages: {pool.emptyMessages:N0}";
+            PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content = $"Unread Data: {pool.unreadBytes:S}";
 
             if (!Common.lastException.Equals(string.Empty))
             {

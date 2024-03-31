@@ -9,6 +9,7 @@ namespace FLogS
 
         public double bytes;
         public short prefix;
+        private readonly static string[] prefixes = { "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q" }; // Always futureproof...
 
         public void Adjust(int factor, bool absolute = true)
         {
@@ -29,7 +30,7 @@ namespace FLogS
 
         public void Simplify()
         {
-            while (bytes >= 921.6 && prefix < Common.prefixes.Length)
+            while (bytes >= 921.6 && prefix < prefixes.Length)
                 Magnitude(-1);
             while (bytes < 0.9 && prefix > -1)
                 Magnitude(1);
@@ -124,7 +125,7 @@ namespace FLogS
             Simplify();
             if (prefix == -1)
                 return $"{bytes:N0} B";
-            return $"{bytes:N1} {Common.prefixes[prefix]}B";
+            return $"{bytes:N1} {prefixes[prefix]}B";
         }
     }
 }

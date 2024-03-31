@@ -10,101 +10,35 @@ using System.Text.RegularExpressions;
 namespace FLogS
 {
     /// <summary>
-    /// Static functions serving most of the needs of the actual translation routine. Everything not strictly WPF but still integral to the BackgroundWorker threads goes here.
+    /// Non-static functions serving most of the needs of the actual translation routine. Everything not strictly WPF but still integral to the BackgroundWorker threads goes here.
     /// </summary>
     internal partial class MessagePool
     {
-        private static ByteCount bytesRead;
-        public static uint corruptTimestamps = 0U;
-        public static string? destDir;
-        public static string? destFile;
-        public static bool divide = false;
-        private static StringBuilder? dstSB;
-        public static DateTime? dtAfter;
-        public static DateTime? dtBefore;
-        public static uint emptyMessages = 0U;
-        private static List<string>? filesDone;
-        private static bool headerWritten = false;
-        private static readonly Dictionary<string, string> htmlEntities = new()
-        {
-            { "&", "&amp;" },
-            { "\"", "&quot;" },
-            { "\'", "&apos;" },
-            { "<", "&lt;" },
-            { ">", "&gt;" },
-            { "¢", "&cent;" },
-            { "£", "&pound;" },
-            { "¥", "&yen;" },
-            { "€", "&euro;" },
-            { "©", "&copy;" },
-            { "®", "&reg;" },
-            { "\n", "<br />" },
-        };
-        private static readonly string htmlFooter = "</body>\n</html>";
-        private static readonly string htmlHeader = @"
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset=""UTF-8"" />
-<base target=""_blank"">
-<title>F-Chat Exported Logs</title>
-<style>
-body { padding: 10px; background-color: #191932; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #EDEDF5; text-align: left; }
-script { display: block; }
-span { position: relative; }
-.pf { color: #6766AD; text-decoration: none; font-weight: bold; }
-.url { color: #FFFFFF; text-decoration: underline; }
-.warn { color: #909090; }
-.us { background-color: #2A2A54; padding-top: 3px; padding-bottom: 3px; padding-right: 3px; margin-top: 3px; margin-bottom: 3px; margin-right: 3px; }
-.ss { color: #D6D6FF; text-decoration: underline; }
-.ts { color: #C0C0C0; }
-.ec { width: 50px; height: 50px; vertical-align: middle; display: inline; }
-.av { width: 15px; height: 15px; vertical-align: middle; display: inline; margin-left: 2px; margin-right: 2px; }
-.sp { background-color: #0D0D0F; color: #0D0D0F; }
-.sp * { background-color: #0D0D0F; color: #0D0D0F; }
-.sp .ec { filter: brightness(0%); }
-.sp:hover { color: #FFFFFF; }
-.sp:hover * { color: #FFFFFF; }
-.sp:hover .ts { color: #C0C0C0; }
-.sp:hover .ss { color: #D6D6FF; }
-.sp:hover .pf { color: #6766AD; }
-.sp:hover .warn { color: #909090; }
-.sp:hover .ec { filter: brightness(100%); }
-</style>
-</head>
-<body>";
-        public static ByteCount intactBytes;
-        public static uint intactMessages = 0U;
-        private static uint lastDate = 0U;
-        private static int lastDiscrepancy;
-        private static string? lastFile;
-        private static uint lastMessageCount = 0U;
-        private static uint lastPosition;
-        private static string opposingProfile = string.Empty;
-        public static string? phrase;
-        public static bool regex = false;
-        public static bool saveTruncated = false;
-        private static bool scanIDX;
-        public static string? srcFile;
-        private static readonly Dictionary<string, string> tagClosings = new()
-        {
-            { "b", "</b>" },
-            { "i", "</i>" },
-            { "s", "</s>" },
-            { "u", "</u>" },
-            { "sub", "</sub>" },
-            { "sup", "</sup>" },
-            { "big", "</span>" },
-            { "noparse", "</script>" },
-            { "url", "</a>" },
-            { "icon", ".png\" /></a>" },
-            { "eicon", ".gif\" />" },
-            { "user", "</span></a>" },
-            { "spoiler", "</span>" },
-            { "session", "</a>" },
-            { "color", "</span>" },
-        };
-        private static readonly Dictionary<string, int> tagCounts = new()
+        private ByteCount bytesRead;
+        public uint corruptTimestamps = 0U;
+        public string? destDir;
+        public string? destFile;
+        public bool divide = false;
+        private StringBuilder? dstSB;
+        public DateTime? dtAfter;
+        public DateTime? dtBefore;
+        public uint emptyMessages = 0U;
+        private List<string>? filesDone;
+        private bool headerWritten = false;
+        public ByteCount intactBytes;
+        public uint intactMessages = 0U;
+        private uint lastDate = 0U;
+        private int lastDiscrepancy;
+        private string? lastFile;
+        private uint lastMessageCount = 0U;
+        private uint lastPosition;
+        private string opposingProfile = string.Empty;
+        public string? phrase;
+        public bool regex = false;
+        public bool saveTruncated = false;
+        private bool scanIDX;
+        public string? srcFile;
+        private readonly Dictionary<string, int> tagCounts = new()
         {
             { "b", 0 },
             { "i", 0 },
@@ -122,13 +56,13 @@ span { position: relative; }
             { "session", 0 },
             { "color", 0 },
         };
-        private static Stack<string> tagHistory;
-        private static uint thisDate = 1U;
-        public static ByteCount totalSize;
-        public static ByteCount truncatedBytes;
-        public static uint truncatedMessages;
-        public static ByteCount unreadBytes;
-        private static List<string>? writtenDirectories;
+        private Stack<string>? tagHistory;
+        private uint thisDate = 1U;
+        public ByteCount totalSize;
+        public ByteCount truncatedBytes;
+        public uint truncatedMessages;
+        public ByteCount unreadBytes;
+        private List<string>? writtenDirectories;
 
         private enum ErrorType
         {
@@ -177,7 +111,7 @@ span { position: relative; }
                 messageData[^1] += "</span>";
         }
 
-        public static void BatchProcess(object? sender, DoWorkEventArgs e)
+        public void BatchProcess(object? sender, DoWorkEventArgs e)
         {
             string[]? files = (string[]?)e.Argument;
             filesDone = new();
@@ -200,7 +134,7 @@ span { position: relative; }
                 lastPosition = 0U;
 
                 BeginRoutine(sender, e);
-                bytesRead += new FileInfo(logfile).Length;
+                bytesRead += Common.fileListing[logfile].Length;
 
                 if (!Common.lastException.Equals(string.Empty))
                     break;
@@ -214,7 +148,7 @@ span { position: relative; }
             return;
         }
 
-        public static void BeginRoutine(object? sender, DoWorkEventArgs e)
+        public void BeginRoutine(object? sender, DoWorkEventArgs e)
         {
             if (dtBefore < dtAfter)
                 (dtAfter, dtBefore) = (dtBefore, dtAfter);
@@ -241,7 +175,7 @@ span { position: relative; }
                 if (File.Exists(destFile))
                     File.Delete(destFile);
 
-                FileStream srcFS = File.OpenRead(srcFile);
+                FileStream srcFS = Common.fileListing[srcFile].OpenRead();
 
                 using (StreamWriter dstFS = divide ? StreamWriter.Null : new(destFile, true))
                 {
@@ -286,9 +220,9 @@ span { position: relative; }
 
                     if (!Common.plaintext)
                     {
-                        dstFS.Write(htmlFooter);
+                        dstFS.Write(Common.htmlFooter);
                         if (divide)
-                            File.AppendAllText(lastFile, htmlFooter);
+                            File.AppendAllText(lastFile, Common.htmlFooter);
                     }
                 }
 
@@ -308,7 +242,7 @@ span { position: relative; }
             return;
         }
 
-        public static void ResetStats()
+        public void ResetStats()
         {
             bytesRead = new();
             corruptTimestamps = 0U;
@@ -332,7 +266,7 @@ span { position: relative; }
         /// </summary>
         /// <param name="srcFS">>A FileStream opened to the IDX file matching MessagePool.srcFile.</param>
         /// <returns>'true' if a channel name was successfully extracted from the filestream and appended to MessagePool.destFile; 'false' if, for any reason, that did not occur.</returns>
-        private static bool TranslateIDX(FileStream srcFS)
+        private bool TranslateIDX(FileStream srcFS)
         {
             /*
              * I have not reverse-engineered the IDX format beyond reading channel/profile names from it.
@@ -341,23 +275,19 @@ span { position: relative; }
              */
 
             string? fileName = Path.GetFileNameWithoutExtension(srcFile);
-            int nameLength;
-            string nameString;
-            int result;
-            byte[]? streamBuffer;
 
             try
             {
-                nameLength = srcFS.ReadByte();
+                int nameLength = srcFS.ReadByte();
                 if (nameLength < 1
                     || !Path.GetFileNameWithoutExtension(srcFS.Name).Contains('#') && nameLength > 20) // F-List profile names cannot be greater than 20 characters in length.
                     return false;
 
-                streamBuffer = new byte[nameLength];
-                if ((result = srcFS.Read(streamBuffer, 0, nameLength)) < nameLength)
+                byte[] streamBuffer = new byte[nameLength];
+                if (srcFS.Read(streamBuffer, 0, nameLength) < nameLength)
                     return false;
 
-                nameString = new string(Encoding.UTF8.GetString(streamBuffer).Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).ToLower();
+                string nameString = new string(Encoding.UTF8.GetString(streamBuffer).Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).ToLower();
 
                 if (("#" + nameString).Equals(fileName?.ToLower())
                     || ("#" + nameString).Equals("#" + fileName?.ToLower())) // If the IDX encoded name matches the log file name, we're either working with a public channel or a DM.
@@ -394,7 +324,7 @@ span { position: relative; }
         /// </summary>
         /// <param name="srcFS">A FileStream opened to the source log file.</param>
         /// <returns>'true' if a message was written to file; 'false' if, for any reason, that did not occur.</returns>
-        private static bool TranslateMessage(FileStream srcFS, StreamWriter dstFS)
+        private bool TranslateMessage(FileStream srcFS, StreamWriter dstFS)
         {
             /*
              * Log files come in a "plaintext-plus" format consisting of sequential blocks in the form:
@@ -405,38 +335,30 @@ span { position: relative; }
              ** 1-byte null terminator.
              */
 
-            int discrepancy;
             byte[]? idBuffer = new byte[4];
             bool intact = true;
             bool matchPhrase = false;
             ArrayList messageData = new();
             uint messageLength;
-            string messageOut;
-            MessageType msId;
-            int nextByte;
-            bool nextTimestamp = false;
             string profileName = string.Empty;
             int result;
-            byte[]? streamBuffer;
             tagHistory = new();
             DateTime thisDT = new();
-            uint timestamp;
             bool withinRange = true;
-            bool written = false;
 
             foreach (string key in tagCounts.Keys)
                 tagCounts[key] = 0;
 
-            discrepancy = (int)srcFS.Position - (int)lastPosition; // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
+            int discrepancy = (int)srcFS.Position - (int)lastPosition; // If there's data inbetween the last successfully read message and this one...well, there's corrupted data there.
             lastDiscrepancy += discrepancy;
             unreadBytes += discrepancy;
 
             if (srcFS.Read(idBuffer, 0, 4) < 4) // Read the timestamp.
-                return written;
+                return false;
 
             messageData.Add(string.Empty);
 
-            timestamp = Common.BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
+            uint timestamp = Common.BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
             if (Common.IsValidTimestamp(timestamp))
             {
                 Common.lastTimestamp = timestamp;
@@ -474,10 +396,10 @@ span { position: relative; }
                         {
                             if (!headerWritten)
                             {
-                                dstSB.Insert(0, htmlHeader);
+                                dstSB.Insert(0, Common.htmlHeader);
                                 headerWritten = true;
                             }
-                            dstSB.Append(htmlFooter);
+                            dstSB.Append(Common.htmlFooter);
                         }
 
                         File.AppendAllText(lastFile, dstSB.ToString());
@@ -509,15 +431,15 @@ span { position: relative; }
                 }
             }
 
-            msId = (MessageType)srcFS.ReadByte(); // Message delimiter.
-            nextByte = srcFS.ReadByte(); // 1-byte length of profile name. Headless messages have a null terminator here.
+            MessageType msId = (MessageType)srcFS.ReadByte(); // Message delimiter.
+            int nextByte = srcFS.ReadByte(); // 1-byte length of profile name. Headless messages have a null terminator here.
 
             if (msId == MessageType.EOF || nextByte == -1)
-                return written;
+                return false;
 
             if (msId != MessageType.Headless)
             {
-                streamBuffer = new byte[nextByte];
+                byte[] streamBuffer = new byte[nextByte];
 
                 if ((result = srcFS.Read(streamBuffer, 0, nextByte)) < nextByte) // Read the profile name.
                 {
@@ -551,13 +473,13 @@ span { position: relative; }
                 switch (msId)
                 {
                     case MessageType.EOF:
-                        return written;
+                        return false;
                     case MessageType.Regular:
                         messageData[^1] += ":"; // This prevents us from putting a space before the colon later.
                         break;
                     case MessageType.Me:
                     case MessageType.DiceRoll: // These also include bottle spins and other 'fun' commands.
-
+                        // Non est.
                         break;
                     case MessageType.Ad:
                         messageData.Add("(ad):");
@@ -589,7 +511,7 @@ span { position: relative; }
                 }
                 else
                 {
-                    streamBuffer = new byte[messageLength];
+                    byte[] streamBuffer = new byte[messageLength];
                     if ((result = srcFS.Read(streamBuffer, 0, (int)messageLength)) < messageLength) // Read the message text.
                     {
                         intact = false;
@@ -598,25 +520,25 @@ span { position: relative; }
                         AppendError(ref messageData);
                     }
 
-                    messageOut = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
+                    string coreMessage = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
 
                     if (!Common.plaintext)
-                        foreach (KeyValuePair<string, string> entity in htmlEntities)
-                            messageOut = Regex.Replace(messageOut, entity.Key, entity.Value);
+                        foreach (KeyValuePair<string, string> entity in Common.htmlEntities)
+                            coreMessage = Regex.Replace(coreMessage, entity.Key, entity.Value);
 
                     if (!Common.plaintext && (msId == MessageType.Me || msId == MessageType.DiceRoll))
                     {
-                        messageOut = "<i>" + messageOut;
+                        coreMessage = "<i>" + coreMessage;
                         tagHistory.Push("i");
                         tagCounts["i"] += 1;
-                        messageOut = messageOut.TrimStart();
+                        coreMessage = coreMessage.TrimStart();
                     }
 
-                    messageData.Add(messageOut);
+                    messageData.Add(coreMessage);
                 }
             }
 
-            messageOut = string.Join(' ', messageData.ToArray());
+            string messageOut = string.Join(' ', messageData.ToArray());
             messageOut = ControlCharacters().Replace(messageOut, string.Empty); // Remove everything that's not a printable, newline, or format character.
 
             if (phrase is null
@@ -658,7 +580,7 @@ span { position: relative; }
 
                 if (!Common.plaintext && !headerWritten)
                 {
-                    dstSB.Insert(0, htmlHeader);
+                    dstSB.Insert(0, Common.htmlHeader);
                     headerWritten = true;
                 }
 
@@ -670,17 +592,17 @@ span { position: relative; }
 
                 lastDiscrepancy = 0;
                 lastMessageCount++;
-                written = true;
             }
 
             lastPosition = (uint)srcFS.Position;
+            bool nextTimestamp = false;
             while (!nextTimestamp) // Search for the next message by locating its timestamp and delimiter. It's the latter we're *really* looking for; the timestamp just helps us identify it.
             {
                 srcFS.ReadByte();
                 srcFS.Read(idBuffer, 0, 4);
                 nextByte = srcFS.ReadByte();
                 if (nextByte == -1)
-                    return written;
+                    return true;
 
                 srcFS.Seek(-6, SeekOrigin.Current);
 
@@ -703,7 +625,7 @@ span { position: relative; }
                     srcFS.Read(idBuffer, 0, 4);
                     nextByte = srcFS.ReadByte();
                     if (nextByte == -1)
-                        return written;
+                        return true;
 
                     srcFS.Seek(-7, SeekOrigin.Current);
                     srcFS.Read(idBuffer, 0, 2);
@@ -718,10 +640,10 @@ span { position: relative; }
                 }
             }
 
-            return written;
+            return true;
         }
 
-        private static string TranslateTags(string message)
+        private string TranslateTags(string message)
         {
             int anchorIndex = 0;
             int indexAdj = 0;
@@ -739,10 +661,10 @@ span { position: relative; }
             {
                 while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
                 {
-                    AdjustMessageData(ref messageOut, tagClosings[lastTag], index, ref indexAdj);
+                    AdjustMessageData(ref messageOut, Common.tagClosings[lastTag], index, ref indexAdj);
                     tagCounts[lastTag]++;
                 }
-                AdjustMessageData(ref messageOut, tagClosings[tag], index, ref indexAdj);
+                AdjustMessageData(ref messageOut, Common.tagClosings[tag], index, ref indexAdj);
                 return true;
             }
 
@@ -920,14 +842,14 @@ span { position: relative; }
                         {
                             while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
                             {
-                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, Common.tagClosings[lastTag], tags[i].Index, ref indexAdj);
                                 tagCounts[lastTag]++;
                             }
 
                             if (!messageOut[anchorIndex..(tags[i].Index + tags[i].Length + indexAdj)].Contains(URL)) // Session tags for public channels already contain their own name instead of a room code. Here we check against doubling them up.
                                 AdjustMessageData(ref messageOut, " (" + URL + ")", tags[i].Index, ref indexAdj);
 
-                            AdjustMessageData(ref messageOut, tagClosings[tag], tags[i].Index, ref indexAdj);
+                            AdjustMessageData(ref messageOut, Common.tagClosings[tag], tags[i].Index, ref indexAdj);
                             partialParse = string.Empty;
                             break;
                         }
@@ -954,14 +876,14 @@ span { position: relative; }
                         {
                             while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
                             {
-                                AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
+                                AdjustMessageData(ref messageOut, Common.tagClosings[lastTag], tags[i].Index, ref indexAdj);
                                 tagCounts[lastTag]++;
                             }
 
                             if (anchorIndex + indexAdj + URL.Length + 6 == tags[i].Index + indexAdj) // If the url tag contained a link but no label text, the client's practice is to display the URL itself.
                                                                                                      // The extra '6' here is the five '[url=' characters plus the closing bracket.
                                 AdjustMessageData(ref messageOut, URL, tags[i].Index, ref indexAdj);
-                            AdjustMessageData(ref messageOut, tagClosings[tag], tags[i].Index, ref indexAdj);
+                            AdjustMessageData(ref messageOut, Common.tagClosings[tag], tags[i].Index, ref indexAdj);
                             partialParse = string.Empty;
                             break;
                         }
@@ -1004,7 +926,7 @@ span { position: relative; }
                 if (tagCounts[lastTag] % 2 == 1 && lastTag.Equals("icon") == false && lastTag.Equals("eicon") == false)
                 {
                     indexAdj = 0;
-                    AdjustMessageData(ref messageOut, tagClosings[lastTag], messageOut.Length, ref indexAdj);
+                    AdjustMessageData(ref messageOut, Common.tagClosings[lastTag], messageOut.Length, ref indexAdj);
                 }
 
                 if (partialParse.Equals(lastTag))

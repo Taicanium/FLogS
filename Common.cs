@@ -1,23 +1,89 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 
 namespace FLogS
 {
     /// <summary>
-    /// Static helper functions serving purely logical purposes in either the front- or backend.
+    /// Static helper functions and variables serving purely logical purposes in either the front- or backend.
     /// </summary>
     static class Common
     {
         public readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
         private readonly static DateTime epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         public readonly static string errorFile = "FLogS_ERROR.txt";
+        public static Dictionary<string, FileInfo>? fileListing;
+        public static readonly Dictionary<string, string> htmlEntities = new()
+        {
+            { "&", "&amp;" },
+            { "\"", "&quot;" },
+            { "\'", "&apos;" },
+            { "<", "&lt;" },
+            { ">", "&gt;" },
+            { "¢", "&cent;" },
+            { "£", "&pound;" },
+            { "¥", "&yen;" },
+            { "€", "&euro;" },
+            { "©", "&copy;" },
+            { "®", "&reg;" },
+            { "\n", "<br />" },
+        };
+        public static readonly string htmlFooter = "</body>\n</html>";
+        public static readonly string htmlHeader = @"
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=""UTF-8"" />
+<base target=""_blank"">
+<title>F-Chat Exported Logs</title>
+<style>
+body { padding: 10px; background-color: #191932; display: block; word-wrap: break-word; -ms-hyphens: auto; -moz-hyphens: auto; -webkit-hyphens: auto; hyphens: auto; max-width: 100%; position: relative; font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji; font-size: 1rem; font-weight: 400; line-height: 1.5; color: #EDEDF5; text-align: left; }
+script { display: block; }
+span { position: relative; }
+.pf { color: #6766AD; text-decoration: none; font-weight: bold; }
+.url { color: #FFFFFF; text-decoration: underline; }
+.warn { color: #909090; }
+.us { background-color: #2A2A54; padding-top: 3px; padding-bottom: 3px; padding-right: 3px; margin-top: 3px; margin-bottom: 3px; margin-right: 3px; }
+.ss { color: #D6D6FF; text-decoration: underline; }
+.ts { color: #C0C0C0; }
+.ec { width: 50px; height: 50px; vertical-align: middle; display: inline; }
+.av { width: 15px; height: 15px; vertical-align: middle; display: inline; margin-left: 2px; margin-right: 2px; }
+.sp { background-color: #0D0D0F; color: #0D0D0F; }
+.sp * { background-color: #0D0D0F; color: #0D0D0F; }
+.sp .ec { filter: brightness(0%); }
+.sp:hover { color: #FFFFFF; }
+.sp:hover * { color: #FFFFFF; }
+.sp:hover .ts { color: #C0C0C0; }
+.sp:hover .ss { color: #D6D6FF; }
+.sp:hover .pf { color: #6766AD; }
+.sp:hover .warn { color: #909090; }
+.sp:hover .ec { filter: brightness(100%); }
+</style>
+</head>
+<body>";
         public static bool plaintext = true;
         public static string lastException = string.Empty;
         public static uint lastTimestamp;
-        public readonly static string[] prefixes = { "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q" }; // Always futureproof...
+        public static readonly Dictionary<string, string> tagClosings = new()
+        {
+            { "b", "</b>" },
+            { "i", "</i>" },
+            { "s", "</s>" },
+            { "u", "</u>" },
+            { "sub", "</sub>" },
+            { "sup", "</sup>" },
+            { "big", "</span>" },
+            { "noparse", "</script>" },
+            { "url", "</a>" },
+            { "icon", ".png\" /></a>" },
+            { "eicon", ".gif\" />" },
+            { "user", "</span></a>" },
+            { "spoiler", "</span>" },
+            { "session", "</a>" },
+            { "color", "</span>" },
+        };
         public static DateTime timeBegin;
-        public static string versionString = "FLogS — Version 1.1.3.12 © Taica, 2024";
 
         public static uint BEInt(byte[] buffer)
         {
