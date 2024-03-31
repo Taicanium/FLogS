@@ -247,6 +247,7 @@ span { position: relative; }
                 {
                     dstSB = new();
                     headerWritten = false;
+                    lastDate = 0U;
                     lastDiscrepancy = 0;
                     lastPosition = 0U;
                     Common.lastTimestamp = 0U;

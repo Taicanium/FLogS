@@ -1,5 +1,5 @@
 # 1.1.3.12 - 27/03/2024
-- Hotfix: Recurrence of the previous headlerless HTML issue.
+- Hotfix: Recurrence of the previous headerless HTML issue.
 - HTML messages containing multiple lines of subtext are no longer cut off by line height restrictions.
 
 # 1.1.3.11 - 26/03/2024
@@ -12,7 +12,7 @@
 - Further optimizations to Regex pattern matching, including compile-time pattern functions.
 
 # 1.1.3.9 - 25/03/2024
-- Removing leftover BBCode tags after we're done translating to HTML has been massively optimized. When I say massive, I mean a literal 250% speedup in pessimistic cases. I'm ashamed of myself for not doing this sooner.
+- Removing leftover BBCode tags after we're done translating to HTML has been massively optimized.
 - Private channel logs are now formatted with their IDX name (if it exists) followed by the user's supplied file name in parentheses.
 
 # 1.1.3.8 - 22/03/2024
@@ -28,7 +28,7 @@
 - Spoilers no longer fail to un-hide if they contain certain types of formatted text.
 
 # 1.1.3.5 - 08/03/2024
-- Fixed a last-minute calculation error causing icon tags to be mangled after HTML translation.
+- Hotfix: Last-minute calculation error causing icon tags to be mangled after HTML translation.
 
 # 1.1.3.4 - 08/03/2024
 - Fixed an issue causing the latest messages in a divided batch process to be omitted, leaving an empty HTML file.
@@ -36,10 +36,10 @@
 - Session invite tags are now rudimentarily handled, in the form of target-less anchors displaying the channel name and code. 
 
 # 1.1.3.3 - 05/03/2024
-- HTML output now features small character avatars next to each message, as seen in the F-Chat Rising third-party client. These are especially useful for FLogS as they allow easier visual differentiation of profile names.
+- HTML output now features small character avatars next to each message, as seen in the F-Chat Rising third-party client. These are especially useful for FLogS as, since we lack the capacity for gender coloring, they allow easier visual differentiation of profile names.
 
 # 1.1.3.2 - 03/03/2024
-- Fixed a niche error that occurred when 'anchor' tags, such as user and url, mistakenly contained other similar tags.
+- Fixed a niche error that occurred when 'anchor' tags, such as user and url, mistakenly contain other similar tags.
 
 # 1.1.3.1 - 03/03/2024
 - HTML styling is now handled more efficiently. Shortening some IDs and applying some base tags allows for up to 20% file size savings.
@@ -50,15 +50,15 @@
 - Reformatted certain options to use checkboxes instead of dropdown menus.
 
 # 1.1.2.3 - 12/02/2024
-- Fixed a major error whereby only the first tag in a message was handled in HTML format. Yes, really.
+- Fixed a major error whereby only the first tag in a message was handled in HTML format.
 - Newlines are now handled correctly in HTML output after being broken.
 
 # 1.1.2.2 - 09/02/2024
-- Quick fix: HTML entities are no longer handled in plaintext output. Oops.
+- Hotfix: HTML entities are no longer handled in plaintext output.
 
 # 1.1.2.1 - 06/02/2024
 - HTML entities are now securely handled. Now such things as <w< won't cause cascading lack of tag closures.
-- Fixed an issue causing tags to reopen if they were manually (and mistakenly) closed twice by users. Niche error, but one that has been shown to happen.
+- Fixed an issue causing tags to reopen if they were manually (and mistakenly) closed twice by users.
 
 # 1.1.2 - 27/01/2024
 - We now prevent the application from reading files with the same name but different extensions, to prevent overlap in the output.
@@ -84,17 +84,17 @@
 - Error and warning messages are now updated each time the mouse is moved; this more stringently ensures that we won't, e.g. encounter a deleted source file that could crash the program out.
 
 # 1.0.8.7 - 10/10/2023
-- Repaired the previously implemented garbage stripping method so that it no longer omits newlines. Now that's embarrassing.
+- Repaired the previously implemented garbage stripping method so that it no longer omits newlines.
 
 # 1.0.8.6 - 09/10/2023
 - Replaced our method for stripping garbage characters; it's now tolerant of non-ASCII Unicode characters. In other words, accented letters, em dashes, and the like are now preserved in the output rather than being removed. Further testing may be necessary.
 
 # 1.0.8.5 - 07/10/2023
-- Regex patterns can now contain leading and trailing whitespace. We'd previously excluded such whitespace on purpose, but there are instances where it might be useful.
+- Regex patterns can now contain leading and trailing whitespace. We'd previously trimmed such whitespace if it existed, but there are instances where it might be useful.
 - Major fix: The progress bar on the File tab was broken. We've fixed the underlying routine, and also rewritten it to be more efficient.
 
 # 1.0.8.4 - 04/10/2023
-- Minor adjustments to the design, mostly margins that were on the order of a few pixels off. Saves my OCD, though.
+- Minor adjustments to the design, mostly margins that were on the order of a few pixels off.
 - Major fix: The new IDX scanning feature was overwriting the user's desired filename when translating a single file.
 - Major fix: We weren't deleting existing files before writing to them if their IDX names didn't match their filenames.
 - Minor fix: Status messages going off the screen when displaying very long filenames.
@@ -107,12 +107,12 @@
 - Minor fix: A variable conflict caused the program to discard all messages in a batch process if a Regex search had previously been conducted during that same session. This is now remedied.
 
 # 1.0.8.1 - 30/09/2023
-- Touch-ups to the frontend design. Bit more professional, now.
-- Filesize measurements are handled via struct rather than naively. There's no measureable drop in performance, and memory should be more organized now.
+- Touch-ups to the frontend design.
+- Filesize measurements are handled via struct rather than naïvely. There's no measureable drop in performance, and memory should be more organized now.
 
 # 1.0.8 - 27/09/2023
 - Major refactoring of the logical backend. The program is sizable enough at this point that it was just not good practice to have so many disparate functions in the same class.
-- Regular expressions (RegEx) phrase searching. Whew. And it wasn't even that hard to implement, either.
+- Regular expressions (RegEx) phrase searching.
 - Minor adjustments to the UI design.
 
 # 1.0.7.3 - 25/09/2023
