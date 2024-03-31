@@ -24,7 +24,7 @@ namespace FLogS
             new SolidColorBrush[] { Brushes.Black, Brushes.White }, // Textboxes
             new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige }, // Buttons
             new SolidColorBrush[] { new(new() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray }, // Borders
-            new SolidColorBrush[] { Brushes.Pink, Brushes.Red }, // Error messages (And the ADL warning)
+            new SolidColorBrush[] { Brushes.Pink, Brushes.Red }, // Error messages (and the ADL warning)
             new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkRed }, // Warning messages
             new SolidColorBrush[] { new(new() { A = 0xFF, R = 0x4C, G = 0x4C, B = 0x4C }), Brushes.DarkGray }, // TabControl
             new SolidColorBrush[] { Brushes.Transparent, new(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }) }, // DatePicker borders
@@ -32,13 +32,13 @@ namespace FLogS
             new SolidColorBrush[] { Brushes.LightBlue, Brushes.DarkBlue }, // Hyperlinks
         };
         private static int brushPalette = 1;
-        private static FLogS_ERROR directoryError;
+        private static FLogS_ERROR directoryError = FLogS_ERROR.NO_SOURCES;
         private static FLogS_WARNING directoryWarning;
-        private static FLogS_ERROR fileError;
+        private static FLogS_ERROR fileError = FLogS_ERROR.NO_SOURCE;
         private static FLogS_WARNING fileWarning;
         private static int filesProcessed;
         private static bool overrideFormat = false;
-        private static FLogS_ERROR phraseError;
+        private static FLogS_ERROR phraseError = FLogS_ERROR.NO_SOURCES;
         private static FLogS_WARNING phraseWarning;
         private static MessagePool? pool;
         private static int reversePalette = 0;
@@ -46,26 +46,26 @@ namespace FLogS
         private enum FLogS_ERROR
         {
             NONE,
-            NO_SOURCES,
-            NO_DEST_DIR,
-            DEST_NOT_DIRECTORY,
-            DEST_NOT_FOUND,
-            SOURCES_NOT_FOUND,
-            SOURCE_CONFLICT,
-            NO_SOURCE,
-            SOURCE_NOT_FOUND,
-            NO_DEST,
-            DEST_NOT_FILE,
-            SOURCE_EQUALS_DEST,
-            NO_REGEX,
             BAD_REGEX,
+            DEST_NOT_DIRECTORY,
+            DEST_NOT_FILE,
+            DEST_NOT_FOUND,
+            NO_DEST,
+            NO_DEST_DIR,
+            NO_REGEX,
+            NO_SOURCE,
+            NO_SOURCES,
+            SOURCE_CONFLICT,
+            SOURCE_EQUALS_DEST,
+            SOURCE_NOT_FOUND,
+            SOURCES_NOT_FOUND,
         }
 
         private enum FLogS_WARNING
         {
             NONE,
-            SINGLE_OVERWRITE,
             MULTI_OVERWRITE,
+            SINGLE_OVERWRITE,
         }
 
         public MainWindow()
