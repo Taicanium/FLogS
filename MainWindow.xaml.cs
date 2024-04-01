@@ -42,6 +42,7 @@ namespace FLogS
         private static FLogS_WARNING phraseWarning;
         private static MessagePool? pool;
         private static int reversePalette = 0;
+        private readonly static ContextSettings settings = new();
 
         private enum FLogS_ERROR
         {
@@ -71,6 +72,7 @@ namespace FLogS
         public MainWindow()
         {
             InitializeComponent();
+            this.DataContext = settings;
         }
 
         private static void ChangeStyle(DependencyObject? sender)

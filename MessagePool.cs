@@ -237,6 +237,7 @@ namespace FLogS
             catch (Exception ex)
             {
                 Common.LogException(ex);
+                (sender as BackgroundWorker).CancelAsync();
             }
 
             return;
@@ -276,47 +277,38 @@ namespace FLogS
 
             string? fileName = Path.GetFileNameWithoutExtension(srcFile);
 
-            try
+            int nameLength = srcFS.ReadByte();
+            if (nameLength < 1
+                || !Path.GetFileNameWithoutExtension(srcFS.Name).Contains('#') && nameLength > 20) // F-List profile names cannot be greater than 20 characters in length.
+                return false;
+
+            byte[] streamBuffer = new byte[nameLength];
+            if (srcFS.Read(streamBuffer, 0, nameLength) < nameLength)
+                return false;
+
+            string nameString = new string(Encoding.UTF8.GetString(streamBuffer).Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).ToLower();
+
+            if (("#" + nameString).Equals(fileName?.ToLower())
+                || ("#" + nameString).Equals("#" + fileName?.ToLower())) // If the IDX encoded name matches the log file name, we're either working with a public channel or a DM.
+                                                                            // It bears mentioning that the IDX name will never contain a hashtag, hence why we append it here.
             {
-                int nameLength = srcFS.ReadByte();
-                if (nameLength < 1
-                    || !Path.GetFileNameWithoutExtension(srcFS.Name).Contains('#') && nameLength > 20) // F-List profile names cannot be greater than 20 characters in length.
-                    return false;
-
-                byte[] streamBuffer = new byte[nameLength];
-                if (srcFS.Read(streamBuffer, 0, nameLength) < nameLength)
-                    return false;
-
-                string nameString = new string(Encoding.UTF8.GetString(streamBuffer).Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray()).ToLower();
-
-                if (("#" + nameString).Equals(fileName?.ToLower())
-                    || ("#" + nameString).Equals("#" + fileName?.ToLower())) // If the IDX encoded name matches the log file name, we're either working with a public channel or a DM.
-                                                                             // It bears mentioning that the IDX name will never contain a hashtag, hence why we append it here.
+                if (fileName.Contains('#')) // If the log filename contains a hashtag, it's a public channel.
                 {
-                    if (fileName.Contains('#')) // If the log filename contains a hashtag, it's a public channel.
-                    {
-                        if (scanIDX)
-                            destFile = Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + Path.GetExtension(destFile)); // Preserve it as such.
-                        return true;
-                    }
-
-                    opposingProfile = nameString; // Save the name so that we can later mark it as not belonging to the local user. This will later factor into highlighting messages in HTML output.
-                    if (!scanIDX) // Drop from the function once we have our name string, if we aren't batch processing.
-                        return true;
-
-                    destFile = Path.Join(Path.GetDirectoryName(destFile), nameString + Path.GetExtension(destFile)); // Otherwise, it's a DM. As before, preserve the name - but this time, leave out the hashtag.
+                    if (scanIDX)
+                        destFile = Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + Path.GetExtension(destFile)); // Preserve it as such.
                     return true;
                 }
 
-                destFile = Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + " (" + Path.GetFileNameWithoutExtension(destFile) + ")" + Path.GetExtension(destFile)); // In all other cases, it's a private channel. Format it with the channel name followed by its ID.
+                opposingProfile = nameString; // Save the name so that we can later mark it as not belonging to the local user. This will later factor into highlighting messages in HTML output.
+                if (!scanIDX) // Drop from the function once we have our name string, if we aren't batch processing.
+                    return true;
+
+                destFile = Path.Join(Path.GetDirectoryName(destFile), nameString + Path.GetExtension(destFile)); // Otherwise, it's a DM. As before, preserve the name - but this time, leave out the hashtag.
                 return true;
             }
-            catch (Exception ex)
-            {
-                Common.LogException(ex);
-            }
 
-            return false;
+            destFile = Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + " (" + Path.GetFileNameWithoutExtension(destFile) + ")" + Path.GetExtension(destFile)); // In all other cases, it's a private channel. Format it with the channel name followed by its ID.
+            return true;
         }
 
         /// <summary>
@@ -330,8 +322,8 @@ namespace FLogS
              * Log files come in a "plaintext-plus" format consisting of sequential blocks in the form:
              ** 4-byte UNIX timestamp;
              ** 1-byte message format ID/delimiter (bottle spin, /me message, etc.);
-             ** 1+4-byte profile name (or a null terminator if the message format is headless);
-             ** 2+N-byte message data.
+             ** 1+N-byte profile name (or a null terminator if the message format is headless);
+             ** 2+N-byte message data;
              ** 1-byte null terminator.
              */
 
