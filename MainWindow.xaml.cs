@@ -51,6 +51,7 @@ namespace FLogS
             DEST_NOT_DIRECTORY,
             DEST_NOT_FILE,
             DEST_NOT_FOUND,
+            DEST_SENSITIVE, // Todo.
             NO_DEST,
             NO_DEST_DIR,
             NO_REGEX,
@@ -142,12 +143,13 @@ namespace FLogS
             return;
         }
 
-        private static string DialogFileSelect(bool checkExists = false, bool multi = true)
+        private static string DialogFileSelect(bool outputSelect = false, bool checkExists = false, bool multi = true)
         {
             OpenFileDialog openFileDialog = new()
             {
                 CheckFileExists = checkExists,
                 Multiselect = multi,
+                InitialDirectory = outputSelect ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop) : Path.Exists(Common.defaultLogDir) ? Common.defaultLogDir : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             };
             if (openFileDialog.ShowDialog() == true)
                 return string.Join(";", openFileDialog.FileNames.Where(file => !file.Contains(".idx"))); // IDX files contain metadata relating to the corresponding (usually extension-less) log files.
@@ -155,11 +157,12 @@ namespace FLogS
             return string.Empty;
         }
 
-        private static string DialogFolderSelect()
+        private static string DialogFolderSelect(bool outputSelect = false)
         {
             System.Windows.Forms.FolderBrowserDialog folderBrowserDialog = new()
             {
-                ShowNewFolderButton = true
+                ShowNewFolderButton = true,
+                InitialDirectory = outputSelect ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop) : Path.Exists(Common.defaultLogDir) ? Common.defaultLogDir : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             };
             if (folderBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 return folderBrowserDialog.SelectedPath;
@@ -207,17 +210,17 @@ namespace FLogS
 
         private void DstDirectoryButton_Click(object? sender, RoutedEventArgs e)
         {
-            DirectoryOutput.Text = DialogFolderSelect();
+            DirectoryOutput.Text = DialogFolderSelect(true);
         }
 
         private void DstFileButton_Click(object? sender, RoutedEventArgs e)
         {
-            FileOutput.Text = DialogFileSelect(multi: false);
+            FileOutput.Text = DialogFileSelect(outputSelect: true, multi: false);
         }
 
         private void DstPhraseButton_Click(object? sender, RoutedEventArgs e)
         {
-            PhraseOutput.Text = DialogFolderSelect();
+            PhraseOutput.Text = DialogFolderSelect(true);
         }
 
         private void FormatOverride(object? sender, RoutedEventArgs e)
@@ -250,6 +253,7 @@ namespace FLogS
             (FLogS_ERROR.DEST_NOT_DIRECTORY, _) => "Destination is not a directory.",
             (FLogS_ERROR.DEST_NOT_FILE, _) => "Destination is not a file.",
             (FLogS_ERROR.DEST_NOT_FOUND, _) => "Destination directory does not exist.",
+            (FLogS_ERROR.DEST_SENSITIVE, _) => "Destination appears to contain source log data.", // Todo.
             (FLogS_ERROR.NO_DEST, _) => "No destination file selected.",
             (FLogS_ERROR.NO_DEST_DIR, _) => "No destination directory selected.",
             (FLogS_ERROR.NO_REGEX, _) => "No search text entered.",
@@ -424,7 +428,7 @@ namespace FLogS
 
         private void SrcFileButton_Click(object? sender, RoutedEventArgs e)
         {
-            FileSource.Text = DialogFileSelect(true, false);
+            FileSource.Text = DialogFileSelect(false, true, false);
         }
 
         private void SrcPhraseButton_Click(object? sender, RoutedEventArgs e)

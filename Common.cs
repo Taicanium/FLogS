@@ -11,10 +11,11 @@ namespace FLogS
     static class Common
     {
         public readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
+        public readonly static string defaultLogDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "fchat", "data");
         private readonly static DateTime epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         public readonly static string errorFile = "FLogS_ERROR.txt";
         public static Dictionary<string, FileInfo>? fileListing;
-        public static readonly Dictionary<string, string> htmlEntities = new()
+        public readonly static Dictionary<string, string> htmlEntities = new()
         {
             { "&", "&amp;" },
             { "\"", "&quot;" },
@@ -29,8 +30,8 @@ namespace FLogS
             { "®", "&reg;" },
             { "\n", "<br />" },
         };
-        public static readonly string htmlFooter = "</body>\n</html>";
-        public static readonly string htmlHeader = @"
+        public readonly static string htmlFooter = "</body>\n</html>";
+        public readonly static string htmlHeader = @"
 <!DOCTYPE html>
 <html>
 <head>
@@ -65,7 +66,7 @@ span { position: relative; }
         public static bool plaintext = true;
         public static string lastException = string.Empty;
         public static uint lastTimestamp;
-        public static readonly Dictionary<string, string> tagClosings = new()
+        public readonly static Dictionary<string, string> tagClosings = new()
         {
             { "b", "</b>" },
             { "i", "</i>" },

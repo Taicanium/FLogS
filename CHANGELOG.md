@@ -1,3 +1,7 @@
+# 1.1.3.13 - 17/04/2024
+- File and folder selection dialogs now open by default to the standard F-Chat 3.0 log location (%appdata%/fchat/data) when selecting source logs, and to the user's desktop when selecting a destination.
+- Minor fix: HTML output files containing a second, empty HTML body.
+
 # 1.1.3.12 - 27/03/2024
 - Hotfix: Recurrence of the previous headerless HTML issue.
 - HTML messages containing multiple lines of subtext are no longer cut off by line height restrictions.
