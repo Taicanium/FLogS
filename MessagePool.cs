@@ -41,20 +41,20 @@ namespace FLogS
         private readonly Dictionary<string, int> tagCounts = new()
         {
             { "b", 0 },
+            { "big", 0 },
+            { "color", 0 },
+            { "eicon", 0 },
             { "i", 0 },
+            { "icon", 0 },
+            { "noparse", 0 },
             { "s", 0 },
-            { "u", 0 },
+            { "session", 0 },
+            { "spoiler", 0 },
             { "sub", 0 },
             { "sup", 0 },
-            { "big", 0 },
-            { "noparse", 0 },
+            { "u", 0 },
             { "url", 0 },
-            { "icon", 0 },
-            { "eicon", 0 },
             { "user", 0 },
-            { "spoiler", 0 },
-            { "session", 0 },
-            { "color", 0 },
         };
         private Stack<string>? tagHistory;
         private uint thisDate = 1U;
@@ -272,7 +272,7 @@ namespace FLogS
             /*
              * I have not reverse-engineered the IDX format beyond reading channel/profile names from it.
              * It appears to contain 8-byte blocks of numerical data in ascending value; there are more such blocks in IDX files paired with older logs.
-             * I don't know what the blocks represent, but they are almost certainly not timestamps.
+             * I don't know what the blocks represent, but they are almost certainly not timestamps - they're several powers of ten too large.
              */
 
             string? fileName = Path.GetFileNameWithoutExtension(srcFile);
@@ -587,8 +587,8 @@ namespace FLogS
             }
 
             lastPosition = (uint)srcFS.Position;
-            bool nextTimestamp = false;
-            while (!nextTimestamp) // Search for the next message by locating its timestamp and delimiter. It's the latter we're *really* looking for; the timestamp just helps us identify it.
+            bool nextID = false;
+            while (!nextID) // Search for the next message by locating its delimiter.
             {
                 srcFS.ReadByte();
                 srcFS.Read(idBuffer, 0, 4);
@@ -607,7 +607,7 @@ namespace FLogS
                     discrepancy = (int)srcFS.Position - (int)lastPosition;
                     lastDiscrepancy += discrepancy;
                     lastPosition = (uint)srcFS.Position;
-                    nextTimestamp = true;
+                    nextID = true;
                     unreadBytes += discrepancy;
                     srcFS.ReadByte();
                 }
@@ -626,7 +626,7 @@ namespace FLogS
                         discrepancy = (int)srcFS.Position - (int)lastPosition - 2;
                         lastDiscrepancy += discrepancy;
                         lastPosition = (uint)srcFS.Position;
-                        nextTimestamp = true;
+                        nextID = true;
                         unreadBytes += discrepancy;
                     }
                 }

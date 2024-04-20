@@ -1,3 +1,6 @@
+# 1.1.3.14 - 20/04/2024
+- We now scan pre-existing destination files for apparent source log data, and refuse to overwrite them if it exists.
+
 # 1.1.3.13 - 17/04/2024
 - File and folder selection dialogs now open by default to the standard F-Chat 3.0 log location (%appdata%/fchat/data) when selecting source logs, and to the user's desktop when selecting a destination.
 - Minor fix: HTML output files containing a second, empty HTML body.

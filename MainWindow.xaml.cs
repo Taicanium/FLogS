@@ -51,7 +51,7 @@ namespace FLogS
             DEST_NOT_DIRECTORY,
             DEST_NOT_FILE,
             DEST_NOT_FOUND,
-            DEST_SENSITIVE, // Todo.
+            DEST_SENSITIVE,
             NO_DEST,
             NO_DEST_DIR,
             NO_REGEX,
@@ -253,7 +253,7 @@ namespace FLogS
             (FLogS_ERROR.DEST_NOT_DIRECTORY, _) => "Destination is not a directory.",
             (FLogS_ERROR.DEST_NOT_FILE, _) => "Destination is not a file.",
             (FLogS_ERROR.DEST_NOT_FOUND, _) => "Destination directory does not exist.",
-            (FLogS_ERROR.DEST_SENSITIVE, _) => "Destination appears to contain source log data.", // Todo.
+            (FLogS_ERROR.DEST_SENSITIVE, _) => "Destination appears to contain source log data.",
             (FLogS_ERROR.NO_DEST, _) => "No destination file selected.",
             (FLogS_ERROR.NO_DEST_DIR, _) => "No destination directory selected.",
             (FLogS_ERROR.NO_REGEX, _) => "No search text entered.",
@@ -497,8 +497,17 @@ namespace FLogS
                             directoryError = FLogS_ERROR.SOURCES_NOT_FOUND;
                         else if (file.Equals(outFile))
                             directoryError = FLogS_ERROR.SOURCE_CONFLICT;
-                        else if (directoryError == FLogS_ERROR.NONE && File.Exists(outFile))
+
+                        if (File.Exists(outFile))
+                        {
+                            if (Common.LogTest(outFile))
+                            {
+                                directoryError = FLogS_ERROR.DEST_SENSITIVE;
+                                break;
+                            }
+
                             directoryWarning = FLogS_WARNING.MULTI_OVERWRITE;
+                        }
                     }
                 }
 
@@ -515,7 +524,12 @@ namespace FLogS
                 else if (FileSource.Text.Equals(FileOutput.Text))
                     fileError = FLogS_ERROR.SOURCE_EQUALS_DEST;
                 else if (File.Exists(FileOutput.Text))
+                {
+                    if (Common.LogTest(FileOutput.Text))
+                        fileError = FLogS_ERROR.DEST_SENSITIVE;
+
                     fileWarning = FLogS_WARNING.SINGLE_OVERWRITE;
+                }
 
                 if (PhraseSource.Text.Length == 0)
                     phraseError = FLogS_ERROR.NO_SOURCES;
@@ -534,16 +548,27 @@ namespace FLogS
                     foreach (string file in PhraseSource.Text.Split(';'))
                     {
                         string outFile = Path.Join(PhraseOutput.Text, Path.GetFileNameWithoutExtension(file));
+
                         if (!Common.plaintext)
                             outFile += ".html";
                         else
                             outFile += ".txt";
+
                         if (!File.Exists(file))
                             phraseError = FLogS_ERROR.SOURCES_NOT_FOUND;
                         else if (file.Equals(outFile))
                             phraseError = FLogS_ERROR.SOURCE_CONFLICT;
-                        else if (phraseError == FLogS_ERROR.NONE && File.Exists(outFile))
+
+                        if (File.Exists(outFile))
+                        {
+                            if (Common.LogTest(outFile))
+                            {
+                                phraseError = FLogS_ERROR.DEST_SENSITIVE;
+                                break;
+                            }
+
                             phraseWarning = FLogS_WARNING.MULTI_OVERWRITE;
+                        }
                     }
                 }
             }

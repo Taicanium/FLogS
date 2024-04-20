@@ -65,24 +65,24 @@ span { position: relative; }
 <body>";
         public static bool plaintext = true;
         public static string lastException = string.Empty;
-        public static uint lastTimestamp;
+        public static uint lastTimestamp = 0U;
         public readonly static Dictionary<string, string> tagClosings = new()
         {
             { "b", "</b>" },
+            { "big", "</span>" },
+            { "color", "</span>" },
+            { "eicon", ".gif\" />" },
             { "i", "</i>" },
+            { "icon", ".png\" /></a>" },
+            { "noparse", "</script>" },
             { "s", "</s>" },
-            { "u", "</u>" },
+            { "session", "</a>" },
+            { "spoiler", "</span>" },
             { "sub", "</sub>" },
             { "sup", "</sup>" },
-            { "big", "</span>" },
-            { "noparse", "</script>" },
+            { "u", "</u>" },
             { "url", "</a>" },
-            { "icon", ".png\" /></a>" },
-            { "eicon", ".gif\" />" },
             { "user", "</span></a>" },
-            { "spoiler", "</span>" },
-            { "session", "</a>" },
-            { "color", "</span>" },
         };
         public static DateTime timeBegin;
 
@@ -123,7 +123,7 @@ span { position: relative; }
             return true;
         }
 
-        public static bool IsValidTimestamp(uint timestamp)
+        public static bool IsValidTimestamp(uint timestamp, bool TSTestOverride = false)
         {
             if (timestamp < 1) // If it came before Jan. 1, 1970, there's a problem.
                 return false;
@@ -131,7 +131,7 @@ span { position: relative; }
                 return false;
             if ((DTFromStamp(timestamp).ToString(dateFormat) ?? string.Empty).Equals(string.Empty)) // If it can't be translated to a date, also a problem.
                 return false;
-            if (timestamp < lastTimestamp)  // If it isn't sequential, also a problem, because F-Chat would never save it that way.
+            if (!TSTestOverride && timestamp < lastTimestamp)  // If it isn't sequential, also a problem, because F-Chat would never save it that way.
                                             // In this case specifically, there's an extremely high chance we're about to produce garbage data in the output.
                 return false;
             return true;
@@ -143,6 +143,40 @@ span { position: relative; }
             File.AppendAllText(errorFile, DateTime.Now.ToString(dateFormat) + " - " + lastException + "\n");
             File.AppendAllText(errorFile, e?.TargetSite?.DeclaringType?.FullName + "." + e?.TargetSite?.Name + "\n\n");
             return;
+        }
+
+        public static bool LogTest(string targetFile)
+        {
+            byte[] idBuffer = new byte[4];
+            byte[] srcBuffer;
+            using FileStream srcFS = new FileInfo(targetFile).OpenRead();
+
+            if (srcFS.Read(idBuffer, 0, 4) < 4)
+                return false;
+            if (!IsValidTimestamp(BEInt(idBuffer), true))
+                return false;
+
+            if (srcFS.ReadByte() > 6)
+                return false;
+
+            int profLen = srcFS.ReadByte();
+            if (profLen == -1)
+                return false;
+
+            if (profLen > 0)
+            {
+                srcBuffer = new byte[profLen];
+                if (srcFS.Read(srcBuffer, 0, profLen) < profLen)
+                    return false;
+            }
+
+            if (srcFS.Read(idBuffer, 0, 2) < 2)
+                return false;
+
+            // We assume a valid log file starting from here, as the header format of the message is now confirmed -
+            // and we can't assume the very first message in a file *didn't* happen to just be truncated or empty.
+
+            return true;
         }
 
         public static uint UNIXTimestamp()
