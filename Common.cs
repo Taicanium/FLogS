@@ -63,9 +63,10 @@ span { position: relative; }
 </style>
 </head>
 <body>";
-        public static bool plaintext = true;
         public static string lastException = string.Empty;
         public static uint lastTimestamp = 0U;
+        public static bool plaintext = true;
+        public static bool processing = false;
         public readonly static Dictionary<string, string> tagClosings = new()
         {
             { "b", "</b>" },
@@ -132,7 +133,7 @@ span { position: relative; }
             if ((DTFromStamp(timestamp).ToString(dateFormat) ?? string.Empty).Equals(string.Empty)) // If it can't be translated to a date, also a problem.
                 return false;
             if (!TSTestOverride && timestamp < lastTimestamp)  // If it isn't sequential, also a problem, because F-Chat would never save it that way.
-                                            // In this case specifically, there's an extremely high chance we're about to produce garbage data in the output.
+                                                               // In this case specifically, there's an extremely high chance we're about to produce garbage data in the output.
                 return false;
             return true;
         }

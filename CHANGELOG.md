@@ -1,3 +1,6 @@
+# 1.1.3.15 - 02/07/2024
+- Fixed a crash occurring when the user mouses over a UI object during single-file processing.
+
 # 1.1.3.14 - 20/04/2024
 - We now scan pre-existing destination files for apparent source log data, and refuse to overwrite them if it exists.
 

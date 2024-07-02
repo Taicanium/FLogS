@@ -179,7 +179,6 @@ namespace FLogS
             try
             {
                 string[] files = DirectorySource.Text.Split(';');
-                filesProcessed = files.Length;
                 Common.plaintext = DirectorySaveHTMLCheckbox.IsChecked == false;
                 pool = new()
                 {
@@ -283,6 +282,7 @@ namespace FLogS
             Common.fileListing = new();
             overrideFormat = false;
             pool = new();
+            Common.processing = false;
 
             if (File.Exists(Common.errorFile))
                 File.Delete(Common.errorFile);
@@ -300,6 +300,9 @@ namespace FLogS
 
         private void MainGrid_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            if (Common.processing)
+                return;
+
             // We will rescan for errors upon user interaction, in case of e.g. a source file being deleted after its path has already been entered.
             TextboxUpdated(sender, e);
 
@@ -334,7 +337,6 @@ namespace FLogS
             try
             {
                 string[] files = PhraseSource.Text.Split(';');
-                filesProcessed = files.Length;
                 Common.plaintext = PhraseSaveHTMLCheckbox.IsChecked == false;
                 pool = new()
                 {
@@ -363,9 +365,12 @@ namespace FLogS
             }
         }
 
-        private void ProcessFiles(object? args = null, bool batch = true)
+        private void ProcessFiles(string[]? args = null, bool batch = true)
         {
+            PhraseEXBox.Content = DirectoryEXBox.Content = EXBox.Content = string.Empty;
+            filesProcessed = args?.Length ?? 1;
             overrideFormat = false;
+            Common.processing = true;
 
             pool.totalSize.Simplify();
             pool.totalSize.Magnitude(1);
@@ -395,7 +400,6 @@ namespace FLogS
 
             try
             {
-                filesProcessed = 1;
                 Common.plaintext = SaveHTMLCheckbox.IsChecked == false;
                 pool = new()
                 {
@@ -464,6 +468,9 @@ namespace FLogS
 
         private void TextboxUpdated(object? sender, EventArgs e)
         {
+            if (Common.processing)
+                return;
+
             try
             {
                 pool.regex = (RegexCheckBox?.IsVisible ?? false) && (RegexCheckBox?.IsChecked ?? false);
@@ -671,6 +678,7 @@ namespace FLogS
 
                 UpdateLogs(sender);
                 TransitionMenus(true);
+                Common.processing = false;
             }
             catch (Exception ex)
             {
