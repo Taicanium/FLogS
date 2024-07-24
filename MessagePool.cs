@@ -113,12 +113,12 @@ namespace FLogS
 
         public void BatchProcess(object? sender, DoWorkEventArgs e)
         {
-            string[]? files = (string[]?)e.Argument;
-            filesDone = new();
+            string[] files = (string[]?)e.Argument ?? [];
+            filesDone = [];
             scanIDX = true;
-            writtenDirectories = new();
+            writtenDirectories = [];
 
-            foreach (string logfile in files)
+            foreach (string? logfile in files)
             {
                 srcFile = logfile;
                 string fileName = Path.GetFileNameWithoutExtension(srcFile);
@@ -134,7 +134,7 @@ namespace FLogS
                 lastPosition = 0U;
 
                 BeginRoutine(sender, e);
-                bytesRead += Common.fileListing[logfile].Length;
+                bytesRead += Common.fileListing?[logfile].Length ?? 0;
 
                 if (!Common.lastException.Equals(string.Empty))
                     break;
@@ -156,10 +156,10 @@ namespace FLogS
 
             try
             {
-                string[] idxOptions = {
+                string[] idxOptions = [
                     Path.Join(Path.GetDirectoryName(srcFile), Path.GetFileNameWithoutExtension(srcFile)) + ".idx", // Search first for an IDX file matching just the log file's name. e.g. "pokefurs.idx".
                     srcFile + ".idx", // As a fallback, also search for an IDX that matches the log's name and extension. e.g. "pokefurs.log.idx".
-                };
+                ];
                 bool idxFound = false;
 
                 foreach (string idx in idxOptions)
@@ -175,7 +175,7 @@ namespace FLogS
                 if (File.Exists(destFile))
                     File.Delete(destFile);
 
-                FileStream srcFS = Common.fileListing[srcFile].OpenRead();
+                FileStream? srcFS = Common.fileListing?[srcFile].OpenRead();
 
                 using (StreamWriter dstFS = divide ? StreamWriter.Null : new(destFile, true))
                 {
@@ -187,7 +187,7 @@ namespace FLogS
                     Common.lastTimestamp = 0U;
                     DateTime lastUpdate = DateTime.Now;
 
-                    while (srcFS.Position < srcFS.Length - 1)
+                    while (srcFS?.Position < srcFS?.Length - 1)
                     {
                         TranslateMessage(srcFS, dstFS);
 
@@ -200,10 +200,10 @@ namespace FLogS
                             {
                                 totalSize.Magnitude(1); // We'll look at the progress values with more precision to keep the bar from "jerking".
                                 progress.Adjust(totalSize.prefix);
-                                (sender as BackgroundWorker).ReportProgress((int)progress.bytes);
+                                (sender as BackgroundWorker)?.ReportProgress((int)progress.bytes);
                             }
                             else
-                                (sender as BackgroundWorker).ReportProgress(0);
+                                (sender as BackgroundWorker)?.ReportProgress(0);
                             lastUpdate = DateTime.Now;
                             if (!Common.lastException.Equals(string.Empty))
                                 break;
@@ -226,7 +226,7 @@ namespace FLogS
                     }
                 }
 
-                srcFS.Close();
+                srcFS?.Close();
                 if (lastMessageCount == 0U) // This will only happen if the source file was empty or no messages matched our search phrase.
                 {
                     File.Delete(destFile);
@@ -237,7 +237,7 @@ namespace FLogS
             catch (Exception ex)
             {
                 Common.LogException(ex);
-                (sender as BackgroundWorker).CancelAsync();
+                (sender as BackgroundWorker)?.CancelAsync();
             }
 
             return;
@@ -292,7 +292,7 @@ namespace FLogS
                 || ("#" + nameString).Equals("#" + fileName?.ToLower())) // If the IDX encoded name matches the log file name, we're either working with a public channel or a DM.
                                                                             // It bears mentioning that the IDX name will never contain a hashtag, hence why we append it here.
             {
-                if (fileName.Contains('#')) // If the log filename contains a hashtag, it's a public channel.
+                if (fileName?.Contains('#') is true) // If the log filename contains a hashtag, it's a public channel.
                 {
                     if (scanIDX)
                         destFile = Path.Join(Path.GetDirectoryName(destFile), "#" + nameString + Path.GetExtension(destFile)); // Preserve it as such.
@@ -330,7 +330,7 @@ namespace FLogS
             byte[]? idBuffer = new byte[4];
             bool intact = true;
             bool matchPhrase = false;
-            ArrayList messageData = new();
+            ArrayList messageData = [];
             uint messageLength;
             string profileName = string.Empty;
             int result;
@@ -388,20 +388,21 @@ namespace FLogS
                         {
                             if (!headerWritten)
                             {
-                                dstSB.Insert(0, Common.htmlHeader);
+                                dstSB?.Insert(0, Common.htmlHeader);
                                 headerWritten = true;
                             }
-                            dstSB.Append(Common.htmlFooter);
+                            dstSB?.Append(Common.htmlFooter);
                         }
 
-                        File.AppendAllText(lastFile, dstSB.ToString());
-                        dstSB.Clear();
+                        File.AppendAllText(lastFile, dstSB?.ToString());
+                        dstSB?.Clear();
 
                         if (lastMessageCount == 0U)
                             File.Delete(lastFile);
                     }
 
-                    string newDir = Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN");
+                    string destName = Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN";
+                    string newDir = Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", destName);
 
                     writtenDirectories?.Add(newDir);
 
@@ -410,8 +411,8 @@ namespace FLogS
 
                     string newName = Path.Combine(
                         Path.GetDirectoryName(destFile) ?? "C:",
-                        Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN",
-                        (Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN") + "_" + thisDT.ToString("yyyy-MM-dd") + Path.GetExtension(destFile) ?? ".txt");
+                        destName,
+                        destName + "_" + thisDT.ToString("yyyy-MM-dd") + Path.GetExtension(destFile) ?? ".txt");
 
                     if (File.Exists(newName))
                         File.Delete(newName);
@@ -521,7 +522,7 @@ namespace FLogS
                     if (!Common.plaintext && (msId == MessageType.Me || msId == MessageType.DiceRoll))
                     {
                         coreMessage = "<i>" + coreMessage;
-                        tagHistory.Push("i");
+                        tagHistory?.Push("i");
                         tagCounts["i"] += 1;
                         coreMessage = coreMessage.TrimStart();
                     }
@@ -549,11 +550,11 @@ namespace FLogS
                 if (lastDiscrepancy > 0)
                 {
                     if (!Common.plaintext)
-                        dstSB.Append("<span class=\"warn\">");
-                    dstSB.Append(string.Format("({0:#,0} missing bytes)", lastDiscrepancy));
+                        dstSB?.Append("<span class=\"warn\">");
+                    dstSB?.Append(string.Format("({0:#,0} missing bytes)", lastDiscrepancy));
                     if (!Common.plaintext)
-                        dstSB.Append("</span><br />");
-                    dstSB.Append(dstFS.NewLine);
+                        dstSB?.Append("</span><br />");
+                    dstSB?.Append(dstFS.NewLine);
                 }
 
                 if (!Common.plaintext)
@@ -565,21 +566,21 @@ namespace FLogS
                 if (!Common.plaintext && !opposingProfile.Equals(string.Empty) && !profileName.ToLower().Equals(opposingProfile.ToLower())) // If this is the local user, close the highlight tag from before.
                     messageOut += "</span>";
 
-                dstSB.Append(messageOut);
+                dstSB?.Append(messageOut);
                 if (!Common.plaintext)
-                    dstSB.Append("<br />");
-                dstSB.Append(dstFS.NewLine);
+                    dstSB?.Append("<br />");
+                dstSB?.Append(dstFS.NewLine);
 
                 if (!Common.plaintext && !headerWritten)
                 {
-                    dstSB.Insert(0, Common.htmlHeader);
+                    dstSB?.Insert(0, Common.htmlHeader);
                     headerWritten = true;
                 }
 
                 if (!divide)
                 {
-                    dstFS.Write(dstSB.ToString());
-                    dstSB.Clear();
+                    dstFS.Write(dstSB?.ToString());
+                    dstSB?.Clear();
                 }
 
                 lastDiscrepancy = 0;
@@ -599,7 +600,7 @@ namespace FLogS
                 srcFS.Seek(-6, SeekOrigin.Current);
 
                 // Our verification of the next message is rudimentary. We only validate whether the byte occupying the space where a delimiter SHOULD be COULD in fact be a delimiter.
-                // Tying the presence of a message to the timestamp is less reliable, since we can't assume that the timestamp is intact and well-ordered.
+                // Tying the message to the presence of a timestamp would be less reliable, since we can't assume that any such timestamp is intact and well-ordered.
                 // In practice, I validated 2.2 million messages across ~250 channel logs, and the occurrence of failed delimiter checks, or issues arising thereof, was 0.
                 // That's unfair, however, because I also know *most* of my logs to be wholly uncorrupted; further testing is necessary with logs that are less intact.
                 if (nextByte < 7)
@@ -651,7 +652,7 @@ namespace FLogS
             // But with the number of times this code snippet is later called, it's virtually unthinkable not to better organize.
             bool AdjustHistory(int index)
             {
-                while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                while (tagHistory?.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
                 {
                     AdjustMessageData(ref messageOut, Common.tagClosings[lastTag], index, ref indexAdj);
                     tagCounts[lastTag]++;
@@ -680,7 +681,7 @@ namespace FLogS
                         noParse = false;
                         continue;
                     }
-                    AdjustMessageData(ref messageOut, "\u200B", tags[i].Index + 1, ref indexAdj); // For strict safety purposes: In addition to enclosing noparse'd tags in a plaintext script, we will also 'break' the tag by inserting a zero-width space directly after its bracket.
+                    AdjustMessageData(ref messageOut, "\u200B", tags[i].Index + 1, ref indexAdj); // In addition to enclosing noparse'd tags in a plaintext script, we will also 'break' the tag by inserting a zero-width space directly after its opening bracket.
                     continue;
                 }
 
@@ -701,7 +702,7 @@ namespace FLogS
                             break;
                         }
                         AdjustMessageData(ref messageOut, "<" + tag + ">", tags[i].Index, ref indexAdj);
-                        tagHistory.Push(tag);
+                        tagHistory?.Push(tag);
                         break;
                     case "big":
                         if (tagCounts[tag] % 2 == 1)
@@ -710,7 +711,7 @@ namespace FLogS
                             break;
                         }
                         AdjustMessageData(ref messageOut, "<span style=\"font-size: 1.5rem\">", tags[i].Index, ref indexAdj);
-                        tagHistory.Push(tag);
+                        tagHistory?.Push(tag);
                         break;
                     case "color":
                         if (tagCounts[tag] % 2 == 1)
@@ -758,7 +759,7 @@ namespace FLogS
                                 AdjustMessageData(ref messageOut, "<span style=\"color: #FFFFFF\">", tags[i].Index, ref indexAdj);
                                 break;
                         }
-                        tagHistory.Push(tag);
+                        tagHistory?.Push(tag);
                         break;
                     case "eicon":
                         if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
@@ -774,7 +775,7 @@ namespace FLogS
                                 messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
                                 messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
 
-                            if (tagHistory.Peek().Equals(tag))
+                            if (tagHistory?.Peek().Equals(tag) is true)
                                 tagHistory.Pop();
 
                             partialParse = string.Empty;
@@ -783,7 +784,7 @@ namespace FLogS
                         anchorIndex = tags[i].Index + indexAdj;
                         AdjustMessageData(ref messageOut, "<img class=\"ec\" src=\"https://static.f-list.net/images/eicon/", tags[i].Index, ref indexAdj);
                         partialParse = tag;
-                        tagHistory.Push(tag);
+                        tagHistory?.Push(tag);
                         break;
                     case "icon":
                         if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
@@ -791,7 +792,7 @@ namespace FLogS
 
                         if (tagCounts[tag] % 2 == 1)
                         {
-                            // The img tag must be wrapped in the anchor and not the other way around.
+                            // The img tag must be enclosed in the anchor and not the other way around.
                             // As such, indexAdj cannot be tied to the anchor, and we have to insert it manually.
 
                             // 62 for the img tag we inserted below, and 5 for the BBCode tag which is still there.
@@ -804,7 +805,7 @@ namespace FLogS
                                 messageOut[anchorIndex..(tags[i].Index + indexAdj)].ToLower(),
                                 messageOut.AsSpan(tags[i].Index + indexAdj, messageOut.Length - tags[i].Index - indexAdj));
 
-                            if (tagHistory.Peek().Equals(tag))
+                            if (tagHistory?.Peek().Equals(tag) is true)
                                 tagHistory.Pop();
 
                             partialParse = string.Empty;
@@ -813,7 +814,7 @@ namespace FLogS
                         anchorIndex = tags[i].Index + indexAdj;
                         AdjustMessageData(ref messageOut, "<img class=\"ec\" src=\"https://static.f-list.net/images/avatar/", tags[i].Index, ref indexAdj);
                         partialParse = tag;
-                        tagHistory.Push(tag);
+                        tagHistory?.Push(tag);
                         break;
                     case "noparse":
                         if (tagCounts[tag] % 2 == 1)
@@ -824,7 +825,7 @@ namespace FLogS
                         }
                         AdjustMessageData(ref messageOut, "<script type=\"text/plain\">", tags[i].Index, ref indexAdj);
                         noParse = true;
-                        tagHistory.Push(tag);
+                        tagHistory?.Push(tag);
                         break;
                     case "session":
                         if (!partialParse.Equals(string.Empty) && !partialParse.Equals(tag))
@@ -832,7 +833,7 @@ namespace FLogS
 
                         if (tagCounts[tag] % 2 == 1)
                         {
-                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            while (tagHistory?.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
                             {
                                 AdjustMessageData(ref messageOut, Common.tagClosings[lastTag], tags[i].Index, ref indexAdj);
                                 tagCounts[lastTag]++;
@@ -848,7 +849,7 @@ namespace FLogS
                         AdjustMessageData(ref messageOut, "<a class=\"ss\" href=\"#\">", tags[i].Index, ref indexAdj); // TODO: JS-based method for copying a session invite to the user's clipboard?
                         anchorIndex = tags[i].Index + tags[i].Length + indexAdj;
                         partialParse = tag;
-                        tagHistory.Push(tag);
+                        tagHistory?.Push(tag);
                         URL = arg;
                         break;
                     case "spoiler":
@@ -858,7 +859,7 @@ namespace FLogS
                             break;
                         }
                         AdjustMessageData(ref messageOut, "<span class=\"sp\">", tags[i].Index, ref indexAdj);
-                        tagHistory.Push(tag);
+                        tagHistory?.Push(tag);
                         break;
                     case "url":
                         if (!partialParse.Equals(string.Empty) && !partialParse.Equals(tag))
@@ -866,13 +867,13 @@ namespace FLogS
 
                         if (tagCounts[tag] % 2 == 1)
                         {
-                            while (tagHistory.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
+                            while (tagHistory?.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
                             {
                                 AdjustMessageData(ref messageOut, Common.tagClosings[lastTag], tags[i].Index, ref indexAdj);
                                 tagCounts[lastTag]++;
                             }
 
-                            if (anchorIndex + indexAdj + URL.Length + 6 == tags[i].Index + indexAdj) // If the url tag contained a link but no label text, the client's practice is to display the URL itself.
+                            if (anchorIndex + indexAdj + URL.Length + 6 == tags[i].Index + indexAdj) // If the url tag contained a link but no label text, we follow the client's practice of displaying the URL itself.
                                                                                                      // The extra '6' here is the five '[url=' characters plus the closing bracket.
                                 AdjustMessageData(ref messageOut, URL, tags[i].Index, ref indexAdj);
                             AdjustMessageData(ref messageOut, Common.tagClosings[tag], tags[i].Index, ref indexAdj);
@@ -882,7 +883,7 @@ namespace FLogS
                         AdjustMessageData(ref messageOut, "<a class=\"url\" href=\"" + arg + "\">", tags[i].Index, ref indexAdj); // Yes, the arg can be empty. That's okay.
                         anchorIndex = tags[i].Index;
                         partialParse = tag;
-                        tagHistory.Push(tag);
+                        tagHistory?.Push(tag);
                         URL = arg;
                         break;
                     case "user":
@@ -899,7 +900,7 @@ namespace FLogS
                         }
                         anchorIndex = tags[i].Index + indexAdj;
                         AdjustMessageData(ref messageOut, "<a class=\"pf\" href=\"https://f-list.net/c/", tags[i].Index, ref indexAdj);
-                        tagHistory.Push(tag);
+                        tagHistory?.Push(tag);
                         partialParse = tag;
                         break;
                     default:
@@ -910,12 +911,12 @@ namespace FLogS
                 if (validTag)
                     tagCounts[tag]++;
             }
-            while (tagHistory.Count > 0)
+            while (tagHistory?.Count > 0)
             {
                 lastTag = tagHistory.Pop();
                 // No matter what, we CANnot auto-close these two specific tags at the end of a message.
                 // Their compound structure just doesn't allow for it in 90% of cases.
-                if (tagCounts[lastTag] % 2 == 1 && lastTag.Equals("icon") == false && lastTag.Equals("eicon") == false)
+                if (tagCounts[lastTag] % 2 == 1 && !lastTag.Equals("icon") && !lastTag.Equals("eicon"))
                 {
                     indexAdj = 0;
                     AdjustMessageData(ref messageOut, Common.tagClosings[lastTag], messageOut.Length, ref indexAdj);
@@ -927,7 +928,7 @@ namespace FLogS
                 tagCounts[lastTag]++;
             }
 
-            // Finish things off by removing the BBCode tags, leaving only our fresh HTML behind.
+            // Finish things off by removing the BBCode tags, leaving our fresh HTML behind.
             messageOut = BBCodeTags().Replace(messageOut, string.Empty);
 
             return messageOut;

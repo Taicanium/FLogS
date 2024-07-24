@@ -13,16 +13,14 @@ namespace FLogS
         private static int GetBuildYear(Assembly assembly)
         {
             const string BuildVersionMetadataPrefix = "+build";
-
             var attribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+
             if (attribute?.InformationalVersion != null)
             {
-                var value = attribute.InformationalVersion;
-                var index = value.IndexOf(BuildVersionMetadataPrefix);
+                string value = attribute.InformationalVersion;
+                int index = value.IndexOf(BuildVersionMetadataPrefix);
                 if (index > 0 && DateTime.TryParseExact(value[(index + BuildVersionMetadataPrefix.Length)..], "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var result))
-                {
                     return result.Year;
-                }
             }
 
             return default;

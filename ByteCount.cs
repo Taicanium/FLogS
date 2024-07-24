@@ -5,20 +5,18 @@ namespace FLogS
     struct ByteCount
     {
         public ByteCount() { bytes = 0.0; prefix = -1; }
-        public ByteCount(double b, short p) { bytes = b; prefix = p; }
+        private ByteCount(double b, short p) { bytes = b; prefix = p; }
 
         public double bytes;
         public short prefix;
-        private readonly static string[] prefixes = { "k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q" }; // Always futureproof...
+        private readonly static string[] prefixes = ["k", "M", "G", "T", "P", "E", "Z", "Y", "R", "Q"]; // Always futureproof...
 
         public void Adjust(int factor, bool absolute = true)
         {
             if (!absolute)
                 factor = (short)(prefix - factor);
-            while (prefix < factor)
-                Magnitude(-1);
-            while (prefix > factor)
-                Magnitude(1);
+            while (prefix != factor)
+                Magnitude(Math.Sign(prefix - factor));
             return;
         }
 

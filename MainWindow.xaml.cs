@@ -20,33 +20,33 @@ namespace FLogS
         private static extern bool ShouldSystemUseDarkMode();
 
         private readonly static SolidColorBrush[][] brushCombos =
-        {   // 0 = Dark mode, 1 = Light mode.
-            new SolidColorBrush[] { Brushes.Black, Brushes.White }, // Textboxes
-            new SolidColorBrush[] { Brushes.LightBlue, Brushes.Beige }, // Buttons
-            new SolidColorBrush[] { new(new() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray }, // Borders
-            new SolidColorBrush[] { Brushes.Pink, Brushes.Red }, // Error messages (and the ADL warning)
-            new SolidColorBrush[] { Brushes.Yellow, Brushes.DarkRed }, // Warning messages
-            new SolidColorBrush[] { new(new() { A = 0xFF, R = 0x4C, G = 0x4C, B = 0x4C }), Brushes.DarkGray }, // TabControl
-            new SolidColorBrush[] { Brushes.Transparent, new(new Color() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }) }, // DatePicker borders
-            new SolidColorBrush[] { Brushes.DimGray, Brushes.Beige }, // PanelGrids
-            new SolidColorBrush[] { Brushes.LightBlue, Brushes.DarkBlue }, // Hyperlinks
-        };
+        [   // 0 = Dark mode, 1 = Light mode.
+            [Brushes.Black, Brushes.White], // Textboxes
+            [Brushes.LightBlue, Brushes.Beige], // Buttons
+            [new(new() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray], // Borders
+            [Brushes.Pink, Brushes.Red], // Error messages (and the ADL warning)
+            [Brushes.Yellow, Brushes.DarkRed], // Warning messages
+            [new(new() { A = 0xFF, R = 0x4C, G = 0x4C, B = 0x4C }), Brushes.DarkGray], // TabControl
+            [Brushes.Transparent, new(new() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 })], // DatePicker borders
+            [Brushes.DimGray, Brushes.Beige], // PanelGrids
+            [Brushes.LightBlue, Brushes.DarkBlue], // Hyperlinks
+        ];
         private static int brushPalette = 1;
         private static FLogS_ERROR directoryError = FLogS_ERROR.NO_SOURCES;
-        private static FLogS_WARNING directoryWarning;
+        private static FLogS_WARNING directoryWarning = FLogS_WARNING.None;
         private static FLogS_ERROR fileError = FLogS_ERROR.NO_SOURCE;
-        private static FLogS_WARNING fileWarning;
+        private static FLogS_WARNING fileWarning = FLogS_WARNING.None;
         private static int filesProcessed;
         private static bool overrideFormat = false;
         private static FLogS_ERROR phraseError = FLogS_ERROR.NO_SOURCES;
-        private static FLogS_WARNING phraseWarning;
+        private static FLogS_WARNING phraseWarning = FLogS_WARNING.None;
         private static MessagePool? pool;
         private static int reversePalette = 0;
         private readonly static ContextSettings settings = new();
 
         private enum FLogS_ERROR
         {
-            NONE,
+            None,
             BAD_REGEX,
             DEST_NOT_DIRECTORY,
             DEST_NOT_FILE,
@@ -65,7 +65,7 @@ namespace FLogS
 
         private enum FLogS_WARNING
         {
-            NONE,
+            None,
             MULTI_OVERWRITE,
             SINGLE_OVERWRITE,
         }
@@ -84,62 +84,62 @@ namespace FLogS
             switch (sender?.DependencyObjectType.Name)
             {
                 case "Button":
-                    (sender as Button).Background = brushCombos[1][brushPalette];
+                    ((Button)sender).Background = brushCombos[1][brushPalette];
                     break;
                 case "DatePicker":
-                    (sender as DatePicker).Background = brushCombos[0][brushPalette];
-                    (sender as DatePicker).BorderBrush = brushCombos[6][brushPalette];
-                    (sender as DatePicker).Foreground = brushCombos[0][reversePalette];
+                    ((DatePicker)sender).Background = brushCombos[0][brushPalette];
+                    ((DatePicker)sender).BorderBrush = brushCombos[6][brushPalette];
+                    ((DatePicker)sender).Foreground = brushCombos[0][reversePalette];
                     break;
                 case "Grid":
-                    if ((sender as Grid).Tag != null && (sender as Grid).Tag.Equals("PanelGrid"))
-                        (sender as Grid).Background = brushCombos[7][brushPalette];
+                    if (((Grid)sender).Tag != null && ((Grid)sender).Tag.Equals("PanelGrid"))
+                        ((Grid)sender).Background = brushCombos[7][brushPalette];
                     break;
                 case "Label":
-                    (sender as Label).Foreground = brushCombos[0][reversePalette];
+                    ((Label)sender).Foreground = brushCombos[0][reversePalette];
                     break;
                 case "ListBox":
-                    (sender as ListBox).Background = brushCombos[0][brushPalette];
-                    (sender as ListBox).BorderBrush = brushCombos[2][reversePalette];
-                    (sender as ListBox).Foreground = brushCombos[0][reversePalette];
+                    ((ListBox)sender).Background = brushCombos[0][brushPalette];
+                    ((ListBox)sender).BorderBrush = brushCombos[2][reversePalette];
+                    ((ListBox)sender).Foreground = brushCombos[0][reversePalette];
                     break;
                 case "ProgressBar":
-                    (sender as ProgressBar).Background = brushCombos[0][brushPalette];
+                    ((ProgressBar)sender).Background = brushCombos[0][brushPalette];
                     break;
                 case "StackPanel":
-                    (sender as StackPanel).Background = brushCombos[2][brushPalette];
+                    ((StackPanel)sender).Background = brushCombos[2][brushPalette];
                     break;
                 case "TabControl":
-                    (sender as TabControl).Background = brushCombos[5][brushPalette];
+                    ((TabControl)sender).Background = brushCombos[5][brushPalette];
                     break;
                 case "TextBlock":
-                    (sender as TextBlock).Foreground = brushCombos[0][reversePalette];
+                    ((TextBlock)sender).Foreground = brushCombos[0][reversePalette];
                     break;
                 case "TextBox":
-                    (sender as TextBox).Background = brushCombos[0][brushPalette];
-                    (sender as TextBox).BorderBrush = brushCombos[2][reversePalette];
-                    (sender as TextBox).Foreground = brushCombos[0][reversePalette];
+                    ((TextBox)sender).Background = brushCombos[0][brushPalette];
+                    ((TextBox)sender).BorderBrush = brushCombos[2][reversePalette];
+                    ((TextBox)sender).Foreground = brushCombos[0][reversePalette];
                     break;
             }
 
             foreach (object dp in LogicalTreeHelper.GetChildren(sender))
                 ChangeStyle(dp as DependencyObject);
 
-            if ((sender.GetValue(TagProperty) as string ?? string.Empty).Equals("WarningLabel"))
-                sender.SetValue(ForegroundProperty, brushCombos[3][brushPalette]);
+            if (((string?)sender?.GetValue(TagProperty) ?? string.Empty).Equals("WarningLabel"))
+                sender?.SetValue(ForegroundProperty, brushCombos[3][brushPalette]);
 
             return;
         }
 
         private void DatePicker_Update(object? sender, RoutedEventArgs e)
         {
-            if ((sender as DatePicker).Name.Contains("BeforeDate"))
+            if (((DatePicker?)sender)?.Name.Contains("BeforeDate") is true)
             {
-                BeforeDate.SelectedDate = DirectoryBeforeDate.SelectedDate = PhraseBeforeDate.SelectedDate = (sender as DatePicker).SelectedDate;
+                BeforeDate.SelectedDate = DirectoryBeforeDate.SelectedDate = PhraseBeforeDate.SelectedDate = ((DatePicker)sender).SelectedDate;
                 return;
             }
 
-            AfterDate.SelectedDate = DirectoryAfterDate.SelectedDate = PhraseAfterDate.SelectedDate = (sender as DatePicker).SelectedDate;
+            AfterDate.SelectedDate = DirectoryAfterDate.SelectedDate = PhraseAfterDate.SelectedDate = ((DatePicker?)sender)?.SelectedDate;
             return;
         }
 
@@ -227,21 +227,21 @@ namespace FLogS
             if (sender is null)
                 return;
 
-            if ((sender as CheckBox).Name.Contains("DivideLogs"))
+            if (((CheckBox)sender).Name.Contains("DivideLogs"))
             {
-                DivideLogsCheckbox.IsChecked = DirectoryDivideLogsCheckbox.IsChecked = PhraseDivideLogsCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                DivideLogsCheckbox.IsChecked = DirectoryDivideLogsCheckbox.IsChecked = PhraseDivideLogsCheckbox.IsChecked = ((CheckBox)sender).IsChecked;
                 return;
             }
 
-            if ((sender as CheckBox).Name.Contains("SaveTruncated"))
+            if (((CheckBox)sender).Name.Contains("SaveTruncated"))
             {
-                SaveTruncatedCheckbox.IsChecked = DirectorySaveTruncatedCheckbox.IsChecked = PhraseSaveTruncatedCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                SaveTruncatedCheckbox.IsChecked = DirectorySaveTruncatedCheckbox.IsChecked = PhraseSaveTruncatedCheckbox.IsChecked = ((CheckBox)sender).IsChecked;
                 return;
             }
 
-            if ((sender as CheckBox).Name.Contains("SaveHTML"))
+            if (((CheckBox)sender).Name.Contains("SaveHTML"))
             {
-                SaveHTMLCheckbox.IsChecked = DirectorySaveHTMLCheckbox.IsChecked = PhraseSaveHTMLCheckbox.IsChecked = (sender as CheckBox).IsChecked;
+                SaveHTMLCheckbox.IsChecked = DirectorySaveHTMLCheckbox.IsChecked = PhraseSaveHTMLCheckbox.IsChecked = ((CheckBox)sender).IsChecked;
                 return;
             }
         }
@@ -263,11 +263,11 @@ namespace FLogS
             (FLogS_ERROR.SOURCE_NOT_FOUND, _) => "Source log file does not exist.",
             (FLogS_ERROR.SOURCES_NOT_FOUND, _) => "One or more source files do not exist.",
 
-            (FLogS_ERROR.NONE, FLogS_WARNING.MULTI_OVERWRITE) => "One or more files will be overwritten.",
-            (FLogS_ERROR.NONE, FLogS_WARNING.SINGLE_OVERWRITE) => "Destination file will be overwritten.",
-            (FLogS_ERROR.NONE, _) => "",
+            (FLogS_ERROR.None, FLogS_WARNING.MULTI_OVERWRITE) => "One or more files will be overwritten.",
+            (FLogS_ERROR.None, FLogS_WARNING.SINGLE_OVERWRITE) => "Destination file will be overwritten.",
+            (FLogS_ERROR.None, _) => "",
 
-            (_, FLogS_WARNING.NONE) => "An unknown error has occurred.",
+            (_, FLogS_WARNING.None) => "An unknown error has occurred.",
             (_, _) => "An unknown error has occurred.",
         };
 
@@ -279,7 +279,7 @@ namespace FLogS
 
         private void MainGrid_Loaded(object? sender, RoutedEventArgs e)
         {
-            Common.fileListing = new();
+            Common.fileListing = [];
             overrideFormat = false;
             pool = new();
             Common.processing = false;
@@ -372,11 +372,11 @@ namespace FLogS
             overrideFormat = false;
             Common.processing = true;
 
-            pool.totalSize.Simplify();
-            pool.totalSize.Magnitude(1);
-            DirectoryProgress.Maximum = FileProgress.Maximum = PhraseProgress.Maximum = pool.totalSize.bytes;
+            pool?.totalSize.Simplify();
+            pool?.totalSize.Magnitude(1);
+            DirectoryProgress.Maximum = FileProgress.Maximum = PhraseProgress.Maximum = pool?.totalSize.bytes ?? 100.0;
 
-            pool.ResetStats();
+            pool?.ResetStats();
             TransitionMenus(false);
             UpdateLogs();
 
@@ -452,11 +452,11 @@ namespace FLogS
                 MainGrid.Background = brushCombos[5][brushPalette];
                 RegexCheckBox.Background = brushCombos[1][brushPalette];
 
-                if (fileError == FLogS_ERROR.NONE)
+                if (fileError == FLogS_ERROR.None)
                     WarningLabel.Foreground = brushCombos[4][brushPalette];
-                if (directoryError == FLogS_ERROR.NONE)
+                if (directoryError == FLogS_ERROR.None)
                     DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
-                if (phraseError == FLogS_ERROR.NONE)
+                if (phraseError == FLogS_ERROR.None)
                     PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
             }
             catch (Exception ex)
@@ -474,8 +474,8 @@ namespace FLogS
             try
             {
                 pool.regex = (RegexCheckBox?.IsVisible ?? false) && (RegexCheckBox?.IsChecked ?? false);
-                fileError = directoryError = phraseError = FLogS_ERROR.NONE;
-                fileWarning = directoryWarning = phraseWarning = FLogS_WARNING.NONE;
+                fileError = directoryError = phraseError = FLogS_ERROR.None;
+                fileWarning = directoryWarning = phraseWarning = FLogS_WARNING.None;
                 PhraseSearchLabel.Content = pool.regex ? "Target Pattern" : "Target Word or Phrase";
                 RunButton.IsEnabled = DirectoryRunButton.IsEnabled = PhraseRunButton.IsEnabled = true;
                 WarningLabel.Content = DirectoryWarningLabel.Content = PhraseWarningLabel.Content = string.Empty;
@@ -548,7 +548,7 @@ namespace FLogS
                     phraseError = FLogS_ERROR.DEST_NOT_FOUND;
                 else if (PhraseSearch.Text.Length == 0)
                     phraseError = FLogS_ERROR.NO_REGEX;
-                else if (RegexCheckBox.IsChecked == true && !Common.IsValidPattern(PhraseSearch.Text))
+                else if (RegexCheckBox?.IsChecked == true && !Common.IsValidPattern(PhraseSearch.Text))
                     phraseError = FLogS_ERROR.BAD_REGEX;
                 else
                 {
@@ -588,15 +588,15 @@ namespace FLogS
             DirectoryWarningLabel.Content = GetErrorMessage(directoryError, directoryWarning);
             PhraseWarningLabel.Content = GetErrorMessage(phraseError, phraseWarning);
             WarningLabel.Content = GetErrorMessage(fileError, fileWarning);
-            DirectoryRunButton.IsEnabled = directoryError == FLogS_ERROR.NONE;
-            PhraseRunButton.IsEnabled = phraseError == FLogS_ERROR.NONE;
-            RunButton.IsEnabled = fileError == FLogS_ERROR.NONE;
+            DirectoryRunButton.IsEnabled = directoryError == FLogS_ERROR.None;
+            PhraseRunButton.IsEnabled = phraseError == FLogS_ERROR.None;
+            RunButton.IsEnabled = fileError == FLogS_ERROR.None;
 
-            if (fileError == FLogS_ERROR.NONE)
+            if (fileError == FLogS_ERROR.None)
                 WarningLabel.Foreground = brushCombos[4][brushPalette];
-            if (directoryError == FLogS_ERROR.NONE)
+            if (directoryError == FLogS_ERROR.None)
                 DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
-            if (phraseError == FLogS_ERROR.NONE)
+            if (phraseError == FLogS_ERROR.None)
                 PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
         }
 
@@ -626,7 +626,7 @@ namespace FLogS
                 Common.timeBegin = DateTime.Now;
 
                 if (filesProcessed == 1)
-                    HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Scanning {Path.GetFileName(pool.srcFile)}...";
+                    HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Scanning {Path.GetFileName(pool?.srcFile)}...";
                 else
                     HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Scanning {filesProcessed:N0} files...";
 
@@ -638,7 +638,7 @@ namespace FLogS
             if (Common.lastException.Equals(string.Empty))
             {
                 double timeTaken = DateTime.Now.Subtract(Common.timeBegin).TotalSeconds;
-                string? formattedName = Path.GetFileName(pool.srcFile);
+                string? formattedName = Path.GetFileName(pool?.srcFile);
                 if (formattedName?.Length > 16)
                     formattedName = formattedName[..14] + "...";
                 if (filesProcessed == 1)
@@ -652,17 +652,17 @@ namespace FLogS
 
         private void UpdateLogs(object? sender = null)
         {
-            PhraseIMBox.Content = DirectoryIMBox.Content = IMBox.Content = $"Intact Messages: {pool.intactMessages:N0} ({pool.intactBytes:S})";
-            PhraseCTBox.Content = DirectoryCTBox.Content = CTBox.Content = $"Corrupted Timestamps: {pool.corruptTimestamps:N0}";
-            PhraseTMBox.Content = DirectoryTMBox.Content = TMBox.Content = $"Truncated Messages: {pool.truncatedMessages:N0} ({pool.truncatedBytes:S})";
-            PhraseEMBox.Content = DirectoryEMBox.Content = EMBox.Content = $"Empty Messages: {pool.emptyMessages:N0}";
-            PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content = $"Unread Data: {pool.unreadBytes:S}";
+            PhraseIMBox.Content = DirectoryIMBox.Content = IMBox.Content = $"Intact Messages: {pool?.intactMessages:N0} ({pool?.intactBytes:S})";
+            PhraseCTBox.Content = DirectoryCTBox.Content = CTBox.Content = $"Corrupted Timestamps: {pool?.corruptTimestamps:N0}";
+            PhraseTMBox.Content = DirectoryTMBox.Content = TMBox.Content = $"Truncated Messages: {pool?.truncatedMessages:N0} ({pool?.truncatedBytes:S})";
+            PhraseEMBox.Content = DirectoryEMBox.Content = EMBox.Content = $"Empty Messages: {pool?.emptyMessages:N0}";
+            PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content = $"Unread Data: {pool?.unreadBytes:S}";
 
             if (!Common.lastException.Equals(string.Empty))
             {
                 HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = "A critical error has occurred.";
                 PhraseEXBox.Content = DirectoryEXBox.Content = EXBox.Content = Common.lastException;
-                (sender as BackgroundWorker).CancelAsync();
+                (sender as BackgroundWorker)?.CancelAsync();
             }
 
             return;

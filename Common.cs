@@ -124,7 +124,7 @@ span { position: relative; }
             return true;
         }
 
-        public static bool IsValidTimestamp(uint timestamp, bool TSTestOverride = false)
+        public static bool IsValidTimestamp(uint timestamp, bool LogTestOverride = false)
         {
             if (timestamp < 1) // If it came before Jan. 1, 1970, there's a problem.
                 return false;
@@ -132,7 +132,7 @@ span { position: relative; }
                 return false;
             if ((DTFromStamp(timestamp).ToString(dateFormat) ?? string.Empty).Equals(string.Empty)) // If it can't be translated to a date, also a problem.
                 return false;
-            if (!TSTestOverride && timestamp < lastTimestamp)  // If it isn't sequential, also a problem, because F-Chat would never save it that way.
+            if (!LogTestOverride && timestamp < lastTimestamp)  // If it isn't sequential, also a problem, because F-Chat would never save it that way.
                                                                // In this case specifically, there's an extremely high chance we're about to produce garbage data in the output.
                 return false;
             return true;
