@@ -719,51 +719,38 @@ namespace FLogS
                             AdjustHistory(tags[i].Index);
                             break;
                         }
-                        switch (arg)
+                        string colorData = arg switch
                         {
-                            case "black":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #000000; text-shadow: 1px 1px 1px #8887BF, -1px 1px 1px #8887BF, -1px -1px 1px #8887BF, 1px -1px 1px #8887BF;\">", tags[i].Index, ref indexAdj);
-                                break;
-                            case "blue":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #3D67F7\">", tags[i].Index, ref indexAdj);
-                                break;
-                            case "brown":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #836E42\">", tags[i].Index, ref indexAdj);
-                                break;
-                            case "cyan":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #8BFCFD\">", tags[i].Index, ref indexAdj);
-                                break;
-                            case "gray":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #B0B0B0\">", tags[i].Index, ref indexAdj);
-                                break;
-                            case "green":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #87FB4A\">", tags[i].Index, ref indexAdj);
-                                break;
-                            case "orange":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #E46F2B\">", tags[i].Index, ref indexAdj);
-                                break;
-                            case "pink":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #EB9ECA\">", tags[i].Index, ref indexAdj);
-                                break;
-                            case "purple":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #8B3EF6\">", tags[i].Index, ref indexAdj);
-                                break;
-                            case "red":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #E03121\">", tags[i].Index, ref indexAdj);
-                                break;
-                            case "yellow":
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #FDFE52\">", tags[i].Index, ref indexAdj);
-                                break;
-                            case "white":
-                            default:
-                                AdjustMessageData(ref messageOut, "<span style=\"color: #FFFFFF\">", tags[i].Index, ref indexAdj);
-                                break;
-                        }
+                            "black" => "#000000; text-shadow: 1px 1px 1px #8887BF, -1px 1px 1px #8887BF, -1px -1px 1px #8887BF, 1px -1px 1px #8887BF;",
+                            "blue" => "#3D67F7",
+                            "brown" => "#836E42",
+                            "cyan" => "#8BFCFD",
+                            "gray" => "#B0B0B0",
+                            "green" => "#87FB4A",
+                            "orange" => "#E46F2B",
+                            "pink" => "#EB9ECA",
+                            "purple" => "#8B3EF6",
+                            "red" => "#E03121",
+                            "yellow" => "#FDFE52",
+                            "white" => "#FFFFFF",
+                            _ => "#F0F0F0",
+                        };
+                        AdjustMessageData(ref messageOut, "<span style=\"color: " + colorData + "\">", tags[i].Index, ref indexAdj);
                         tagHistory?.Push(tag);
                         break;
                     case "eicon":
-                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
-                            continue;
+                        if (!partialParse.Equals(tag))
+                        {
+                            if (!partialParse.Equals(string.Empty))
+                                continue;
+
+                            if (!messageOut.Contains("[/eicon]"))
+                            {
+                                // If this eicon tag isn't closed later, then noparse it. Same with icons below.
+                                AdjustMessageData(ref messageOut, "\u200B", tags[i].Index + 1, ref indexAdj);
+                                continue;
+                            }
+                        }
 
                         if (tagCounts[tag] % 2 == 1)
                         {
@@ -787,8 +774,17 @@ namespace FLogS
                         tagHistory?.Push(tag);
                         break;
                     case "icon":
-                        if (!partialParse.Equals(tag) && !partialParse.Equals(string.Empty))
-                            continue;
+                        if (!partialParse.Equals(tag))
+                        {
+                            if (!partialParse.Equals(string.Empty))
+                                continue;
+
+                            if (!messageOut.Contains("[/icon]"))
+                            {
+                                AdjustMessageData(ref messageOut, "\u200B", tags[i].Index + 1, ref indexAdj);
+                                continue;
+                            }
+                        }
 
                         if (tagCounts[tag] % 2 == 1)
                         {

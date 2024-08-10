@@ -37,81 +37,81 @@ namespace FLogS
 
         public static ByteCount operator -(ByteCount a, ByteCount b)
         {
-            ByteCount o;
-            ByteCount o2;
+            ByteCount c;
+            ByteCount d;
 
             if (Math.Abs(a.prefix - b.prefix) > 3) // Special accommodations must be made if the disparity in magnitude would normally result in an int overflow.
             {
-                o = new(a.bytes, a.prefix);
-                o2 = new(b.bytes, b.prefix);
-                o.Adjust(Math.Abs(a.prefix - b.prefix) / 2);
-                o2.Adjust(o.prefix);
-                o.bytes -= o2.bytes;
-                o.Simplify();
-                return o;
+                c = new(a.bytes, a.prefix);
+                d = new(b.bytes, b.prefix);
+                c.Adjust(Math.Abs(a.prefix - b.prefix) / 2);
+                d.Adjust(c.prefix);
+                c.bytes -= d.bytes;
+                c.Simplify();
+                return c;
             }
 
-            o = new(a.bytes, a.prefix);
-            o.Adjust(b.prefix);
-            o.bytes -= b.bytes;
-            o.Simplify();
-            return o;
+            c = new(a.bytes, a.prefix);
+            c.Adjust(b.prefix);
+            c.bytes -= b.bytes;
+            c.Simplify();
+            return c;
         }
 
         public static ByteCount operator +(ByteCount a, ByteCount b)
         {
-            ByteCount o;
-            ByteCount o2;
+            ByteCount c;
+            ByteCount d;
 
             if (Math.Abs(a.prefix - b.prefix) > 3)
             {
-                o = new(a.bytes, a.prefix);
-                o2 = new(b.bytes, b.prefix);
-                o.Adjust(Math.Abs(a.prefix - b.prefix) / 2);
-                o2.Adjust(o.prefix);
-                o.bytes += o2.bytes;
-                o.Simplify();
-                return o;
+                c = new(a.bytes, a.prefix);
+                d = new(b.bytes, b.prefix);
+                c.Adjust(Math.Abs(a.prefix - b.prefix) / 2);
+                d.Adjust(c.prefix);
+                c.bytes += d.bytes;
+                c.Simplify();
+                return c;
             }
 
-            o = new(a.bytes, a.prefix);
-            o.Adjust(b.prefix);
-            o.bytes += b.bytes;
-            o.Simplify();
-            return o;
+            c = new(a.bytes, a.prefix);
+            c.Adjust(b.prefix);
+            c.bytes += b.bytes;
+            c.Simplify();
+            return c;
         }
 
         public static ByteCount operator +(ByteCount a, int b)
         {
-            ByteCount o = new(a.bytes, a.prefix);
-            ByteCount o2 = new(b, -1);
-            o.Adjust((o.prefix + 1) / 2);
-            o2.Adjust(o.prefix);
-            o.bytes += o2.bytes;
-            o.Simplify();
-            return o;
+            ByteCount c = new(a.bytes, a.prefix);
+            ByteCount d = new(b, -1);
+            c.Adjust((c.prefix + 1) / 2);
+            d.Adjust(c.prefix);
+            c.bytes += d.bytes;
+            c.Simplify();
+            return c;
         }
 
         public static ByteCount operator +(ByteCount a, uint b)
         {
-            ByteCount o = new(a.bytes, a.prefix);
-            ByteCount o2 = new(b, -1);
-            o.Adjust((o.prefix + 1) / 2);
-            o2.Adjust(o.prefix);
-            o.bytes += o2.bytes;
-            o.Simplify();
-            return o;
+            ByteCount c = new(a.bytes, a.prefix);
+            ByteCount d = new(b, -1);
+            c.Adjust((c.prefix + 1) / 2);
+            d.Adjust(c.prefix);
+            c.bytes += d.bytes;
+            c.Simplify();
+            return c;
         }
 
         public static ByteCount operator +(ByteCount a, long b)
         {
-            ByteCount o = new(a.bytes, a.prefix);
-            ByteCount o2 = new(b, -1);
-            o.Adjust((o.prefix + 1) / 2);
-            o2.Adjust(o.prefix);
-            o.bytes += o2.bytes;
-            o.Simplify();
-            return o;
+            ByteCount c = new(a.bytes, a.prefix);
+            ByteCount d = new(b, -1);
+            c.Adjust((c.prefix + 1) / 2);
+            d.Adjust(c.prefix);
+            c.bytes += d.bytes;
+            c.Simplify();
+            return c;
         }
 
         /// <summary>

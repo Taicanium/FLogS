@@ -84,41 +84,41 @@ namespace FLogS
             switch (sender?.DependencyObjectType.Name)
             {
                 case "Button":
-                    ((Button)sender).Background = brushCombos[1][brushPalette];
+                    sender.SetValue(BackgroundProperty, brushCombos[1][brushPalette]);
                     break;
                 case "DatePicker":
-                    ((DatePicker)sender).Background = brushCombos[0][brushPalette];
-                    ((DatePicker)sender).BorderBrush = brushCombos[6][brushPalette];
-                    ((DatePicker)sender).Foreground = brushCombos[0][reversePalette];
+                    sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette]);
+                    sender.SetValue(BorderBrushProperty, brushCombos[6][brushPalette]);
+                    sender.SetValue(ForegroundProperty, brushCombos[0][reversePalette]);
                     break;
                 case "Grid":
-                    if (((Grid)sender).Tag != null && ((Grid)sender).Tag.Equals("PanelGrid"))
-                        ((Grid)sender).Background = brushCombos[7][brushPalette];
+                    if ((sender.GetValue(TagProperty) ?? "").Equals("PanelGrid"))
+                        sender.SetValue(BackgroundProperty, brushCombos[7][brushPalette]);
                     break;
                 case "Label":
-                    ((Label)sender).Foreground = brushCombos[0][reversePalette];
+                    sender.SetValue(ForegroundProperty, brushCombos[0][reversePalette]);
                     break;
                 case "ListBox":
-                    ((ListBox)sender).Background = brushCombos[0][brushPalette];
-                    ((ListBox)sender).BorderBrush = brushCombos[2][reversePalette];
-                    ((ListBox)sender).Foreground = brushCombos[0][reversePalette];
+                    sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette]);
+                    sender.SetValue(BorderBrushProperty, brushCombos[2][reversePalette]);
+                    sender.SetValue(ForegroundProperty, brushCombos[0][reversePalette]);
                     break;
                 case "ProgressBar":
-                    ((ProgressBar)sender).Background = brushCombos[0][brushPalette];
+                    sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette]);
                     break;
                 case "StackPanel":
-                    ((StackPanel)sender).Background = brushCombos[2][brushPalette];
+                    sender.SetValue(BackgroundProperty, brushCombos[2][brushPalette]);
                     break;
                 case "TabControl":
-                    ((TabControl)sender).Background = brushCombos[5][brushPalette];
+                    sender.SetValue(BackgroundProperty, brushCombos[5][brushPalette]);
                     break;
                 case "TextBlock":
-                    ((TextBlock)sender).Foreground = brushCombos[0][reversePalette];
+                    sender.SetValue(ForegroundProperty, brushCombos[0][reversePalette]);
                     break;
                 case "TextBox":
-                    ((TextBox)sender).Background = brushCombos[0][brushPalette];
-                    ((TextBox)sender).BorderBrush = brushCombos[2][reversePalette];
-                    ((TextBox)sender).Foreground = brushCombos[0][reversePalette];
+                    sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette]);
+                    sender.SetValue(BorderBrushProperty, brushCombos[2][reversePalette]);
+                    sender.SetValue(ForegroundProperty, brushCombos[0][reversePalette]);
                     break;
             }
 
@@ -162,7 +162,9 @@ namespace FLogS
             System.Windows.Forms.FolderBrowserDialog folderBrowserDialog = new()
             {
                 ShowNewFolderButton = true,
-                InitialDirectory = outputSelect ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop) : Path.Exists(Common.defaultLogDir) ? Common.defaultLogDir : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                InitialDirectory = outputSelect ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+                    : Path.Exists(Common.defaultLogDir) ? Common.defaultLogDir
+                    : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
             };
             if (folderBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 return folderBrowserDialog.SelectedPath;
@@ -227,21 +229,23 @@ namespace FLogS
             if (sender is null)
                 return;
 
-            if (((CheckBox)sender).Name.Contains("DivideLogs"))
+            var senderObject = ((CheckBox)sender);
+
+            if (senderObject.Name.Contains("DivideLogs"))
             {
-                DivideLogsCheckbox.IsChecked = DirectoryDivideLogsCheckbox.IsChecked = PhraseDivideLogsCheckbox.IsChecked = ((CheckBox)sender).IsChecked;
+                DivideLogsCheckbox.IsChecked = DirectoryDivideLogsCheckbox.IsChecked = PhraseDivideLogsCheckbox.IsChecked = senderObject.IsChecked;
                 return;
             }
 
-            if (((CheckBox)sender).Name.Contains("SaveTruncated"))
+            if (senderObject.Name.Contains("SaveTruncated"))
             {
-                SaveTruncatedCheckbox.IsChecked = DirectorySaveTruncatedCheckbox.IsChecked = PhraseSaveTruncatedCheckbox.IsChecked = ((CheckBox)sender).IsChecked;
+                SaveTruncatedCheckbox.IsChecked = DirectorySaveTruncatedCheckbox.IsChecked = PhraseSaveTruncatedCheckbox.IsChecked = senderObject.IsChecked;
                 return;
             }
 
-            if (((CheckBox)sender).Name.Contains("SaveHTML"))
+            if (senderObject.Name.Contains("SaveHTML"))
             {
-                SaveHTMLCheckbox.IsChecked = DirectorySaveHTMLCheckbox.IsChecked = PhraseSaveHTMLCheckbox.IsChecked = ((CheckBox)sender).IsChecked;
+                SaveHTMLCheckbox.IsChecked = DirectorySaveHTMLCheckbox.IsChecked = PhraseSaveHTMLCheckbox.IsChecked = senderObject.IsChecked;
                 return;
             }
         }
@@ -493,12 +497,7 @@ namespace FLogS
                 {
                     foreach (string file in DirectorySource.Text.Split(';'))
                     {
-                        string outFile = Path.Join(DirectoryOutput.Text, Path.GetFileNameWithoutExtension(file));
-
-                        if (!Common.plaintext)
-                            outFile += ".html";
-                        else
-                            outFile += ".txt";
+                        string outFile = Path.Join(DirectoryOutput.Text, Path.GetFileNameWithoutExtension(file)) + (Common.plaintext ? ".txt" : ".html");
 
                         if (!File.Exists(file))
                             directoryError = FLogS_ERROR.SOURCES_NOT_FOUND;
@@ -554,12 +553,7 @@ namespace FLogS
                 {
                     foreach (string file in PhraseSource.Text.Split(';'))
                     {
-                        string outFile = Path.Join(PhraseOutput.Text, Path.GetFileNameWithoutExtension(file));
-
-                        if (!Common.plaintext)
-                            outFile += ".html";
-                        else
-                            outFile += ".txt";
+                        string outFile = Path.Join(PhraseOutput.Text, Path.GetFileNameWithoutExtension(file)) + (Common.plaintext ? ".txt" : ".html");
 
                         if (!File.Exists(file))
                             phraseError = FLogS_ERROR.SOURCES_NOT_FOUND;
