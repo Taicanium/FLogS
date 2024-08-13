@@ -5,33 +5,33 @@ using System.Text.RegularExpressions;
 
 namespace FLogS
 {
-    /// <summary>
-    /// Static helper functions and variables serving purely logical purposes in either the front- or backend.
-    /// </summary>
-    static class Common
-    {
-        public readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
-        public readonly static string defaultLogDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "fchat", "data");
-        private readonly static DateTime epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        public readonly static string errorFile = "FLogS_ERROR.txt";
-        public static Dictionary<string, FileInfo>? fileListing;
-        public readonly static Dictionary<string, string> htmlEntities = new()
-        {
-            { "&", "&amp;" },
-            { "\"", "&quot;" },
-            { "\'", "&apos;" },
-            { "<", "&lt;" },
-            { ">", "&gt;" },
-            { "¢", "&cent;" },
-            { "£", "&pound;" },
-            { "¥", "&yen;" },
-            { "€", "&euro;" },
-            { "©", "&copy;" },
-            { "®", "&reg;" },
-            { "\n", "<br />" },
-        };
-        public readonly static string htmlFooter = "</body>\n</html>";
-        public readonly static string htmlHeader = @"
+	/// <summary>
+	/// Static helper functions and variables serving purely logical purposes in either the front- or backend.
+	/// </summary>
+	static class Common
+	{
+		public readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
+		public readonly static string defaultLogDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "fchat", "data");
+		private readonly static DateTime epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+		public readonly static string errorFile = "FLogS_ERROR.txt";
+		public static Dictionary<string, FileInfo>? fileListing;
+		public readonly static Dictionary<string, string> htmlEntities = new()
+		{
+			{ "&", "&amp;" },
+			{ "\"", "&quot;" },
+			{ "\'", "&apos;" },
+			{ "<", "&lt;" },
+			{ ">", "&gt;" },
+			{ "¢", "&cent;" },
+			{ "£", "&pound;" },
+			{ "¥", "&yen;" },
+			{ "€", "&euro;" },
+			{ "©", "&copy;" },
+			{ "®", "&reg;" },
+			{ "\n", "<br />" },
+		};
+		public readonly static string htmlFooter = "</body>\n</html>";
+		public readonly static string htmlHeader = @"
 <!DOCTYPE html>
 <html>
 <head>
@@ -63,126 +63,129 @@ span { position: relative; }
 </style>
 </head>
 <body>";
-        public static string lastException = string.Empty;
-        public static uint lastTimestamp = 0U;
-        public static bool plaintext = true;
-        public static bool processing = false;
-        public readonly static Dictionary<string, string> tagClosings = new()
-        {
-            { "b", "</b>" },
-            { "big", "</span>" },
-            { "color", "</span>" },
-            { "eicon", ".gif\" />" },
-            { "i", "</i>" },
-            { "icon", ".png\" /></a>" },
-            { "noparse", "</script>" },
-            { "s", "</s>" },
-            { "session", "</a>" },
-            { "spoiler", "</span>" },
-            { "sub", "</sub>" },
-            { "sup", "</sup>" },
-            { "u", "</u>" },
-            { "url", "</a>" },
-            { "user", "</span></a>" },
-        };
-        public static DateTime timeBegin;
+		public static string lastException = string.Empty;
+		public static uint lastTimestamp = 0U;
+		public static bool plaintext = true;
+		public static bool processing = false;
+		public readonly static Dictionary<string, string> tagClosings = new()
+		{
+			{ "b", "</b>" },
+			{ "big", "</span>" },
+			{ "color", "</span>" },
+			{ "eicon", ".gif\" />" },
+			{ "i", "</i>" },
+			{ "icon", ".png\" /></a>" },
+			{ "noparse", "</script>" },
+			{ "s", "</s>" },
+			{ "session", "</a>" },
+			{ "spoiler", "</span>" },
+			{ "sub", "</sub>" },
+			{ "sup", "</sup>" },
+			{ "u", "</u>" },
+			{ "url", "</a>" },
+			{ "user", "</span></a>" },
+		};
+		public static DateTime timeBegin;
 
-        public static uint BEInt(byte[] buffer)
-        {
-            return buffer[0]
-                + buffer[1] * 256U
-                + buffer[2] * 65536U
-                + buffer[3] * 16777216U;
-        }
+		public static uint BEInt(byte[] buffer)
+		{
+			return buffer[0]
+				+ buffer[1] * 256U
+				+ buffer[2] * 65536U
+				+ buffer[3] * 16777216U;
+		}
 
-        public static DateTime DTFromStamp(uint stamp)
-        {
-            try
-            {
-                return epoch.AddSeconds(stamp);
-            }
-            catch (Exception)
-            {
-                return new DateTime();
-            }
-        }
+		public static DateTime DTFromStamp(uint stamp)
+		{
+			try
+			{
+				return epoch.AddSeconds(stamp);
+			}
+			catch (Exception)
+			{
+				return new DateTime();
+			}
+		}
 
-        public static bool IsValidPattern(string? pattern = null)
-        {
-            if (pattern is null)
-                return false;
+		public static bool IsValidPattern(string? pattern = null)
+		{
+			if (pattern is null)
+				return false;
 
-            try
-            {
-                Regex.IsMatch(string.Empty, pattern);
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+			try
+			{
+				Regex.IsMatch(string.Empty, pattern);
+			}
+			catch (Exception)
+			{
+				return false;
+			}
 
-            return true;
-        }
+			return true;
+		}
 
-        public static bool IsValidTimestamp(uint timestamp, bool LogTestOverride = false)
-        {
-            if (timestamp < 1) // If it came before Jan. 1, 1970, there's a problem.
-                return false;
-            if (timestamp > UNIXTimestamp()) // If it's in the future, also a problem.
-                return false;
-            if ((DTFromStamp(timestamp).ToString(dateFormat) ?? string.Empty).Equals(string.Empty)) // If it can't be translated to a date, also a problem.
-                return false;
-            if (!LogTestOverride && timestamp < lastTimestamp)  // If it isn't sequential, also a problem, because F-Chat would never save it that way.
-                                                               // In this case specifically, there's an extremely high chance we're about to produce garbage data in the output.
-                return false;
-            return true;
-        }
+		public static bool IsValidTimestamp(uint timestamp, bool LogTestOverride = false)
+		{
+			if (timestamp < 1) // If it came before Jan. 1, 1970, there's a problem.
+				return false;
+			if (timestamp > UNIXTimestamp()) // If it's in the future, also a problem.
+				return false;
+			if ((DTFromStamp(timestamp).ToString(dateFormat) ?? string.Empty).Equals(string.Empty)) // If it can't be translated to a date, also a problem.
+				return false;
+			if (!LogTestOverride && timestamp < lastTimestamp)  // If it isn't sequential, also a problem, because F-Chat would never save it that way.
+															   // In this case specifically, there's an extremely high chance we're about to produce garbage data in the output.
+				return false;
+			return true;
+		}
 
-        public static void LogException(Exception e)
-        {
-            lastException = e.Message;
-            File.AppendAllText(errorFile, DateTime.Now.ToString(dateFormat) + " - " + lastException + "\n");
-            File.AppendAllText(errorFile, e?.TargetSite?.DeclaringType?.FullName + "." + e?.TargetSite?.Name + "\n\n");
-            return;
-        }
+		public static void LogException(Exception e)
+		{
+			lastException = e.Message;
+			File.AppendAllText(errorFile, DateTime.Now.ToString(dateFormat) + " - " + lastException + "\n");
+			File.AppendAllText(errorFile, e?.TargetSite?.DeclaringType?.FullName + "." + e?.TargetSite?.Name + "\n\n");
+			return;
+		}
 
-        public static bool LogTest(string targetFile)
-        {
-            byte[] idBuffer = new byte[4];
-            byte[] srcBuffer;
-            using FileStream srcFS = new FileInfo(targetFile).OpenRead();
+		public static bool LogTest(string targetFile)
+		{
+			if (!File.Exists(targetFile))
+				return false;
 
-            if (srcFS.Read(idBuffer, 0, 4) < 4)
-                return false;
-            if (!IsValidTimestamp(BEInt(idBuffer), true))
-                return false;
+			byte[] idBuffer = new byte[4];
+			byte[] srcBuffer;
+			using FileStream srcFS = new FileInfo(targetFile).OpenRead();
 
-            if (srcFS.ReadByte() > 6)
-                return false;
+			if (srcFS.Read(idBuffer, 0, 4) < 4)
+				return false;
+			if (!IsValidTimestamp(BEInt(idBuffer), true))
+				return false;
 
-            int profLen = srcFS.ReadByte();
-            if (profLen == -1)
-                return false;
+			if (srcFS.ReadByte() > 6)
+				return false;
 
-            if (profLen > 0)
-            {
-                srcBuffer = new byte[profLen];
-                if (srcFS.Read(srcBuffer, 0, profLen) < profLen)
-                    return false;
-            }
+			int profLen = srcFS.ReadByte();
+			if (profLen == -1)
+				return false;
 
-            if (srcFS.Read(idBuffer, 0, 2) < 2)
-                return false;
+			if (profLen > 0)
+			{
+				srcBuffer = new byte[profLen];
+				if (srcFS.Read(srcBuffer, 0, profLen) < profLen)
+					return false;
+			}
 
-            // We assume a valid log file starting from here, as the header format of the message is now confirmed -
-            // and we can't assume the very first message in a file *didn't* happen to just be truncated or empty.
+			if (srcFS.Read(idBuffer, 0, 2) < 2)
+				return false;
 
-            return true;
-        }
+			// We assume a valid log file starting from here, as the header format of the message is now confirmed -
+			// and we can't assume the very first message in a file *didn't* happen to just be truncated or empty.
 
-        public static uint UNIXTimestamp()
-        {
-            return (uint)Math.Floor(DateTime.UtcNow.Subtract(epoch).TotalSeconds);
-        }
-    }
+			return true;
+		}
+
+		public static uint UNIXTimestamp()
+		{
+			return (uint)Math.Floor(DateTime.UtcNow.Subtract(epoch).TotalSeconds);
+		}
+	}
 }
