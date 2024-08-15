@@ -125,21 +125,20 @@ namespace FLogS
 			foreach (object dp in LogicalTreeHelper.GetChildren(sender))
 				ChangeStyle(dp as DependencyObject);
 
-			if (((string?)sender?.GetValue(TagProperty) ?? string.Empty).Equals("WarningLabel"))
-				sender?.SetValue(ForegroundProperty, brushCombos[3][brushPalette]);
-
 			return;
 		}
 
 		private void DatePicker_Update(object? sender, RoutedEventArgs e)
 		{
-			if (((DatePicker?)sender)?.Name.Contains("BeforeDate") is true)
+			var senderDate = (DatePicker?)sender;
+
+			if (senderDate.Name.Contains("BeforeDate"))
 			{
-				BeforeDate.SelectedDate = DirectoryBeforeDate.SelectedDate = PhraseBeforeDate.SelectedDate = ((DatePicker)sender).SelectedDate;
+				BeforeDate.SelectedDate = DirectoryBeforeDate.SelectedDate = PhraseBeforeDate.SelectedDate = senderDate.SelectedDate;
 				return;
 			}
 
-			AfterDate.SelectedDate = DirectoryAfterDate.SelectedDate = PhraseAfterDate.SelectedDate = ((DatePicker?)sender)?.SelectedDate;
+			AfterDate.SelectedDate = DirectoryAfterDate.SelectedDate = PhraseAfterDate.SelectedDate = senderDate.SelectedDate;
 			return;
 		}
 
@@ -151,6 +150,7 @@ namespace FLogS
 				Multiselect = multi,
 				InitialDirectory = outputSelect ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop) : Path.Exists(Common.defaultLogDir) ? Common.defaultLogDir : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
 			};
+
 			if (openFileDialog.ShowDialog() == true)
 				return string.Join(";", openFileDialog.FileNames.Where(file => !file.Contains(".idx"))); // IDX files contain metadata relating to the corresponding (usually extension-less) log files.
 																										 // They will never contain actual messages, so we exclude them unconditionally.
@@ -166,6 +166,7 @@ namespace FLogS
 					: Path.Exists(Common.defaultLogDir) ? Common.defaultLogDir
 					: Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
 			};
+
 			if (folderBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
 				return folderBrowserDialog.SelectedPath;
 
@@ -196,7 +197,7 @@ namespace FLogS
 
 				foreach (string logfile in files)
 				{
-					Common.fileListing[logfile] = new(logfile);
+					Common.fileListing[logfile] ??= new(logfile);
 					pool.totalSize += Common.fileListing[logfile].Length;
 				}
 
@@ -229,23 +230,23 @@ namespace FLogS
 			if (sender is null)
 				return;
 
-			var senderObject = ((CheckBox)sender);
+			var senderBox = (CheckBox)sender;
 
-			if (senderObject.Name.Contains("DivideLogs"))
+			if (senderBox.Name.Contains("DivideLogs"))
 			{
-				DivideLogsCheckbox.IsChecked = DirectoryDivideLogsCheckbox.IsChecked = PhraseDivideLogsCheckbox.IsChecked = senderObject.IsChecked;
+				DivideLogsCheckbox.IsChecked = DirectoryDivideLogsCheckbox.IsChecked = PhraseDivideLogsCheckbox.IsChecked = senderBox.IsChecked;
 				return;
 			}
 
-			if (senderObject.Name.Contains("SaveTruncated"))
+			if (senderBox.Name.Contains("SaveTruncated"))
 			{
-				SaveTruncatedCheckbox.IsChecked = DirectorySaveTruncatedCheckbox.IsChecked = PhraseSaveTruncatedCheckbox.IsChecked = senderObject.IsChecked;
+				SaveTruncatedCheckbox.IsChecked = DirectorySaveTruncatedCheckbox.IsChecked = PhraseSaveTruncatedCheckbox.IsChecked = senderBox.IsChecked;
 				return;
 			}
 
-			if (senderObject.Name.Contains("SaveHTML"))
+			if (senderBox.Name.Contains("SaveHTML"))
 			{
-				SaveHTMLCheckbox.IsChecked = DirectorySaveHTMLCheckbox.IsChecked = PhraseSaveHTMLCheckbox.IsChecked = senderObject.IsChecked;
+				SaveHTMLCheckbox.IsChecked = DirectorySaveHTMLCheckbox.IsChecked = PhraseSaveHTMLCheckbox.IsChecked = senderBox.IsChecked;
 				return;
 			}
 		}
@@ -310,25 +311,13 @@ namespace FLogS
 			// We will rescan for errors upon user interaction, in case of e.g. a source file being deleted after its path has already been entered.
 			TextboxUpdated(sender, e);
 
-			RegExLink.Foreground = brushCombos[8][brushPalette];
-			if (RegExLink.IsMouseOver)
-				RegExLink.Foreground = brushCombos[3][brushPalette];
+			RegExLink.Foreground = brushCombos[RegExLink.IsMouseOver ? 3 : 8][brushPalette];
 
 			if (!overrideFormat)
 			{
-				if (DirectoryOutput.Text.EndsWith(".html"))
-					DirectorySaveHTMLCheckbox.IsChecked = true;
-				if (PhraseOutput.Text.EndsWith(".html"))
-					PhraseSaveHTMLCheckbox.IsChecked = true;
-				if (FileOutput.Text.EndsWith(".html"))
-					SaveHTMLCheckbox.IsChecked = true;
-
-				if (DirectoryOutput.Text.EndsWith(".txt"))
-					DirectorySaveHTMLCheckbox.IsChecked = false;
-				if (PhraseOutput.Text.EndsWith(".txt"))
-					PhraseSaveHTMLCheckbox.IsChecked = false;
-				if (FileOutput.Text.EndsWith(".txt"))
-					SaveHTMLCheckbox.IsChecked = false;
+				DirectorySaveHTMLCheckbox.IsChecked = DirectoryOutput.Text.EndsWith(".html");
+				PhraseSaveHTMLCheckbox.IsChecked = PhraseOutput.Text.EndsWith(".html");
+				SaveHTMLCheckbox.IsChecked = FileOutput.Text.EndsWith(".html");
 			}
 		}
 
@@ -373,7 +362,7 @@ namespace FLogS
 		{
 			var directorySources = DirectorySource.Text.Equals(string.Empty) ? [] : DirectorySource.Text.Split(';');
 			var phraseSources = PhraseSource.Text.Equals(string.Empty) ? [] : PhraseSource.Text.Split(';');
-			Func<string, string, string> outputPath = (directory, file) => Path.Join(directory, Path.GetFileNameWithoutExtension(file)) + (Common.plaintext ? ".txt" : ".html");
+			static string outputPath(string directory, string file) => Path.Join(directory, Path.GetFileNameWithoutExtension(file)) + (Common.plaintext ? ".txt" : ".html");
 
 			directoryError = new[] {
 				(DirectorySource.Text.Length == 0, FLogS_ERROR.NO_SOURCES),
@@ -435,12 +424,11 @@ namespace FLogS
 			PhraseRunButton.IsEnabled = phraseError == FLogS_ERROR.None;
 			RunButton.IsEnabled = fileError == FLogS_ERROR.None;
 
-			if (fileError == FLogS_ERROR.None)
-				WarningLabel.Foreground = brushCombos[4][brushPalette];
-			if (directoryError == FLogS_ERROR.None)
-				DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
-			if (phraseError == FLogS_ERROR.None)
-				PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
+			DirectoryWarningLabel.Foreground = brushCombos[directoryError == FLogS_ERROR.None ? 4 : 3][brushPalette];
+			PhraseWarningLabel.Foreground = brushCombos[phraseError == FLogS_ERROR.None ? 4 : 3][brushPalette];
+			WarningLabel.Foreground = brushCombos[fileError == FLogS_ERROR.None ? 4 : 3][brushPalette];
+
+			return;
 		}
 
 		private void ProcessFiles(string[]? args = null, bool batch = true)
@@ -527,15 +515,11 @@ namespace FLogS
 
 				ChangeStyle(MainGrid);
 				ADLWarning.Foreground = brushCombos[3][brushPalette];
+				DirectoryWarningLabel.Foreground = brushCombos[directoryError == FLogS_ERROR.None ? 4 : 3][brushPalette];
 				MainGrid.Background = brushCombos[5][brushPalette];
+				PhraseWarningLabel.Foreground = brushCombos[phraseError == FLogS_ERROR.None ? 4 : 3][brushPalette];
 				RegexCheckBox.Background = brushCombos[1][brushPalette];
-
-				if (fileError == FLogS_ERROR.None)
-					WarningLabel.Foreground = brushCombos[4][brushPalette];
-				if (directoryError == FLogS_ERROR.None)
-					DirectoryWarningLabel.Foreground = brushCombos[4][brushPalette];
-				if (phraseError == FLogS_ERROR.None)
-					PhraseWarningLabel.Foreground = brushCombos[4][brushPalette];
+				WarningLabel.Foreground = brushCombos[fileError == FLogS_ERROR.None ? 4 : 3][brushPalette];
 			}
 			catch (Exception ex)
 			{
@@ -575,15 +559,11 @@ namespace FLogS
 
 			if (!enabled)
 			{
+				HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = "Scanning " + (filesProcessed == 1 ? $"{Path.GetFileName(pool?.srcFile)}..." : $"{filesProcessed:N0} files...");
 				DirectoryRunButton.Content = PhraseRunButton.Content = RunButton.Content = "Scanning...";
 
 				Common.lastException = string.Empty;
 				Common.timeBegin = DateTime.Now;
-
-				if (filesProcessed == 1)
-					HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Scanning {Path.GetFileName(pool?.srcFile)}...";
-				else
-					HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Scanning {filesProcessed:N0} files...";
 
 				return;
 			}
@@ -596,10 +576,8 @@ namespace FLogS
 				string? formattedName = Path.GetFileName(pool?.srcFile);
 				if (formattedName?.Length > 16)
 					formattedName = formattedName[..14] + "...";
-				if (filesProcessed == 1)
-					HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Processed {formattedName} in {timeTaken:N2} seconds.";
-				else
-					HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = $"Processed {filesProcessed:N0} files in {timeTaken:N2} seconds.";
+
+				HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = "Processed " + (filesProcessed == 1 ? $"{formattedName} in {timeTaken:N2} seconds." : $"{filesProcessed:N0} files in {timeTaken:N2} seconds.");
 			}
 
 			return;

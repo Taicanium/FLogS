@@ -21,8 +21,8 @@
 					</Grid.RowDefinitions>
 					<Grid Tag="PanelGrid" Grid.Row="0" Grid.Column="0" Background="Beige" Margin="2,0">
 						<StackPanel Background="LightGray" Margin="2,2">
-                            <ListBox x:Name="LogWindow" IsHitTestVisible="False" Width="350" Height="430" Margin="0,21" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1" ScrollViewer.HorizontalScrollBarVisibility="Auto">
-                                <ListBoxItem x:Name="HeaderBox">Ready to receive data.</ListBoxItem>
+							<ListBox x:Name="LogWindow" IsHitTestVisible="False" Width="350" Height="430" Margin="0,21" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1" ScrollViewer.HorizontalScrollBarVisibility="Auto">
+								<ListBoxItem x:Name="HeaderBox">Ready to receive data.</ListBoxItem>
 								<ListBoxItem Margin="10" Visibility="Hidden"></ListBoxItem>
 								<ListBoxItem x:Name="IMBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
 								<ListBoxItem x:Name="CTBox">Corrupted Timestamps:</ListBoxItem>
@@ -81,8 +81,7 @@
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="2*"/>
 									<ColumnDefinition Width="*"/>
-									<ColumnDefinition Width="*"/>
-									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="2*"/>
 								</Grid.ColumnDefinitions>
 								<StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
 									<Label Tag="WarningLabel" x:Name="WarningLabel" VerticalAlignment="Center" Foreground="Red" FontSize="14" FontStyle="Italic" Content="No source log file selected."/>
@@ -111,7 +110,7 @@
 					</Grid.RowDefinitions>
 					<Grid Tag="PanelGrid" Grid.Row="0" Grid.Column="0" Background="Beige" Margin="2,0">
 						<StackPanel Background="LightGray" Margin="2,2">
-                            <ListBox x:Name="DirectoryLogWindow" IsHitTestVisible="False" Width="350" Height="430" Margin="0,21" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1" ScrollViewer.HorizontalScrollBarVisibility="Auto">
+							<ListBox x:Name="DirectoryLogWindow" IsHitTestVisible="False" Width="350" Height="430" Margin="0,21" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1" ScrollViewer.HorizontalScrollBarVisibility="Auto">
 								<ListBoxItem x:Name="DirectoryHeaderBox">Ready to receive data.</ListBoxItem>
 								<ListBoxItem Margin="10" Visibility="Hidden"></ListBoxItem>
 								<ListBoxItem x:Name="DirectoryIMBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
@@ -171,8 +170,7 @@
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="2*"/>
 									<ColumnDefinition Width="*"/>
-									<ColumnDefinition Width="*"/>
-									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="2*"/>
 								</Grid.ColumnDefinitions>
 								<StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
 									<Label Tag="WarningLabel" x:Name="DirectoryWarningLabel" VerticalAlignment="Center" Foreground="Red" FontSize="14" FontStyle="Italic" Content="No source log files selected."/>
@@ -201,7 +199,7 @@
 					</Grid.RowDefinitions>
 					<Grid Tag="PanelGrid" Grid.Row="0" Grid.Column="0" Background="Beige" Margin="2,0">
 						<StackPanel Background="LightGray" Margin="2,2">
-                            <ListBox x:Name="PhraseLogWindow" IsHitTestVisible="False" Width="350" Height="430" Margin="0,21" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1" ScrollViewer.HorizontalScrollBarVisibility="Auto">
+							<ListBox x:Name="PhraseLogWindow" IsHitTestVisible="False" Width="350" Height="430" Margin="0,21" HorizontalAlignment="Center" Padding="3" FontSize="14" BorderBrush="#FF333333" BorderThickness="1" ScrollViewer.HorizontalScrollBarVisibility="Auto">
 								<ListBoxItem x:Name="PhraseHeaderBox">Ready to receive data.</ListBoxItem>
 								<ListBoxItem Margin="10" Visibility="Hidden"></ListBoxItem>
 								<ListBoxItem x:Name="PhraseIMBox" FontWeight="Bold">Intact Messages:</ListBoxItem>
@@ -266,8 +264,7 @@
 								<Grid.ColumnDefinitions>
 									<ColumnDefinition Width="2*"/>
 									<ColumnDefinition Width="*"/>
-									<ColumnDefinition Width="*"/>
-									<ColumnDefinition Width="*"/>
+									<ColumnDefinition Width="2*"/>
 								</Grid.ColumnDefinitions>
 								<StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
 									<Label Tag="WarningLabel" x:Name="PhraseWarningLabel" VerticalAlignment="Center" Foreground="Red" FontSize="14" FontStyle="Italic" Content="No source log files selected."/>
@@ -307,7 +304,7 @@
 							<Bold>FLogS</Bold> does not distinguish partially from fully corrupted data.
 							An option is provided to save corrupted data in case it contains something readable, but by default, <Bold>FLogS</Bold> will only save what is entirely clean.<LineBreak/>
 							Viewing HTML output can be very resource-intensive if the source file is particularly large. Take caution when translating very old logs to HTML format.<LineBreak/><LineBreak/>
-							<Span x:Name="ADLWarning" Foreground="Red"><Bold>FLogS</Bold> is not a substitute for ADL</Span>: Plaintext logs generated by this program <Italic>cannot</Italic> be accepted by F-List staff in case of a dispute, even if the source file is completely intact.
+							<Span x:Name="ADLWarning" Foreground="Red"><Bold>FLogS</Bold> is not a substitute for ADL:</Span> Plaintext logs generated by this program <Italic>cannot</Italic> be accepted by F-List staff in case of a dispute, even if the source file is completely intact.
 							</TextBlock>
 						</StackPanel>
 					</Grid>
