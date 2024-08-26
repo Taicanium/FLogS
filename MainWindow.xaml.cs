@@ -31,7 +31,7 @@ namespace FLogS
 			[Brushes.DimGray, Brushes.Beige], // PanelGrids
 			[Brushes.LightBlue, Brushes.DarkBlue], // Hyperlinks
 		];
-		private static int brushPalette = 1;
+		private static (int, int) brushPalette = (1, 0);
 		private static FLogS_ERROR directoryError = FLogS_ERROR.NO_SOURCES;
 		private static FLogS_WARNING directoryWarning = FLogS_WARNING.None;
 		private static FLogS_ERROR fileError = FLogS_ERROR.NO_SOURCE;
@@ -40,8 +40,7 @@ namespace FLogS
 		private static bool overrideFormat = false;
 		private static FLogS_ERROR phraseError = FLogS_ERROR.NO_SOURCES;
 		private static FLogS_WARNING phraseWarning = FLogS_WARNING.None;
-		private static MessagePool? pool;
-		private static int reversePalette = 0;
+		private static MessagePool pool = new();
 		private readonly static ContextSettings settings = new();
 
 		private enum FLogS_ERROR
@@ -73,7 +72,7 @@ namespace FLogS
 		public MainWindow()
 		{
 			InitializeComponent();
-			this.DataContext = settings;
+			DataContext = settings;
 		}
 
 		private static void ChangeStyle(DependencyObject? sender)
@@ -84,75 +83,59 @@ namespace FLogS
 			switch (sender?.DependencyObjectType.Name)
 			{
 				case "Button":
-					sender.SetValue(BackgroundProperty, brushCombos[1][brushPalette]);
+					sender.SetValue(BackgroundProperty, brushCombos[1][brushPalette.Item1]);
 					break;
 				case "DatePicker":
-					sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette]);
-					sender.SetValue(BorderBrushProperty, brushCombos[6][brushPalette]);
-					sender.SetValue(ForegroundProperty, brushCombos[0][reversePalette]);
+					sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette.Item1]);
+					sender.SetValue(BorderBrushProperty, brushCombos[6][brushPalette.Item1]);
+					sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
 					break;
 				case "Grid":
-					if ((sender.GetValue(TagProperty) ?? "").Equals("PanelGrid"))
-						sender.SetValue(BackgroundProperty, brushCombos[7][brushPalette]);
+					if ((sender.GetValue(TagProperty) ?? string.Empty).Equals("PanelGrid"))
+						sender.SetValue(BackgroundProperty, brushCombos[7][brushPalette.Item1]);
 					break;
 				case "Label":
-					sender.SetValue(ForegroundProperty, brushCombos[0][reversePalette]);
+					sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
 					break;
 				case "ListBox":
-					sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette]);
-					sender.SetValue(BorderBrushProperty, brushCombos[2][reversePalette]);
-					sender.SetValue(ForegroundProperty, brushCombos[0][reversePalette]);
+					sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette.Item1]);
+					sender.SetValue(BorderBrushProperty, brushCombos[2][brushPalette.Item2]);
+					sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
 					break;
 				case "ProgressBar":
-					sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette]);
+					sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette.Item1]);
 					break;
 				case "StackPanel":
-					sender.SetValue(BackgroundProperty, brushCombos[2][brushPalette]);
+					sender.SetValue(BackgroundProperty, brushCombos[2][brushPalette.Item1]);
 					break;
 				case "TabControl":
-					sender.SetValue(BackgroundProperty, brushCombos[5][brushPalette]);
+					sender.SetValue(BackgroundProperty, brushCombos[5][brushPalette.Item1]);
 					break;
 				case "TextBlock":
-					sender.SetValue(ForegroundProperty, brushCombos[0][reversePalette]);
+					sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
 					break;
 				case "TextBox":
-					sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette]);
-					sender.SetValue(BorderBrushProperty, brushCombos[2][reversePalette]);
-					sender.SetValue(ForegroundProperty, brushCombos[0][reversePalette]);
+					sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette.Item1]);
+					sender.SetValue(BorderBrushProperty, brushCombos[2][brushPalette.Item2]);
+					sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
 					break;
 			}
 
 			foreach (object dp in LogicalTreeHelper.GetChildren(sender))
 				ChangeStyle(dp as DependencyObject);
-
-			return;
-		}
-
-		private void DatePicker_Update(object? sender, RoutedEventArgs e)
-		{
-			var senderDate = (DatePicker?)sender;
-
-			if (senderDate.Name.Contains("BeforeDate"))
-			{
-				BeforeDate.SelectedDate = DirectoryBeforeDate.SelectedDate = PhraseBeforeDate.SelectedDate = senderDate.SelectedDate;
-				return;
-			}
-
-			AfterDate.SelectedDate = DirectoryAfterDate.SelectedDate = PhraseAfterDate.SelectedDate = senderDate.SelectedDate;
-			return;
 		}
 
 		private static string DialogFileSelect(bool outputSelect = false, bool checkExists = false, bool multi = true)
 		{
-			OpenFileDialog openFileDialog = new()
+			OpenFileDialog dialog = new()
 			{
 				CheckFileExists = checkExists,
 				Multiselect = multi,
 				InitialDirectory = outputSelect ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop) : Path.Exists(Common.defaultLogDir) ? Common.defaultLogDir : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
 			};
 
-			if (openFileDialog.ShowDialog() == true)
-				return string.Join(";", openFileDialog.FileNames.Where(file => !file.Contains(".idx"))); // IDX files contain metadata relating to the corresponding (usually extension-less) log files.
+			if (dialog.ShowDialog() == true)
+				return string.Join(";", dialog.FileNames.Where(file => !file.Contains(".idx"))); // IDX files contain metadata relating to the corresponding (usually extension-less) log files.
 																										 // They will never contain actual messages, so we exclude them unconditionally.
 			return string.Empty;
 		}
@@ -173,58 +156,6 @@ namespace FLogS
 			return string.Empty;
 		}
 
-		private void DirectoryRunButton_Click(object? sender, RoutedEventArgs e)
-		{
-			TextboxUpdated(sender, e);
-			if (!DirectoryRunButton.IsEnabled)
-				return;
-
-			try
-			{
-				string[] files = DirectorySource.Text.Split(';');
-				Common.plaintext = DirectorySaveHTMLCheckbox.IsChecked == false;
-				pool = new()
-				{
-					destDir = DirectoryOutput.Text,
-					divide = DirectoryDivideLogsCheckbox.IsChecked == true,
-					dtAfter = DirectoryAfterDate.SelectedDate ?? Common.DTFromStamp(1),
-					dtBefore = DirectoryBeforeDate.SelectedDate ?? DateTime.UtcNow,
-					phrase = string.Empty,
-					saveTruncated = DirectorySaveTruncatedCheckbox.IsChecked == true,
-					srcFile = DirectorySource.Text,
-					totalSize = new()
-				};
-
-				foreach (string logfile in files)
-				{
-					Common.fileListing[logfile] ??= new(logfile);
-					pool.totalSize += Common.fileListing[logfile].Length;
-				}
-
-				ProcessFiles(files);
-			}
-			catch (Exception ex)
-			{
-				Common.LogException(ex);
-				return;
-			}
-		}
-
-		private void DstDirectoryButton_Click(object? sender, RoutedEventArgs e)
-		{
-			DirectoryOutput.Text = DialogFolderSelect(true);
-		}
-
-		private void DstFileButton_Click(object? sender, RoutedEventArgs e)
-		{
-			FileOutput.Text = DialogFileSelect(outputSelect: true, multi: false);
-		}
-
-		private void DstPhraseButton_Click(object? sender, RoutedEventArgs e)
-		{
-			PhraseOutput.Text = DialogFolderSelect(true);
-		}
-
 		private void FormatOverride(object? sender, RoutedEventArgs e)
 		{
 			if (sender is null)
@@ -234,19 +165,19 @@ namespace FLogS
 
 			if (senderBox.Name.Contains("DivideLogs"))
 			{
-				DivideLogsCheckbox.IsChecked = DirectoryDivideLogsCheckbox.IsChecked = PhraseDivideLogsCheckbox.IsChecked = senderBox.IsChecked;
+				F_DivideLogsCheckbox.IsChecked = D_DivideLogsCheckbox.IsChecked = P_DivideLogsCheckbox.IsChecked = senderBox.IsChecked;
 				return;
 			}
 
 			if (senderBox.Name.Contains("SaveTruncated"))
 			{
-				SaveTruncatedCheckbox.IsChecked = DirectorySaveTruncatedCheckbox.IsChecked = PhraseSaveTruncatedCheckbox.IsChecked = senderBox.IsChecked;
+				F_SaveTruncatedCheckbox.IsChecked = D_SaveTruncatedCheckbox.IsChecked = P_SaveTruncatedCheckbox.IsChecked = senderBox.IsChecked;
 				return;
 			}
 
 			if (senderBox.Name.Contains("SaveHTML"))
 			{
-				SaveHTMLCheckbox.IsChecked = DirectorySaveHTMLCheckbox.IsChecked = PhraseSaveHTMLCheckbox.IsChecked = senderBox.IsChecked;
+				F_SaveHTMLCheckbox.IsChecked = D_SaveHTMLCheckbox.IsChecked = P_SaveHTMLCheckbox.IsChecked = overrideFormat = (senderBox.IsChecked ?? false);
 				return;
 			}
 		}
@@ -270,7 +201,7 @@ namespace FLogS
 
 			(FLogS_ERROR.None, FLogS_WARNING.MULTI_OVERWRITE) => "One or more files will be overwritten.",
 			(FLogS_ERROR.None, FLogS_WARNING.SINGLE_OVERWRITE) => "Destination file will be overwritten.",
-			(FLogS_ERROR.None, _) => "",
+			(FLogS_ERROR.None, _) => string.Empty,
 
 			(_, FLogS_WARNING.None) => "An unknown error has occurred.",
 			(_, _) => "An unknown error has occurred.",
@@ -284,10 +215,7 @@ namespace FLogS
 
 		private void MainGrid_Loaded(object? sender, RoutedEventArgs e)
 		{
-			Common.fileListing = [];
 			overrideFormat = false;
-			pool = new();
-			Common.processing = false;
 
 			if (File.Exists(Common.errorFile))
 				File.Delete(Common.errorFile);
@@ -311,35 +239,146 @@ namespace FLogS
 			// We will rescan for errors upon user interaction, in case of e.g. a source file being deleted after its path has already been entered.
 			TextboxUpdated(sender, e);
 
-			RegExLink.Foreground = brushCombos[RegExLink.IsMouseOver ? 3 : 8][brushPalette];
+			RegExLink.Foreground = brushCombos[RegExLink.IsMouseOver ? 3 : 8][brushPalette.Item1];
 
 			if (!overrideFormat)
 			{
-				DirectorySaveHTMLCheckbox.IsChecked = DirectoryOutput.Text.EndsWith(".html");
-				PhraseSaveHTMLCheckbox.IsChecked = PhraseOutput.Text.EndsWith(".html");
-				SaveHTMLCheckbox.IsChecked = FileOutput.Text.EndsWith(".html");
+				F_SaveHTMLCheckbox.IsChecked = F_Output.Text.EndsWith(".html");
+				D_SaveHTMLCheckbox.IsChecked = D_Output.Text.EndsWith(".html");
+				P_SaveHTMLCheckbox.IsChecked = P_Output.Text.EndsWith(".html");
 			}
 		}
 
-		private void PhraseRunButton_Click(object? sender, RoutedEventArgs e)
+		private void MultiDest_Click(object sender, RoutedEventArgs e)
+		{
+			D_Output.Text = P_Output.Text = DialogFolderSelect(true);
+		}
+
+		private void MultiSource_Click(object sender, RoutedEventArgs e)
+		{
+			D_Source.Text = P_Source.Text = DialogFileSelect();
+		}
+
+		private void ProcessErrors()
+		{
+			var directorySources = D_Source.Text.Equals(string.Empty) ? [] : D_Source.Text.Split(';');
+			var phraseSources = P_Source.Text.Equals(string.Empty) ? [] : P_Source.Text.Split(';');
+			static string outputPath(string directory, string file) => Path.Join(directory, Path.GetFileNameWithoutExtension(file)) + (Common.plaintext ? ".txt" : ".html");
+
+			directoryError = new[] {
+				(D_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCES),
+				(directorySources.Any(file => !File.Exists(file)), FLogS_ERROR.SOURCES_NOT_FOUND),
+				(D_Output.Text.Length == 0, FLogS_ERROR.NO_DEST_DIR),
+				(File.Exists(D_Output.Text), FLogS_ERROR.DEST_NOT_DIRECTORY),
+				(!Directory.Exists(D_Output.Text), FLogS_ERROR.DEST_NOT_FOUND),
+				(directorySources.Any(file => file.Equals(outputPath(D_Output.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
+				(directorySources.Any(file => Common.LogTest(outputPath(D_Output.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
+				(true, FLogS_ERROR.None)
+			}.First(condition => condition.Item1).Item2;
+
+			fileError = new[] {
+				(F_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCE),
+				(!File.Exists(F_Source.Text), FLogS_ERROR.SOURCE_NOT_FOUND),
+				(F_Output.Text.Length == 0, FLogS_ERROR.NO_DEST),
+				(Directory.Exists(F_Output.Text), FLogS_ERROR.DEST_NOT_FILE),
+				(!Directory.Exists(Path.GetDirectoryName(F_Output.Text)), FLogS_ERROR.DEST_NOT_FOUND),
+				(F_Source.Text.Equals(F_Output.Text), FLogS_ERROR.SOURCE_EQUALS_DEST),
+				(Common.LogTest(F_Output.Text), FLogS_ERROR.DEST_SENSITIVE),
+				(true, FLogS_ERROR.None)
+			}.First(condition => condition.Item1).Item2;
+
+			phraseError = new[] {
+				(P_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCES),
+				(phraseSources.Any(file => !File.Exists(file)), FLogS_ERROR.SOURCES_NOT_FOUND),
+				(P_Output.Text.Length == 0, FLogS_ERROR.NO_DEST_DIR),
+				(File.Exists(P_Output.Text), FLogS_ERROR.DEST_NOT_DIRECTORY),
+				(!Directory.Exists(P_Output.Text), FLogS_ERROR.DEST_NOT_FOUND),
+				(phraseSources.Any(file => file.Equals(outputPath(P_Output.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
+				(phraseSources.Any(file => Common.LogTest(outputPath(P_Output.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
+				(P_Search.Text.Length == 0, FLogS_ERROR.NO_REGEX),
+				(RegexCheckBox?.IsChecked == true && !Common.IsValidPattern(P_Search.Text), FLogS_ERROR.BAD_REGEX),
+				(true, FLogS_ERROR.None)
+			}.First(condition => condition.Item1).Item2;
+
+			directoryWarning = new[]
+			{
+				(directorySources.Any(file => File.Exists(outputPath(D_Output.Text, file))), FLogS_WARNING.MULTI_OVERWRITE),
+				(true, FLogS_WARNING.None)
+			}.First(condition => condition.Item1).Item2;
+
+			fileWarning = new[]
+			{
+				(File.Exists(F_Output.Text), FLogS_WARNING.SINGLE_OVERWRITE),
+				(true, FLogS_WARNING.None)
+			}.First(condition => condition.Item1).Item2;
+
+			phraseWarning = new[]
+			{
+				(phraseSources.Any(file => File.Exists(outputPath(P_Output.Text, file))), FLogS_WARNING.MULTI_OVERWRITE),
+				(true, FLogS_WARNING.None)
+			}.First(condition => condition.Item1).Item2;
+
+			D_WarningLabel.Content = GetErrorMessage(directoryError, directoryWarning);
+			P_WarningLabel.Content = GetErrorMessage(phraseError, phraseWarning);
+			F_WarningLabel.Content = GetErrorMessage(fileError, fileWarning);
+			D_RunButton.IsEnabled = directoryError == FLogS_ERROR.None;
+			P_RunButton.IsEnabled = phraseError == FLogS_ERROR.None;
+			F_RunButton.IsEnabled = fileError == FLogS_ERROR.None;
+
+			D_WarningLabel.Foreground = brushCombos[directoryError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
+			P_WarningLabel.Foreground = brushCombos[phraseError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
+			F_WarningLabel.Foreground = brushCombos[fileError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
+		}
+
+		private void ProcessFiles(string[] args)
+		{
+			settings.Exception = string.Empty;
+			filesProcessed = args.Length;
+			overrideFormat = false;
+			Common.processing = true;
+
+			pool.totalSize.Simplify();
+			pool.totalSize.Magnitude(1);
+			settings.ProgressMax = pool.totalSize.bytes;
+
+			pool.ResetStats();
+			TransitionMenus(false);
+			UpdateLogs();
+
+			BackgroundWorker worker = new()
+			{
+				WorkerReportsProgress = true,
+				WorkerSupportsCancellation = true
+			};
+			worker.DoWork += pool.BatchProcess;
+			worker.ProgressChanged += Worker_ProgressChanged;
+			worker.RunWorkerCompleted += Worker_Completed;
+
+			worker.RunWorkerAsync(args);
+		}
+
+		private void RunButton_Click(object? sender, RoutedEventArgs e)
 		{
 			TextboxUpdated(sender, e);
-			if (!PhraseRunButton.IsEnabled)
+
+			var senderButton = (Button?)sender;
+			if (senderButton?.IsEnabled is false)
 				return;
 
 			try
 			{
-				string[] files = PhraseSource.Text.Split(';');
-				Common.plaintext = PhraseSaveHTMLCheckbox.IsChecked == false;
+				string buttonTag = (string)(senderButton?.Tag ?? string.Empty);
+				string[] files = ((TextBox)MainGrid.FindName(buttonTag + "Source")).Text.Split(';');
+				Common.plaintext = P_SaveHTMLCheckbox.IsChecked == false;
 				pool = new()
 				{
-					destDir = PhraseOutput.Text,
-					divide = PhraseDivideLogsCheckbox.IsChecked == true,
-					dtAfter = PhraseAfterDate.SelectedDate ?? Common.DTFromStamp(1),
-					dtBefore = PhraseBeforeDate.SelectedDate ?? DateTime.UtcNow,
-					phrase = PhraseSearch.Text,
-					saveTruncated = PhraseSaveTruncatedCheckbox.IsChecked == true,
-					srcFile = PhraseSource.Text,
+					destDir = ((TextBox)MainGrid.FindName(buttonTag + "Output")).Text,
+					divide = ((CheckBox)MainGrid.FindName(buttonTag + "DivideLogsCheckbox")).IsChecked is true,
+					dtAfter = ((DatePicker)MainGrid.FindName(buttonTag + "AfterDate")).SelectedDate ?? Common.DTFromStamp(1),
+					dtBefore = ((DatePicker)MainGrid.FindName(buttonTag + "BeforeDate")).SelectedDate ?? DateTime.UtcNow,
+					phrase = buttonTag.Equals("Phrase") ? P_Search.Text : string.Empty,
+					saveTruncated = ((CheckBox)MainGrid.FindName(buttonTag + "SaveTruncatedCheckbox")).IsChecked is true,
+					srcFile = ((TextBox)MainGrid.FindName(buttonTag + "Source")).Text,
 					totalSize = new()
 				};
 
@@ -354,177 +393,37 @@ namespace FLogS
 			catch (Exception ex)
 			{
 				Common.LogException(ex);
-				return;
 			}
 		}
 
-		private void ProcessErrors()
+		private void SingleDest_Click(object sender, RoutedEventArgs e)
 		{
-			var directorySources = DirectorySource.Text.Equals(string.Empty) ? [] : DirectorySource.Text.Split(';');
-			var phraseSources = PhraseSource.Text.Equals(string.Empty) ? [] : PhraseSource.Text.Split(';');
-			static string outputPath(string directory, string file) => Path.Join(directory, Path.GetFileNameWithoutExtension(file)) + (Common.plaintext ? ".txt" : ".html");
-
-			directoryError = new[] {
-				(DirectorySource.Text.Length == 0, FLogS_ERROR.NO_SOURCES),
-				(directorySources.Any(file => !File.Exists(file)), FLogS_ERROR.SOURCES_NOT_FOUND),
-				(DirectoryOutput.Text.Length == 0, FLogS_ERROR.NO_DEST_DIR),
-				(File.Exists(DirectoryOutput.Text), FLogS_ERROR.DEST_NOT_DIRECTORY),
-				(!Directory.Exists(DirectoryOutput.Text), FLogS_ERROR.DEST_NOT_FOUND),
-				(directorySources.Any(file => file.Equals(outputPath(DirectoryOutput.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
-				(directorySources.Any(file => Common.LogTest(outputPath(DirectoryOutput.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
-				(true, FLogS_ERROR.None)
-			}.First(condition => condition.Item1).Item2;
-
-			fileError = new[] {
-				(FileSource.Text.Length == 0, FLogS_ERROR.NO_SOURCE),
-				(!File.Exists(FileSource.Text), FLogS_ERROR.SOURCE_NOT_FOUND),
-				(FileOutput.Text.Length == 0, FLogS_ERROR.NO_DEST),
-				(Directory.Exists(FileOutput.Text), FLogS_ERROR.DEST_NOT_FILE),
-				(!Directory.Exists(Path.GetDirectoryName(FileOutput.Text)), FLogS_ERROR.DEST_NOT_FOUND),
-				(FileSource.Text.Equals(FileOutput.Text), FLogS_ERROR.SOURCE_EQUALS_DEST),
-				(Common.LogTest(FileOutput.Text), FLogS_ERROR.DEST_SENSITIVE),
-				(true, FLogS_ERROR.None)
-			}.First(condition => condition.Item1).Item2;
-
-			phraseError = new[] {
-				(PhraseSource.Text.Length == 0, FLogS_ERROR.NO_SOURCES),
-				(phraseSources.Any(file => !File.Exists(file)), FLogS_ERROR.SOURCES_NOT_FOUND),
-				(PhraseOutput.Text.Length == 0, FLogS_ERROR.NO_DEST_DIR),
-				(File.Exists(PhraseOutput.Text), FLogS_ERROR.DEST_NOT_DIRECTORY),
-				(!Directory.Exists(PhraseOutput.Text), FLogS_ERROR.DEST_NOT_FOUND),
-				(phraseSources.Any(file => file.Equals(outputPath(PhraseOutput.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
-				(phraseSources.Any(file => Common.LogTest(outputPath(PhraseOutput.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
-				(PhraseSearch.Text.Length == 0, FLogS_ERROR.NO_REGEX),
-				(RegexCheckBox?.IsChecked == true && !Common.IsValidPattern(PhraseSearch.Text), FLogS_ERROR.BAD_REGEX),
-				(true, FLogS_ERROR.None)
-			}.First(condition => condition.Item1).Item2;
-
-			directoryWarning = new[]
-			{
-				(directorySources.Any(file => File.Exists(outputPath(DirectoryOutput.Text, file))), FLogS_WARNING.MULTI_OVERWRITE),
-				(true, FLogS_WARNING.None)
-			}.First(condition => condition.Item1).Item2;
-
-			fileWarning = new[]
-			{
-				(File.Exists(FileOutput.Text), FLogS_WARNING.SINGLE_OVERWRITE),
-				(true, FLogS_WARNING.None)
-			}.First(condition => condition.Item1).Item2;
-
-			phraseWarning = new[]
-			{
-				(phraseSources.Any(file => File.Exists(outputPath(PhraseOutput.Text, file))), FLogS_WARNING.MULTI_OVERWRITE),
-				(true, FLogS_WARNING.None)
-			}.First(condition => condition.Item1).Item2;
-
-			DirectoryWarningLabel.Content = GetErrorMessage(directoryError, directoryWarning);
-			PhraseWarningLabel.Content = GetErrorMessage(phraseError, phraseWarning);
-			WarningLabel.Content = GetErrorMessage(fileError, fileWarning);
-			DirectoryRunButton.IsEnabled = directoryError == FLogS_ERROR.None;
-			PhraseRunButton.IsEnabled = phraseError == FLogS_ERROR.None;
-			RunButton.IsEnabled = fileError == FLogS_ERROR.None;
-
-			DirectoryWarningLabel.Foreground = brushCombos[directoryError == FLogS_ERROR.None ? 4 : 3][brushPalette];
-			PhraseWarningLabel.Foreground = brushCombos[phraseError == FLogS_ERROR.None ? 4 : 3][brushPalette];
-			WarningLabel.Foreground = brushCombos[fileError == FLogS_ERROR.None ? 4 : 3][brushPalette];
-
-			return;
+			F_Output.Text = DialogFileSelect(outputSelect: true, multi: false);
 		}
 
-		private void ProcessFiles(string[]? args = null, bool batch = true)
+		private void SingleSource_Click(object sender, RoutedEventArgs e)
 		{
-			PhraseEXBox.Content = DirectoryEXBox.Content = EXBox.Content = string.Empty;
-			filesProcessed = args?.Length ?? 1;
-			overrideFormat = false;
-			Common.processing = true;
-
-			pool?.totalSize.Simplify();
-			pool?.totalSize.Magnitude(1);
-			DirectoryProgress.Maximum = FileProgress.Maximum = PhraseProgress.Maximum = pool?.totalSize.bytes ?? 100.0;
-
-			pool?.ResetStats();
-			TransitionMenus(false);
-			UpdateLogs();
-
-			BackgroundWorker worker = new()
-			{
-				WorkerReportsProgress = true,
-				WorkerSupportsCancellation = true
-			};
-			worker.DoWork += batch ? pool.BatchProcess : pool.BeginRoutine;
-			worker.ProgressChanged += Worker_ProgressChanged;
-			worker.RunWorkerCompleted += Worker_Completed;
-
-			worker.RunWorkerAsync(args);
-		}
-
-		private void RunButton_Click(object? sender, RoutedEventArgs e)
-		{
-			TextboxUpdated(sender, e);
-			if (!RunButton.IsEnabled)
-				return;
-
-			try
-			{
-				Common.plaintext = SaveHTMLCheckbox.IsChecked == false;
-				pool = new()
-				{
-					destFile = FileOutput.Text,
-					divide = DivideLogsCheckbox.IsChecked == true,
-					dtAfter = AfterDate.SelectedDate ?? Common.DTFromStamp(1),
-					dtBefore = BeforeDate.SelectedDate ?? DateTime.UtcNow,
-					phrase = string.Empty,
-					saveTruncated = SaveTruncatedCheckbox.IsChecked == true,
-					srcFile = FileSource.Text,
-					totalSize = new()
-				};
-
-				Common.fileListing[pool.srcFile] = new(pool.srcFile);
-				pool.totalSize += Common.fileListing[pool.srcFile].Length;
-
-				ProcessFiles(batch: false);
-			}
-			catch (Exception ex)
-			{
-				Common.LogException(ex);
-				return;
-			}
-		}
-
-		private void SrcDirectoryButton_Click(object? sender, RoutedEventArgs e)
-		{
-			DirectorySource.Text = DialogFileSelect();
-		}
-
-		private void SrcFileButton_Click(object? sender, RoutedEventArgs e)
-		{
-			FileSource.Text = DialogFileSelect(false, true, false);
-		}
-
-		private void SrcPhraseButton_Click(object? sender, RoutedEventArgs e)
-		{
-			PhraseSource.Text = DialogFileSelect();
+			F_Source.Text = DialogFileSelect(checkExists: true, multi: false);
 		}
 
 		private void ThemeSelector_Click(object? sender, RoutedEventArgs e)
 		{
 			try
 			{
-				(brushPalette, reversePalette) = (reversePalette, brushPalette);
-				DirectoryThemeSelector.Content = PhraseThemeSelector.Content = ThemeSelector.Content = brushPalette == 0 ? "Light" : "Dark";
+				brushPalette = (brushPalette.Item2, brushPalette.Item1);
+				D_ThemeSelector.Content = P_ThemeSelector.Content = F_ThemeSelector.Content = brushPalette.Item1 == 0 ? "Light" : "Dark";
 
 				ChangeStyle(MainGrid);
-				ADLWarning.Foreground = brushCombos[3][brushPalette];
-				DirectoryWarningLabel.Foreground = brushCombos[directoryError == FLogS_ERROR.None ? 4 : 3][brushPalette];
-				MainGrid.Background = brushCombos[5][brushPalette];
-				PhraseWarningLabel.Foreground = brushCombos[phraseError == FLogS_ERROR.None ? 4 : 3][brushPalette];
-				RegexCheckBox.Background = brushCombos[1][brushPalette];
-				WarningLabel.Foreground = brushCombos[fileError == FLogS_ERROR.None ? 4 : 3][brushPalette];
+				ADLWarning.Foreground = brushCombos[3][brushPalette.Item1];
+				D_WarningLabel.Foreground = brushCombos[directoryError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
+				MainGrid.Background = brushCombos[5][brushPalette.Item1];
+				P_WarningLabel.Foreground = brushCombos[phraseError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
+				RegexCheckBox.Background = brushCombos[1][brushPalette.Item1];
+				F_WarningLabel.Foreground = brushCombos[fileError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
 			}
 			catch (Exception ex)
 			{
 				Common.LogException(ex);
-				return;
 			}
 		}
 
@@ -534,7 +433,7 @@ namespace FLogS
 				return;
 
 			pool.regex = (RegexCheckBox?.IsVisible ?? false) && (RegexCheckBox?.IsChecked ?? false);
-			PhraseSearchLabel.Content = pool.regex ? "Target Pattern" : "Target Word or Phrase";
+			P_SearchLabel.Content = pool.regex ? "Target Pattern" : "Target Word or Phrase";
 
 			ProcessErrors();
 		}
@@ -549,8 +448,6 @@ namespace FLogS
 
 			foreach (object dp in LogicalTreeHelper.GetChildren(sender))
 				TransitionEnableables(dp as DependencyObject, enabled);
-
-			return;
 		}
 
 		private void TransitionMenus(bool enabled)
@@ -559,8 +456,8 @@ namespace FLogS
 
 			if (!enabled)
 			{
-				HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = "Scanning " + (filesProcessed == 1 ? $"{Path.GetFileName(pool?.srcFile)}..." : $"{filesProcessed:N0} files...");
-				DirectoryRunButton.Content = PhraseRunButton.Content = RunButton.Content = "Scanning...";
+				settings.LogHeader = "Scanning " + (filesProcessed == 1 ? $"{Path.GetFileName(pool?.srcFile)}..." : $"{filesProcessed:N0} files...");
+				settings.RunLabel = "Scanning...";
 
 				Common.lastException = string.Empty;
 				Common.timeBegin = DateTime.Now;
@@ -568,7 +465,7 @@ namespace FLogS
 				return;
 			}
 
-			DirectoryRunButton.Content = PhraseRunButton.Content = RunButton.Content = "Run";
+			settings.RunLabel = "Run";
 
 			if (Common.lastException.Equals(string.Empty))
 			{
@@ -577,37 +474,31 @@ namespace FLogS
 				if (formattedName?.Length > 16)
 					formattedName = formattedName[..14] + "...";
 
-				HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = "Processed " + (filesProcessed == 1 ? $"{formattedName} in {timeTaken:N2} seconds." : $"{filesProcessed:N0} files in {timeTaken:N2} seconds.");
+				settings.LogHeader = "Processed " + (filesProcessed == 1 ? $"{formattedName} in {timeTaken:N2} seconds." : $"{filesProcessed:N0} files in {timeTaken:N2} seconds.");
 			}
-
-			return;
 		}
 
-		private void UpdateLogs(object? sender = null)
+		private static void UpdateLogs(object? sender = null)
 		{
-			PhraseIMBox.Content = DirectoryIMBox.Content = IMBox.Content = $"Intact Messages: {pool?.intactMessages:N0} ({pool?.intactBytes:S})";
-			PhraseCTBox.Content = DirectoryCTBox.Content = CTBox.Content = $"Corrupted Timestamps: {pool?.corruptTimestamps:N0}";
-			PhraseTMBox.Content = DirectoryTMBox.Content = TMBox.Content = $"Truncated Messages: {pool?.truncatedMessages:N0} ({pool?.truncatedBytes:S})";
-			PhraseEMBox.Content = DirectoryEMBox.Content = EMBox.Content = $"Empty Messages: {pool?.emptyMessages:N0}";
-			PhraseUBBox.Content = DirectoryUBBox.Content = UBBox.Content = $"Unread Data: {pool?.unreadBytes:S}";
+			settings.IntactMessages = $"Intact Messages: {pool?.intactMessages:N0} ({pool?.intactBytes:S})";
+			settings.CorruptedTimestamps = $"Corrupted Timestamps: {pool?.corruptTimestamps:N0}";
+			settings.TruncatedMessages = $"Truncated Messages: {pool?.truncatedMessages:N0} ({pool?.truncatedBytes:S})";
+			settings.EmptyMessages = $"Empty Messages: {pool?.emptyMessages:N0}";
+			settings.UnreadData = $"Unread Data: {pool?.unreadBytes:S}";
 
 			if (!Common.lastException.Equals(string.Empty))
 			{
-				HeaderBox.Content = DirectoryHeaderBox.Content = PhraseHeaderBox.Content = "A critical error has occurred.";
-				PhraseEXBox.Content = DirectoryEXBox.Content = EXBox.Content = Common.lastException;
+				settings.LogHeader = "A critical error has occurred.";
+				settings.Exception = Common.lastException;
 				(sender as BackgroundWorker)?.CancelAsync();
 			}
-
-			return;
 		}
 
 		private void Worker_Completed(object? sender, EventArgs e)
 		{
 			try
 			{
-				DirectoryProgress.Value = DirectoryProgress.Maximum;
-				FileProgress.Value = FileProgress.Maximum;
-				PhraseProgress.Value = PhraseProgress.Maximum;
+				settings.Progress = settings.ProgressMax;
 
 				UpdateLogs(sender);
 				TransitionMenus(true);
@@ -616,7 +507,6 @@ namespace FLogS
 			catch (Exception ex)
 			{
 				Common.LogException(ex);
-				return;
 			}
 		}
 
@@ -624,14 +514,13 @@ namespace FLogS
 		{
 			try
 			{
-				FileProgress.Value = DirectoryProgress.Value = PhraseProgress.Value = e.ProgressPercentage;
+				settings.Progress = e.ProgressPercentage;
 
 				UpdateLogs(sender);
 			}
 			catch (Exception ex)
 			{
 				Common.LogException(ex);
-				return;
 			}
 		}
 	}

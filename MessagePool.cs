@@ -17,7 +17,7 @@ namespace FLogS
 		private ByteCount bytesRead;
 		public uint corruptTimestamps = 0U;
 		public string? destDir;
-		public string? destFile;
+		public string destFile = string.Empty;
 		public bool divide = false;
 		private StringBuilder? dstSB;
 		public DateTime? dtAfter;
@@ -29,15 +29,15 @@ namespace FLogS
 		public uint intactMessages = 0U;
 		private uint lastDate = 0U;
 		private int lastDiscrepancy;
-		private string? lastFile;
+		private string lastFile = string.Empty;
 		private uint lastMessageCount = 0U;
 		private uint lastPosition;
 		private string opposingProfile = string.Empty;
-		public string? phrase;
+		public string phrase = string.Empty;
 		public bool regex = false;
 		public bool saveTruncated = false;
 		private bool scanIDX;
-		public string? srcFile;
+		public string srcFile = string.Empty;
 		private readonly Dictionary<string, int> tagCounts = new()
 		{
 			{ "b", 0 },
@@ -141,8 +141,6 @@ namespace FLogS
 				foreach (string dir in writtenDirectories)
 					if (Directory.Exists(dir) && Directory.GetFiles(dir).Length == 0)
 						Directory.Delete(dir, true);
-
-			return;
 		}
 
 		public void BeginRoutine(object? sender, DoWorkEventArgs e)
@@ -163,16 +161,15 @@ namespace FLogS
 				{
 					if (!idxFound && File.Exists(idx))
 					{
-						FileStream srcIDX = File.OpenRead(idx);
+						using FileStream srcIDX = File.OpenRead(idx);
 						idxFound = TranslateIDX(srcIDX);
-						srcIDX.Close();
 					}
 				}
 
 				if (File.Exists(destFile))
 					File.Delete(destFile);
 
-				FileStream? srcFS = Common.fileListing?[srcFile].OpenRead();
+				using FileStream? srcFS = Common.fileListing?[srcFile].OpenRead();
 
 				using (StreamWriter dstFS = divide ? StreamWriter.Null : new(destFile, true))
 				{
@@ -201,6 +198,7 @@ namespace FLogS
 							}
 							else
 								(sender as BackgroundWorker)?.ReportProgress(0);
+
 							lastUpdate = DateTime.Now;
 							if (!Common.lastException.Equals(string.Empty))
 								break;
@@ -223,7 +221,6 @@ namespace FLogS
 					}
 				}
 
-				srcFS?.Close();
 				if (lastMessageCount == 0U) // This will only happen if the source file was empty or no messages matched our search phrase.
 				{
 					File.Delete(destFile);
@@ -236,8 +233,6 @@ namespace FLogS
 				Common.LogException(ex);
 				(sender as BackgroundWorker)?.CancelAsync();
 			}
-
-			return;
 		}
 
 		public void ResetStats()
@@ -255,8 +250,6 @@ namespace FLogS
 			truncatedBytes = new();
 			truncatedMessages = 0U;
 			unreadBytes = new();
-
-			return;
 		}
 
 		/// <summary>

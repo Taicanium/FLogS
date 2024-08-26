@@ -17,7 +17,6 @@ namespace FLogS
 				factor = (short)(prefix - factor);
 			while (prefix != factor)
 				Magnitude(Math.Sign(prefix - factor));
-			return;
 		}
 
 		public void Magnitude(int factor)
@@ -32,13 +31,11 @@ namespace FLogS
 				Magnitude(-1);
 			while (bytes < 0.9 && prefix > -1)
 				Magnitude(1);
-			return;
 		}
 
 		public static ByteCount operator -(ByteCount a, ByteCount b)
 		{
-			ByteCount c;
-			ByteCount d;
+			ByteCount c, d;
 
 			if (Math.Abs(a.prefix - b.prefix) > 3) // Special accommodations must be made if the disparity in magnitude would normally result in an int overflow.
 			{
@@ -60,8 +57,7 @@ namespace FLogS
 
 		public static ByteCount operator +(ByteCount a, ByteCount b)
 		{
-			ByteCount c;
-			ByteCount d;
+			ByteCount c, d;
 
 			if (Math.Abs(a.prefix - b.prefix) > 3)
 			{

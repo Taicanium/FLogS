@@ -14,7 +14,7 @@ namespace FLogS
 		public readonly static string defaultLogDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "fchat", "data");
 		private readonly static DateTime epoch = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 		public readonly static string errorFile = "FLogS_ERROR.txt";
-		public static Dictionary<string, FileInfo>? fileListing;
+		public static Dictionary<string, FileInfo> fileListing = [];
 		public readonly static Dictionary<string, string> htmlEntities = new()
 		{
 			{ "&", "&amp;" },
@@ -143,7 +143,6 @@ span { position: relative; }
 			lastException = e.Message;
 			File.AppendAllText(errorFile, DateTime.Now.ToString(dateFormat) + " - " + lastException + "\n");
 			File.AppendAllText(errorFile, e?.TargetSite?.DeclaringType?.FullName + "." + e?.TargetSite?.Name + "\n\n");
-			return;
 		}
 
 		public static bool LogTest(string targetFile)
@@ -164,15 +163,12 @@ span { position: relative; }
 				return false;
 
 			int profLen = srcFS.ReadByte();
-			if (profLen == -1)
+			if (profLen < 1)
 				return false;
 
-			if (profLen > 0)
-			{
-				srcBuffer = new byte[profLen];
-				if (srcFS.Read(srcBuffer, 0, profLen) < profLen)
-					return false;
-			}
+			srcBuffer = new byte[profLen];
+			if (srcFS.Read(srcBuffer, 0, profLen) < profLen)
+				return false;
 
 			if (srcFS.Read(idBuffer, 0, 2) < 2)
 				return false;
