@@ -365,20 +365,22 @@ namespace FLogS
 			if (senderButton?.IsEnabled is false)
 				return;
 
+			string bTag = (string)(senderButton?.Tag ?? string.Empty);
+			T GridObject<T>(string value) where T : DependencyObject => (T)MainGrid.FindName(bTag + value);
+
 			try
 			{
-				string buttonTag = (string)(senderButton?.Tag ?? string.Empty);
-				string[] files = ((TextBox)MainGrid.FindName(buttonTag + "Source")).Text.Split(';');
-				Common.plaintext = P_SaveHTMLCheckbox.IsChecked == false;
+				string[] files = GridObject<TextBox>("Source").Text.Split(';');
+				Common.plaintext = GridObject<CheckBox>("SaveHTMLCheckbox").IsChecked == false;
 				pool = new()
 				{
-					destDir = ((TextBox)MainGrid.FindName(buttonTag + "Output")).Text,
-					divide = ((CheckBox)MainGrid.FindName(buttonTag + "DivideLogsCheckbox")).IsChecked is true,
-					dtAfter = ((DatePicker)MainGrid.FindName(buttonTag + "AfterDate")).SelectedDate ?? Common.DTFromStamp(1),
-					dtBefore = ((DatePicker)MainGrid.FindName(buttonTag + "BeforeDate")).SelectedDate ?? DateTime.UtcNow,
-					phrase = buttonTag.Equals("Phrase") ? P_Search.Text : string.Empty,
-					saveTruncated = ((CheckBox)MainGrid.FindName(buttonTag + "SaveTruncatedCheckbox")).IsChecked is true,
-					srcFile = ((TextBox)MainGrid.FindName(buttonTag + "Source")).Text,
+					destDir = GridObject<TextBox>("Output").Text,
+					divide = GridObject<CheckBox>("DivideLogsCheckbox").IsChecked is true,
+					dtAfter = GridObject<DatePicker>("AfterDate").SelectedDate ?? Common.DTFromStamp(1),
+					dtBefore = GridObject<DatePicker>("BeforeDate").SelectedDate ?? DateTime.UtcNow,
+					phrase = bTag.Equals("Phrase") ? P_Search.Text : string.Empty,
+					saveTruncated = GridObject<CheckBox>("SaveTruncatedCheckbox").IsChecked is true,
+					srcFile = GridObject<TextBox>("Source").Text,
 					totalSize = new()
 				};
 

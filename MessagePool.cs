@@ -16,7 +16,7 @@ namespace FLogS
 	{
 		private ByteCount bytesRead;
 		public uint corruptTimestamps = 0U;
-		public string? destDir;
+		public string destDir = string.Empty;
 		public string destFile = string.Empty;
 		public bool divide = false;
 		private StringBuilder? dstSB;
@@ -125,7 +125,7 @@ namespace FLogS
 					continue;
 
 				srcFile = logfile;
-				destFile = Path.Join(destDir, fileName) + (Common.plaintext ? ".txt" : ".html");
+				destFile = files.Length == 1 ? destDir : Path.Join(destDir, fileName) + (Common.plaintext ? ".txt" : ".html");
 				lastPosition = 0U;
 
 				BeginRoutine(sender, e);
