@@ -95,9 +95,11 @@ namespace FLogS
 						sender.SetValue(BackgroundProperty, brushCombos[7][brushPalette.Item1]);
 					break;
 				case "Label":
+				case "TextBlock":
 					sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
 					break;
 				case "ListBox":
+				case "TextBox":
 					sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette.Item1]);
 					sender.SetValue(BorderBrushProperty, brushCombos[2][brushPalette.Item2]);
 					sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
@@ -111,14 +113,6 @@ namespace FLogS
 				case "TabControl":
 					sender.SetValue(BackgroundProperty, brushCombos[5][brushPalette.Item1]);
 					break;
-				case "TextBlock":
-					sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
-					break;
-				case "TextBox":
-					sender.SetValue(BackgroundProperty, brushCombos[0][brushPalette.Item1]);
-					sender.SetValue(BorderBrushProperty, brushCombos[2][brushPalette.Item2]);
-					sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
-					break;
 			}
 
 			foreach (object dp in LogicalTreeHelper.GetChildren(sender))
@@ -131,12 +125,14 @@ namespace FLogS
 			{
 				CheckFileExists = checkExists,
 				Multiselect = multi,
-				InitialDirectory = outputSelect ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop) : Path.Exists(Common.defaultLogDir) ? Common.defaultLogDir : Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+				InitialDirectory = outputSelect ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+				: Path.Exists(Common.defaultLogDir) ? Common.defaultLogDir
+				: Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
 			};
 
 			if (dialog.ShowDialog() == true)
 				return string.Join(";", dialog.FileNames.Where(file => !file.Contains(".idx"))); // IDX files contain metadata relating to the corresponding (usually extension-less) log files.
-																										 // They will never contain actual messages, so we exclude them unconditionally.
+																								 // They will never contain actual messages, so we exclude them unconditionally.
 			return string.Empty;
 		}
 
@@ -203,7 +199,6 @@ namespace FLogS
 			(FLogS_ERROR.None, FLogS_WARNING.SINGLE_OVERWRITE) => "Destination file will be overwritten.",
 			(FLogS_ERROR.None, _) => string.Empty,
 
-			(_, FLogS_WARNING.None) => "An unknown error has occurred.",
 			(_, _) => "An unknown error has occurred.",
 		};
 
@@ -215,8 +210,6 @@ namespace FLogS
 
 		private void MainGrid_Loaded(object? sender, RoutedEventArgs e)
 		{
-			overrideFormat = false;
-
 			if (File.Exists(Common.errorFile))
 				File.Delete(Common.errorFile);
 
@@ -261,18 +254,19 @@ namespace FLogS
 
 		private void ProcessErrors()
 		{
-			var directorySources = D_Source.Text.Equals(string.Empty) ? [] : D_Source.Text.Split(';');
+			var dirSources = D_Source.Text.Equals(string.Empty) ? [] : D_Source.Text.Split(';');
 			var phraseSources = P_Source.Text.Equals(string.Empty) ? [] : P_Source.Text.Split(';');
+
 			static string outputPath(string directory, string file) => Path.Join(directory, Path.GetFileNameWithoutExtension(file)) + (Common.plaintext ? ".txt" : ".html");
 
 			directoryError = new[] {
 				(D_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCES),
-				(directorySources.Any(file => !File.Exists(file)), FLogS_ERROR.SOURCES_NOT_FOUND),
+				(dirSources.Any(file => !File.Exists(file)), FLogS_ERROR.SOURCES_NOT_FOUND),
 				(D_Output.Text.Length == 0, FLogS_ERROR.NO_DEST_DIR),
 				(File.Exists(D_Output.Text), FLogS_ERROR.DEST_NOT_DIRECTORY),
 				(!Directory.Exists(D_Output.Text), FLogS_ERROR.DEST_NOT_FOUND),
-				(directorySources.Any(file => file.Equals(outputPath(D_Output.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
-				(directorySources.Any(file => Common.LogTest(outputPath(D_Output.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
+				(dirSources.Any(file => file.Equals(outputPath(D_Output.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
+				(dirSources.Any(file => Common.LogTest(outputPath(D_Output.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
 				(true, FLogS_ERROR.None)
 			}.First(condition => condition.Item1).Item2;
 
@@ -302,7 +296,7 @@ namespace FLogS
 
 			directoryWarning = new[]
 			{
-				(directorySources.Any(file => File.Exists(outputPath(D_Output.Text, file))), FLogS_WARNING.MULTI_OVERWRITE),
+				(dirSources.Any(file => File.Exists(outputPath(D_Output.Text, file))), FLogS_WARNING.MULTI_OVERWRITE),
 				(true, FLogS_WARNING.None)
 			}.First(condition => condition.Item1).Item2;
 
@@ -318,16 +312,17 @@ namespace FLogS
 				(true, FLogS_WARNING.None)
 			}.First(condition => condition.Item1).Item2;
 
-			D_WarningLabel.Content = GetErrorMessage(directoryError, directoryWarning);
-			P_WarningLabel.Content = GetErrorMessage(phraseError, phraseWarning);
-			F_WarningLabel.Content = GetErrorMessage(fileError, fileWarning);
+			F_RunButton.IsEnabled = fileError == FLogS_ERROR.None;
 			D_RunButton.IsEnabled = directoryError == FLogS_ERROR.None;
 			P_RunButton.IsEnabled = phraseError == FLogS_ERROR.None;
-			F_RunButton.IsEnabled = fileError == FLogS_ERROR.None;
 
+			F_WarningLabel.Content = GetErrorMessage(fileError, fileWarning);
+			D_WarningLabel.Content = GetErrorMessage(directoryError, directoryWarning);
+			P_WarningLabel.Content = GetErrorMessage(phraseError, phraseWarning);
+
+			F_WarningLabel.Foreground = brushCombos[fileError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
 			D_WarningLabel.Foreground = brushCombos[directoryError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
 			P_WarningLabel.Foreground = brushCombos[phraseError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
-			F_WarningLabel.Foreground = brushCombos[fileError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
 		}
 
 		private void ProcessFiles(string[] args)
@@ -412,16 +407,18 @@ namespace FLogS
 		{
 			try
 			{
-				brushPalette = (brushPalette.Item2, brushPalette.Item1);
-				D_ThemeSelector.Content = P_ThemeSelector.Content = F_ThemeSelector.Content = brushPalette.Item1 == 0 ? "Light" : "Dark";
+				Common.Swap(ref brushPalette);
+				settings.ThemeLabel = brushPalette.Item1 == 0 ? "Light" : "Dark";
 
 				ChangeStyle(MainGrid);
+
 				ADLWarning.Foreground = brushCombos[3][brushPalette.Item1];
-				D_WarningLabel.Foreground = brushCombos[directoryError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
 				MainGrid.Background = brushCombos[5][brushPalette.Item1];
-				P_WarningLabel.Foreground = brushCombos[phraseError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
 				RegexCheckBox.Background = brushCombos[1][brushPalette.Item1];
+
 				F_WarningLabel.Foreground = brushCombos[fileError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
+				D_WarningLabel.Foreground = brushCombos[directoryError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
+				P_WarningLabel.Foreground = brushCombos[phraseError == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
 			}
 			catch (Exception ex)
 			{
@@ -440,7 +437,7 @@ namespace FLogS
 			ProcessErrors();
 		}
 
-		private static void TransitionEnableables(DependencyObject sender, bool enabled)
+		private static void TransitionEnableables(DependencyObject? sender, bool enabled)
 		{
 			if (sender is null)
 				return;
@@ -471,11 +468,11 @@ namespace FLogS
 
 			if (Common.lastException.Equals(string.Empty))
 			{
-				double timeTaken = DateTime.Now.Subtract(Common.timeBegin).TotalSeconds;
 				string? formattedName = Path.GetFileName(pool?.srcFile);
 				if (formattedName?.Length > 16)
 					formattedName = formattedName[..14] + "...";
 
+				double timeTaken = DateTime.Now.Subtract(Common.timeBegin).TotalSeconds;
 				settings.LogHeader = "Processed " + (filesProcessed == 1 ? $"{formattedName} in {timeTaken:N2} seconds." : $"{filesProcessed:N0} files in {timeTaken:N2} seconds.");
 			}
 		}

@@ -87,13 +87,10 @@ span { position: relative; }
 		};
 		public static DateTime timeBegin;
 
-		public static uint BEInt(byte[] buffer)
-		{
-			return buffer[0]
+		public static uint BEInt(byte[] buffer) => buffer[0]
 				+ buffer[1] * 256U
 				+ buffer[2] * 65536U
 				+ buffer[3] * 16777216U;
-		}
 
 		public static DateTime DTFromStamp(uint stamp)
 		{
@@ -179,9 +176,8 @@ span { position: relative; }
 			return true;
 		}
 
-		public static uint UNIXTimestamp()
-		{
-			return (uint)Math.Floor(DateTime.UtcNow.Subtract(epoch).TotalSeconds);
-		}
+		public static (T, T) Swap<T>(ref (T, T) tuple) => tuple = (tuple.Item2, tuple.Item1);
+
+		public static uint UNIXTimestamp() => (uint)Math.Floor(DateTime.UtcNow.Subtract(epoch).TotalSeconds);
 	}
 }

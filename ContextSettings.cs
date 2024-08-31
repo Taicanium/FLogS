@@ -18,6 +18,7 @@ namespace FLogS
 		private double _progress = 0.0;
 		private double _progressMax = 100.0;
 		private string _runLabel = "Run";
+		private string _themeLabel = "Dark";
 		private string _truncatedMessages = "Truncated Messages:";
 		private string _unreadData = "Unread Data:";
 		private readonly string _versionString = "FLogS — Version " + Assembly.GetExecutingAssembly().GetName().Version + " © Taica, " + GetBuildYear(Assembly.GetExecutingAssembly());
@@ -33,6 +34,7 @@ namespace FLogS
 		public double ProgressMax { get => _progressMax; set { _progressMax = value; OnPropertyChanged(); } }
 		public event PropertyChangedEventHandler? PropertyChanged;
 		public string RunLabel { get => _runLabel; set { _runLabel = value; OnPropertyChanged(); } }
+		public string ThemeLabel { get => _themeLabel; set { _themeLabel = value; OnPropertyChanged(); } }
 		public string TruncatedMessages { get => _truncatedMessages; set { _truncatedMessages = value; OnPropertyChanged(); } }
 		public string UnreadData { get => _unreadData; set { _unreadData = value; OnPropertyChanged(); } }
 		public string VersionString => _versionString;

@@ -145,12 +145,13 @@ namespace FLogS
 
 		public void BeginRoutine(object? sender, DoWorkEventArgs e)
 		{
-			if (dtBefore < dtAfter)
-				(dtAfter, dtBefore) = (dtBefore, dtAfter);
 			opposingProfile = string.Empty;
 
 			try
 			{
+				if (dtBefore < dtAfter)
+					(dtAfter, dtBefore) = (dtBefore, dtAfter);
+
 				string[] idxOptions = [
 					Path.Join(Path.GetDirectoryName(srcFile), Path.GetFileNameWithoutExtension(srcFile)) + ".idx", // Search first for an IDX file matching just the log file's name. e.g. "pokefurs.idx".
 					srcFile + ".idx", // As a fallback, also search for an IDX that matches the log's name and extension. e.g. "pokefurs.log.idx".
