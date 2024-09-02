@@ -129,8 +129,7 @@ span { position: relative; }
 				return false;
 			if ((DTFromStamp(timestamp).ToString(dateFormat) ?? string.Empty).Equals(string.Empty)) // If it can't be translated to a date, also a problem.
 				return false;
-			if (!LogTestOverride && timestamp < lastTimestamp)  // If it isn't sequential, also a problem, because F-Chat would never save it that way.
-															   // In this case specifically, there's an extremely high chance we're about to produce garbage data in the output.
+			if (!LogTestOverride && timestamp < lastTimestamp) // If it isn't sequential, also a problem, because F-Chat would never save it that way.
 				return false;
 			return true;
 		}
