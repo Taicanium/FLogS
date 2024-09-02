@@ -1,3 +1,10 @@
+# 1.1.4 - 02/09/2024
+- Migrated to .NET 8.0
+- Fixed detection of broken eicon and icon tags.
+- Refactored color tag selection.
+- Many, many changes and optimizations to assembly-level code.
+- Massive refactoring of XAML backend interactions, including additional data bindings for sharing info between tabs.
+
 # 1.1.3.15 - 02/07/2024
 - Fixed a crash occurring when the user mouses over a UI object during single-file processing.
 

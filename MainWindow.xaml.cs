@@ -32,10 +32,9 @@ namespace FLogS
 			[Brushes.LightBlue, Brushes.DarkBlue], // Hyperlinks
 		];
 		private static (int, int) brushPalette = (1, 0);
-		private static (FLogS_ERROR, FLogS_ERROR, FLogS_ERROR) localError = (0, 0, 0);
-		private static (FLogS_WARNING, FLogS_WARNING, FLogS_WARNING) localWarning = (0, 0, 0);
+		private static (FLogS_ERROR, FLogS_ERROR, FLogS_ERROR) localError = (FLogS_ERROR.NO_SOURCE, FLogS_ERROR.NO_SOURCES, FLogS_ERROR.NO_SOURCES);
+		private static (FLogS_WARNING, FLogS_WARNING, FLogS_WARNING) localWarning = (FLogS_WARNING.None, FLogS_WARNING.None, FLogS_WARNING.None);
 		private static int filesProcessed;
-		private static bool overrideFormat = false;
 		private static MessagePool pool = new();
 		private readonly static ContextSettings settings = new();
 
@@ -145,32 +144,6 @@ namespace FLogS
 			return string.Empty;
 		}
 
-		private void FormatOverride(object? sender, RoutedEventArgs e)
-		{
-			if (sender is null)
-				return;
-
-			var senderBox = (CheckBox)sender;
-
-			if (senderBox.Name.Contains("DivideLogs"))
-			{
-				F_DivideLogsCheckbox.IsChecked = D_DivideLogsCheckbox.IsChecked = P_DivideLogsCheckbox.IsChecked = senderBox.IsChecked;
-				return;
-			}
-
-			if (senderBox.Name.Contains("SaveTruncated"))
-			{
-				F_SaveTruncatedCheckbox.IsChecked = D_SaveTruncatedCheckbox.IsChecked = P_SaveTruncatedCheckbox.IsChecked = senderBox.IsChecked;
-				return;
-			}
-
-			if (senderBox.Name.Contains("SaveHTML"))
-			{
-				F_SaveHTMLCheckbox.IsChecked = D_SaveHTMLCheckbox.IsChecked = P_SaveHTMLCheckbox.IsChecked = overrideFormat = (senderBox.IsChecked ?? false);
-				return;
-			}
-		}
-
 		private static string GetErrorMessage(FLogS_ERROR eCode, FLogS_WARNING wCode) => (eCode, wCode) switch
 		{
 			(FLogS_ERROR.BAD_REGEX, _) => "Search text contains an invalid RegEx pattern.",
@@ -226,13 +199,6 @@ namespace FLogS
 			TextboxUpdated(sender, e);
 
 			RegExLink.Foreground = brushCombos[RegExLink.IsMouseOver ? 3 : 8][brushPalette.Item1];
-
-			if (!overrideFormat)
-			{
-				F_SaveHTMLCheckbox.IsChecked = F_Output.Text.EndsWith(".html");
-				D_SaveHTMLCheckbox.IsChecked = D_Output.Text.EndsWith(".html");
-				P_SaveHTMLCheckbox.IsChecked = P_Output.Text.EndsWith(".html");
-			}
 		}
 
 		private void MultiDest_Click(object sender, RoutedEventArgs e)
@@ -252,17 +218,6 @@ namespace FLogS
 
 			static string outputPath(string directory, string file) => Path.Join(directory, Path.GetFileNameWithoutExtension(file)) + (Common.plaintext ? ".txt" : ".html");
 
-			localError.Item2 = new[] {
-				(D_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCES),
-				(dirSources.Any(file => !File.Exists(file)), FLogS_ERROR.SOURCES_NOT_FOUND),
-				(D_Output.Text.Length == 0, FLogS_ERROR.NO_DEST_DIR),
-				(File.Exists(D_Output.Text), FLogS_ERROR.DEST_NOT_DIRECTORY),
-				(!Directory.Exists(D_Output.Text), FLogS_ERROR.DEST_NOT_FOUND),
-				(dirSources.Any(file => file.Equals(outputPath(D_Output.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
-				(dirSources.Any(file => Common.LogTest(outputPath(D_Output.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
-				(true, FLogS_ERROR.None)
-			}.First(condition => condition.Item1).Item2;
-
 			localError.Item1 = new[] {
 				(F_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCE),
 				(!File.Exists(F_Source.Text), FLogS_ERROR.SOURCE_NOT_FOUND),
@@ -271,6 +226,17 @@ namespace FLogS
 				(!Directory.Exists(Path.GetDirectoryName(F_Output.Text)), FLogS_ERROR.DEST_NOT_FOUND),
 				(F_Source.Text.Equals(F_Output.Text), FLogS_ERROR.SOURCE_EQUALS_DEST),
 				(Common.LogTest(F_Output.Text), FLogS_ERROR.DEST_SENSITIVE),
+				(true, FLogS_ERROR.None)
+			}.First(condition => condition.Item1).Item2;
+
+			localError.Item2 = new[] {
+				(D_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCES),
+				(dirSources.Any(file => !File.Exists(file)), FLogS_ERROR.SOURCES_NOT_FOUND),
+				(D_Output.Text.Length == 0, FLogS_ERROR.NO_DEST_DIR),
+				(File.Exists(D_Output.Text), FLogS_ERROR.DEST_NOT_DIRECTORY),
+				(!Directory.Exists(D_Output.Text), FLogS_ERROR.DEST_NOT_FOUND),
+				(dirSources.Any(file => file.Equals(outputPath(D_Output.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
+				(dirSources.Any(file => Common.LogTest(outputPath(D_Output.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
 				(true, FLogS_ERROR.None)
 			}.First(condition => condition.Item1).Item2;
 
@@ -287,15 +253,15 @@ namespace FLogS
 				(true, FLogS_ERROR.None)
 			}.First(condition => condition.Item1).Item2;
 
-			localWarning.Item2 = new[]
-			{
-				(dirSources.Any(file => File.Exists(outputPath(D_Output.Text, file))), FLogS_WARNING.MULTI_OVERWRITE),
-				(true, FLogS_WARNING.None)
-			}.First(condition => condition.Item1).Item2;
-
 			localWarning.Item1 = new[]
 			{
 				(File.Exists(F_Output.Text), FLogS_WARNING.SINGLE_OVERWRITE),
+				(true, FLogS_WARNING.None)
+			}.First(condition => condition.Item1).Item2;
+
+			localWarning.Item2 = new[]
+			{
+				(dirSources.Any(file => File.Exists(outputPath(D_Output.Text, file))), FLogS_WARNING.MULTI_OVERWRITE),
 				(true, FLogS_WARNING.None)
 			}.First(condition => condition.Item1).Item2;
 
@@ -322,7 +288,6 @@ namespace FLogS
 		{
 			settings.Exception = string.Empty;
 			filesProcessed = args.Length;
-			overrideFormat = false;
 			Common.processing = true;
 
 			pool.totalSize.Simplify();
@@ -359,15 +324,15 @@ namespace FLogS
 			try
 			{
 				string[] files = GridObject<TextBox>("Source").Text.Split(';');
-				Common.plaintext = GridObject<CheckBox>("SaveHTMLCheckbox").IsChecked == false;
+				Common.plaintext = GridObject<CheckBox>("SaveHTML").IsChecked == false || GridObject<TextBox>("Output").Text.EndsWith(".html");
 				pool = new()
 				{
 					destDir = GridObject<TextBox>("Output").Text,
-					divide = GridObject<CheckBox>("DivideLogsCheckbox").IsChecked is true,
+					divide = GridObject<CheckBox>("DivideLogs").IsChecked is true,
 					dtAfter = GridObject<DatePicker>("AfterDate").SelectedDate ?? Common.DTFromStamp(1),
 					dtBefore = GridObject<DatePicker>("BeforeDate").SelectedDate ?? DateTime.UtcNow,
-					phrase = bTag.Equals("Phrase") ? P_Search.Text : string.Empty,
-					saveTruncated = GridObject<CheckBox>("SaveTruncatedCheckbox").IsChecked is true,
+					phrase = bTag.Equals("P_") ? P_Search.Text : string.Empty,
+					saveTruncated = GridObject<CheckBox>("SaveTruncated").IsChecked is true,
 					srcFile = GridObject<TextBox>("Source").Text,
 					totalSize = new()
 				};
