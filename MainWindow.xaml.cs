@@ -132,18 +132,15 @@ namespace FLogS
 			return string.Empty;
 		}
 
-		private static string DialogFolderSelect(bool outputSelect = false)
+		private static string DialogFolderSelect()
 		{
-			System.Windows.Forms.FolderBrowserDialog folderBrowserDialog = new()
+			OpenFolderDialog dialog = new()
 			{
-				ShowNewFolderButton = true,
-				InitialDirectory = outputSelect ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-					: Path.Exists(Common.defaultLogDir) ? Common.defaultLogDir
-					: Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
+				DefaultDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
 			};
 
-			if (folderBrowserDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-				return folderBrowserDialog.SelectedPath;
+			if (dialog.ShowDialog() is true)
+				return dialog.FolderName;
 
 			return string.Empty;
 		}
@@ -240,7 +237,7 @@ namespace FLogS
 
 		private void MultiDest_Click(object sender, RoutedEventArgs e)
 		{
-			D_Output.Text = P_Output.Text = DialogFolderSelect(true);
+			D_Output.Text = P_Output.Text = DialogFolderSelect();
 		}
 
 		private void MultiSource_Click(object sender, RoutedEventArgs e)
