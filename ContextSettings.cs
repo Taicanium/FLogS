@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Windows.Media;
 
 namespace FLogS
 {
@@ -10,6 +11,7 @@ namespace FLogS
 	{
 		private DateTime? _afterDate;
 		private DateTime? _beforeDate;
+		private bool _canRun = false;
 		private string _corruptedTimestamps = "Corrupted Timestamps:";
 		private bool? _divideLogs = false;
 		private string _emptyMessages = "Empty Messages:";
@@ -25,9 +27,12 @@ namespace FLogS
 		private string _truncatedMessages = "Truncated Messages:";
 		private string _unreadData = "Unread Data:";
 		private readonly string _versionString = "FLogS — Version " + Assembly.GetExecutingAssembly().GetName().Version + " © Taica, " + GetBuildYear(Assembly.GetExecutingAssembly());
+		private Brush _warnBrush = Brushes.Red;
+		private string _warningText = Common.GetErrorMessage(FLogS_ERROR.NO_SOURCE, FLogS_WARNING.None);
 
 		public DateTime? AfterDate { get => _afterDate; set { _afterDate = value; OnPropertyChanged(); } }
 		public DateTime? BeforeDate { get => _beforeDate; set { _beforeDate = value; OnPropertyChanged(); } }
+		public bool CanRun { get => _canRun; set { _canRun = value; OnPropertyChanged(); } }
 		public string CorruptedTimestamps { get => _corruptedTimestamps; set { _corruptedTimestamps = value; OnPropertyChanged(); } }
 		public bool? DivideLogs { get => _divideLogs; set { _divideLogs = value; OnPropertyChanged(); } }
 		public string EmptyMessages { get => _emptyMessages; set { _emptyMessages = value; OnPropertyChanged(); } }
@@ -44,19 +49,18 @@ namespace FLogS
 		public string TruncatedMessages { get => _truncatedMessages; set { _truncatedMessages = value; OnPropertyChanged(); } }
 		public string UnreadData { get => _unreadData; set { _unreadData = value; OnPropertyChanged(); } }
 		public string VersionString => _versionString;
+		public Brush WarnBrush { get => _warnBrush; set { _warnBrush = value; OnPropertyChanged(); } }
+		public string WarningText { get => _warningText; set { _warningText = value; OnPropertyChanged(); } }
 
 		private static int GetBuildYear(Assembly assembly)
 		{
-			const string BuildVersionMetadataPrefix = "+build";
-			var attribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+			const string prefix = "+build";
+			var attr = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
 
-			if (attribute?.InformationalVersion != null)
-			{
-				string value = attribute.InformationalVersion;
-				int index = value.IndexOf(BuildVersionMetadataPrefix);
-				if (index > 0 && DateTime.TryParseExact(value[(index + BuildVersionMetadataPrefix.Length)..], "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var result))
-					return result.Year;
-			}
+			string? value = attr?.InformationalVersion;
+			int index = value?.IndexOf(prefix) ?? 0;
+			if (index > 0 && DateTime.TryParseExact(value?[(index + prefix.Length)..], "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var result))
+				return result.Year;
 
 			return default;
 		}

@@ -4,11 +4,12 @@
 		xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 		xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 		xmlns:local="clr-namespace:FLogS"
+		d:DataContext="{d:DesignInstance Type=local:ContextSettings}"
 		mc:Ignorable="d"
 		Loaded="MainGrid_Loaded"
 		Title="FLogS" Height="700" Width="800" ResizeMode="NoResize">
 	<Grid x:Name="MainGrid" Background="DarkGray" MouseMove="MainGrid_MouseMove">
-		<TabControl Background="DarkGray" BorderThickness="0">
+		<TabControl Background="DarkGray" BorderThickness="0" SelectionChanged="ActiveMenuChanged">
 			<TabItem Header="File">
 				<Grid>
 					<Grid.ColumnDefinitions>
@@ -59,15 +60,15 @@
 							</StackPanel>
 							<StackPanel HorizontalAlignment="Center" Margin="0,30,0,0" Orientation="Horizontal">
 								<Label FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Divide logs by date?"/>
-								<CheckBox x:Name="F_DivideLogs" VerticalAlignment="Center" IsChecked="{Binding DivideLogs}" Tag="Enableable"/>
+								<CheckBox VerticalAlignment="Center" IsChecked="{Binding DivideLogs}" Tag="Enableable"/>
 							</StackPanel>
 							<StackPanel HorizontalAlignment="Center" Margin="0,20,0,0" Orientation="Horizontal">
 								<Label FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Save non-intact messages?"/>
-								<CheckBox x:Name="F_SaveTruncated" VerticalAlignment="Center" IsChecked="{Binding SaveTruncated}" Tag="Enableable"/>
+								<CheckBox VerticalAlignment="Center" IsChecked="{Binding SaveTruncated}" Tag="Enableable"/>
 							</StackPanel>
 							<StackPanel HorizontalAlignment="Center" Margin="0,20,0,0" Orientation="Horizontal">
 								<Label FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Save to HTML?"/>
-								<CheckBox x:Name="F_SaveHTML" VerticalAlignment="Center" IsChecked="{Binding SaveHTML}" Tag="Enableable"/>
+								<CheckBox VerticalAlignment="Center" IsChecked="{Binding SaveHTML}" Tag="Enableable"/>
 							</StackPanel>
 						</StackPanel>
 					</Grid>
@@ -84,10 +85,10 @@
 									<ColumnDefinition Width="2*"/>
 								</Grid.ColumnDefinitions>
 								<StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
-									<Label x:Name="F_WarningLabel" Tag="WarningLabel" VerticalAlignment="Center" Foreground="Red" FontSize="14" FontStyle="Italic" Content="No source log file selected."/>
+									<Label Tag="WarningLabel" VerticalAlignment="Center" Foreground="{Binding WarnBrush}" FontSize="14" FontStyle="Italic" Content="{Binding WarningText}"/>
 								</StackPanel>
 								<StackPanel Grid.Row="0" Grid.Column="1">
-									<Button x:Name="F_RunButton" Width="100" Height="25" HorizontalAlignment="Center" Margin="0,20" Background="Beige" IsEnabled="False" Click="RunButton_Click" Content="{Binding RunLabel}" Tag="F_"/>
+									<Button Width="100" Height="25" HorizontalAlignment="Center" Margin="0,20" Background="Beige" IsEnabled="{Binding CanRun}" Click="RunButton_Click" Content="{Binding RunLabel}" Tag="F_"/>
 								</StackPanel>
 								<StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4">
 									<ProgressBar Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="{Binding ProgressMax}" Value="{Binding Progress}"/>
@@ -148,15 +149,15 @@
 							</StackPanel>
 							<StackPanel HorizontalAlignment="Center" Margin="0,30,0,0" Orientation="Horizontal">
 								<Label FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Divide logs by date?"/>
-								<CheckBox x:Name="D_DivideLogs" VerticalAlignment="Center" IsChecked="{Binding DivideLogs}" Tag="Enableable"/>
+								<CheckBox VerticalAlignment="Center" IsChecked="{Binding DivideLogs}" Tag="Enableable"/>
 							</StackPanel>
 							<StackPanel HorizontalAlignment="Center" Margin="0,20,0,0" Orientation="Horizontal">
 								<Label FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Save non-intact messages?"/>
-								<CheckBox x:Name="D_SaveTruncated" VerticalAlignment="Center" IsChecked="{Binding SaveTruncated}" Tag="Enableable"/>
+								<CheckBox VerticalAlignment="Center" IsChecked="{Binding SaveTruncated}" Tag="Enableable"/>
 							</StackPanel>
 							<StackPanel HorizontalAlignment="Center" Margin="0,20,0,0" Orientation="Horizontal">
 								<Label FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Save to HTML?"/>
-								<CheckBox x:Name="D_SaveHTML" VerticalAlignment="Center" IsChecked="{Binding SaveHTML}" Tag="Enableable"/>
+								<CheckBox VerticalAlignment="Center" IsChecked="{Binding SaveHTML}" Tag="Enableable"/>
 							</StackPanel>
 						</StackPanel>
 					</Grid>
@@ -173,10 +174,10 @@
 									<ColumnDefinition Width="2*"/>
 								</Grid.ColumnDefinitions>
 								<StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
-									<Label x:Name="D_WarningLabel" Tag="WarningLabel" VerticalAlignment="Center" Foreground="Red" FontSize="14" FontStyle="Italic" Content="No source log files selected."/>
+									<Label Tag="WarningLabel" VerticalAlignment="Center" Foreground="{Binding WarnBrush}" FontSize="14" FontStyle="Italic" Content="{Binding WarningText}"/>
 								</StackPanel>
 								<StackPanel Grid.Row="0" Grid.Column="1">
-									<Button x:Name="D_RunButton" Width="100" Height="25" HorizontalAlignment="Center" Margin="0,20" Background="Beige" IsEnabled="False" Click="RunButton_Click" Content="{Binding RunLabel}" Tag="D_"/>
+									<Button Width="100" Height="25" HorizontalAlignment="Center" Margin="0,20" Background="Beige" IsEnabled="{Binding CanRun}" Click="RunButton_Click" Content="{Binding RunLabel}" Tag="D_"/>
 								</StackPanel>
 								<StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5">
 									<ProgressBar Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="{Binding ProgressMax}" Value="{Binding Progress}"/>
@@ -242,15 +243,15 @@
 							</StackPanel>
 							<StackPanel HorizontalAlignment="Center" Margin="0,30,0,0" Orientation="Horizontal">
 								<Label FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Divide logs by date?"/>
-								<CheckBox x:Name="P_DivideLogs" VerticalAlignment="Center" IsChecked="{Binding DivideLogs}" Tag="Enableable"/>
+								<CheckBox VerticalAlignment="Center" IsChecked="{Binding DivideLogs}" Tag="Enableable"/>
 							</StackPanel>
 							<StackPanel HorizontalAlignment="Center" Margin="0,20,0,0" Orientation="Horizontal">
 								<Label FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Save non-intact messages?"/>
-								<CheckBox x:Name="P_SaveTruncated" VerticalAlignment="Center" IsChecked="{Binding SaveTruncated}" Tag="Enableable"/>
+								<CheckBox VerticalAlignment="Center" IsChecked="{Binding SaveTruncated}" Tag="Enableable"/>
 							</StackPanel>
 							<StackPanel HorizontalAlignment="Center" Margin="0,20,0,0" Orientation="Horizontal">
 								<Label FontFamily="Arial" FontSize="12" Height="25" HorizontalAlignment="Center" Margin="0,0,10,0" Foreground="Black" Content="Save to HTML?"/>
-								<CheckBox x:Name="P_SaveHTML" VerticalAlignment="Center" IsChecked="{Binding SaveHTML}" Tag="Enableable"/>
+								<CheckBox VerticalAlignment="Center" IsChecked="{Binding SaveHTML}" Tag="Enableable"/>
 							</StackPanel>
 						</StackPanel>
 					</Grid>
@@ -267,10 +268,10 @@
 									<ColumnDefinition Width="2*"/>
 								</Grid.ColumnDefinitions>
 								<StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center">
-									<Label x:Name="P_WarningLabel" Tag="WarningLabel" VerticalAlignment="Center" Foreground="Red" FontSize="14" FontStyle="Italic" Content="No source log files selected."/>
+									<Label Tag="WarningLabel" VerticalAlignment="Center" Foreground="{Binding WarnBrush}" FontSize="14" FontStyle="Italic" Content="{Binding WarningText}"/>
 								</StackPanel>
 								<StackPanel Grid.Row="0" Grid.Column="1">
-									<Button x:Name="P_RunButton" Width="100" Height="25" HorizontalAlignment="Center" Margin="0,20" Background="Beige" IsEnabled="False" Click="RunButton_Click" Content="{Binding RunLabel}" Tag="P_"/>
+									<Button Width="100" Height="25" HorizontalAlignment="Center" Margin="0,20" Background="Beige" IsEnabled="{Binding CanRun}" Click="RunButton_Click" Content="{Binding RunLabel}" Tag="P_"/>
 								</StackPanel>
 								<StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5">
 									<ProgressBar Width="600" Height="25" HorizontalAlignment="Center" Minimum="0" Maximum="{Binding ProgressMax}" Value="{Binding Progress}"/>

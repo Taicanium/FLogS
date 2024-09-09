@@ -19,8 +19,9 @@ namespace FLogS
 		[DllImport("UXTheme.dll", SetLastError = true, EntryPoint = "#138")]
 		private static extern bool ShouldSystemUseDarkMode();
 
+		private static int activeMenu = 0;
 		private readonly static SolidColorBrush[][] brushCombos =
-		[   // 0 = Dark mode, 1 = Light mode.
+		[	// 0 = Dark mode, 1 = Light mode.
 			[Brushes.Black, Brushes.White], // Textboxes
 			[Brushes.LightBlue, Brushes.Beige], // Buttons
 			[new(new() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 }), Brushes.LightGray], // Borders
@@ -32,42 +33,22 @@ namespace FLogS
 			[Brushes.LightBlue, Brushes.DarkBlue], // Hyperlinks
 		];
 		private static (int, int) brushPalette = (1, 0);
-		private static (FLogS_ERROR, FLogS_ERROR, FLogS_ERROR) localError = (FLogS_ERROR.NO_SOURCE, FLogS_ERROR.NO_SOURCES, FLogS_ERROR.NO_SOURCES);
-		private static (FLogS_WARNING, FLogS_WARNING, FLogS_WARNING) localWarning = (FLogS_WARNING.None, FLogS_WARNING.None, FLogS_WARNING.None);
+		private static FLogS_ERROR[] localError = [FLogS_ERROR.NO_SOURCE, FLogS_ERROR.NO_SOURCES, FLogS_ERROR.NO_SOURCES];
+		private static FLogS_WARNING[] localWarning = [FLogS_WARNING.None, FLogS_WARNING.None, FLogS_WARNING.None];
 		private static int filesProcessed;
 		private static MessagePool pool = new();
 		private readonly static ContextSettings settings = new();
-
-		private enum FLogS_ERROR
-		{
-			None,
-			BAD_REGEX,
-			DEST_NOT_DIRECTORY,
-			DEST_NOT_FILE,
-			DEST_NOT_FOUND,
-			DEST_SENSITIVE,
-			NO_DEST,
-			NO_DEST_DIR,
-			NO_REGEX,
-			NO_SOURCE,
-			NO_SOURCES,
-			SOURCE_CONFLICT,
-			SOURCE_EQUALS_DEST,
-			SOURCE_NOT_FOUND,
-			SOURCES_NOT_FOUND,
-		}
-
-		private enum FLogS_WARNING
-		{
-			None,
-			MULTI_OVERWRITE,
-			SINGLE_OVERWRITE,
-		}
 
 		public MainWindow()
 		{
 			InitializeComponent();
 			DataContext = settings;
+		}
+
+		private void ActiveMenuChanged(object? sender, RoutedEventArgs e)
+		{
+			activeMenu = Math.Min(((TabControl?)sender)?.SelectedIndex ?? 0, 2);
+			ProcessErrors();
 		}
 
 		private static void ChangeStyle(DependencyObject? sender)
@@ -91,7 +72,8 @@ namespace FLogS
 					break;
 				case "Label":
 				case "TextBlock":
-					sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
+					if (!(sender.GetValue(TagProperty) ?? string.Empty).Equals("WarningLabel"))
+						sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
 					break;
 				case "ListBox":
 				case "TextBox":
@@ -144,30 +126,6 @@ namespace FLogS
 			return string.Empty;
 		}
 
-		private static string GetErrorMessage(FLogS_ERROR eCode, FLogS_WARNING wCode) => (eCode, wCode) switch
-		{
-			(FLogS_ERROR.BAD_REGEX, _) => "Search text contains an invalid RegEx pattern.",
-			(FLogS_ERROR.DEST_NOT_DIRECTORY, _) => "Destination is not a directory.",
-			(FLogS_ERROR.DEST_NOT_FILE, _) => "Destination is not a file.",
-			(FLogS_ERROR.DEST_NOT_FOUND, _) => "Destination directory does not exist.",
-			(FLogS_ERROR.DEST_SENSITIVE, _) => "Destination appears to contain source log data.",
-			(FLogS_ERROR.NO_DEST, _) => "No destination file selected.",
-			(FLogS_ERROR.NO_DEST_DIR, _) => "No destination directory selected.",
-			(FLogS_ERROR.NO_REGEX, _) => "No search text entered.",
-			(FLogS_ERROR.NO_SOURCE, _) => "No source log file selected.",
-			(FLogS_ERROR.NO_SOURCES, _) => "No source log files selected.",
-			(FLogS_ERROR.SOURCE_CONFLICT, _) => "One or more source files exist in the destination.",
-			(FLogS_ERROR.SOURCE_EQUALS_DEST, _) => "Source and destination files are identical.",
-			(FLogS_ERROR.SOURCE_NOT_FOUND, _) => "Source log file does not exist.",
-			(FLogS_ERROR.SOURCES_NOT_FOUND, _) => "One or more source files do not exist.",
-
-			(FLogS_ERROR.None, FLogS_WARNING.MULTI_OVERWRITE) => "One or more files will be overwritten.",
-			(FLogS_ERROR.None, FLogS_WARNING.SINGLE_OVERWRITE) => "Destination file will be overwritten.",
-			(FLogS_ERROR.None, _) => string.Empty,
-
-			(_, _) => "An unknown error has occurred.",
-		};
-
 		private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
 		{
 			Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
@@ -218,70 +176,63 @@ namespace FLogS
 
 			static string outputPath(string directory, string file) => Path.Join(directory, Path.GetFileNameWithoutExtension(file)) + (Common.plaintext ? ".txt" : ".html");
 
-			localError.Item1 = new[] {
-				(F_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCE),
-				(!File.Exists(F_Source.Text), FLogS_ERROR.SOURCE_NOT_FOUND),
-				(F_Output.Text.Length == 0, FLogS_ERROR.NO_DEST),
-				(Directory.Exists(F_Output.Text), FLogS_ERROR.DEST_NOT_FILE),
-				(!Directory.Exists(Path.GetDirectoryName(F_Output.Text)), FLogS_ERROR.DEST_NOT_FOUND),
-				(F_Source.Text.Equals(F_Output.Text), FLogS_ERROR.SOURCE_EQUALS_DEST),
-				(Common.LogTest(F_Output.Text), FLogS_ERROR.DEST_SENSITIVE),
-				(true, FLogS_ERROR.None)
-			}.First(condition => condition.Item1).Item2;
+			localError = [
+				new[] {
+					(F_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCE),
+					(!File.Exists(F_Source.Text), FLogS_ERROR.SOURCE_NOT_FOUND),
+					(F_Output.Text.Length == 0, FLogS_ERROR.NO_DEST),
+					(Directory.Exists(F_Output.Text), FLogS_ERROR.DEST_NOT_FILE),
+					(!Directory.Exists(Path.GetDirectoryName(F_Output.Text)), FLogS_ERROR.DEST_NOT_FOUND),
+					(F_Source.Text.Equals(F_Output.Text), FLogS_ERROR.SOURCE_EQUALS_DEST),
+					(Common.LogTest(F_Output.Text), FLogS_ERROR.DEST_SENSITIVE),
+					(true, FLogS_ERROR.None)
+				}.First(condition => condition.Item1).Item2,
 
-			localError.Item2 = new[] {
-				(D_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCES),
-				(dirSources.Any(file => !File.Exists(file)), FLogS_ERROR.SOURCES_NOT_FOUND),
-				(D_Output.Text.Length == 0, FLogS_ERROR.NO_DEST_DIR),
-				(File.Exists(D_Output.Text), FLogS_ERROR.DEST_NOT_DIRECTORY),
-				(!Directory.Exists(D_Output.Text), FLogS_ERROR.DEST_NOT_FOUND),
-				(dirSources.Any(file => file.Equals(outputPath(D_Output.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
-				(dirSources.Any(file => Common.LogTest(outputPath(D_Output.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
-				(true, FLogS_ERROR.None)
-			}.First(condition => condition.Item1).Item2;
+				new[] {
+					(D_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCES),
+					(dirSources.Any(file => !File.Exists(file)), FLogS_ERROR.SOURCES_NOT_FOUND),
+					(D_Output.Text.Length == 0, FLogS_ERROR.NO_DEST_DIR),
+					(File.Exists(D_Output.Text), FLogS_ERROR.DEST_NOT_DIRECTORY),
+					(!Directory.Exists(D_Output.Text), FLogS_ERROR.DEST_NOT_FOUND),
+					(dirSources.Any(file => file.Equals(outputPath(D_Output.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
+					(dirSources.Any(file => Common.LogTest(outputPath(D_Output.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
+					(true, FLogS_ERROR.None)
+				}.First(condition => condition.Item1).Item2,
 
-			localError.Item3 = new[] {
-				(P_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCES),
-				(phraseSources.Any(file => !File.Exists(file)), FLogS_ERROR.SOURCES_NOT_FOUND),
-				(P_Output.Text.Length == 0, FLogS_ERROR.NO_DEST_DIR),
-				(File.Exists(P_Output.Text), FLogS_ERROR.DEST_NOT_DIRECTORY),
-				(!Directory.Exists(P_Output.Text), FLogS_ERROR.DEST_NOT_FOUND),
-				(phraseSources.Any(file => file.Equals(outputPath(P_Output.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
-				(phraseSources.Any(file => Common.LogTest(outputPath(P_Output.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
-				(P_Search.Text.Length == 0, FLogS_ERROR.NO_REGEX),
-				(RegexCheckBox?.IsChecked == true && !Common.IsValidPattern(P_Search.Text), FLogS_ERROR.BAD_REGEX),
-				(true, FLogS_ERROR.None)
-			}.First(condition => condition.Item1).Item2;
+				new[] {
+					(P_Source.Text.Length == 0, FLogS_ERROR.NO_SOURCES),
+					(phraseSources.Any(file => !File.Exists(file)), FLogS_ERROR.SOURCES_NOT_FOUND),
+					(P_Output.Text.Length == 0, FLogS_ERROR.NO_DEST_DIR),
+					(File.Exists(P_Output.Text), FLogS_ERROR.DEST_NOT_DIRECTORY),
+					(!Directory.Exists(P_Output.Text), FLogS_ERROR.DEST_NOT_FOUND),
+					(phraseSources.Any(file => file.Equals(outputPath(P_Output.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
+					(phraseSources.Any(file => Common.LogTest(outputPath(P_Output.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
+					(P_Search.Text.Length == 0, FLogS_ERROR.NO_REGEX),
+					(RegexCheckBox?.IsChecked == true && !Common.IsValidPattern(P_Search.Text), FLogS_ERROR.BAD_REGEX),
+					(true, FLogS_ERROR.None)
+				}.First(condition => condition.Item1).Item2
+			];
 
-			localWarning.Item1 = new[]
-			{
-				(File.Exists(F_Output.Text), FLogS_WARNING.SINGLE_OVERWRITE),
-				(true, FLogS_WARNING.None)
-			}.First(condition => condition.Item1).Item2;
+			localWarning = [
+				new[] {
+					(File.Exists(F_Output.Text), FLogS_WARNING.SINGLE_OVERWRITE),
+					(true, FLogS_WARNING.None)
+				}.First(condition => condition.Item1).Item2,
 
-			localWarning.Item2 = new[]
-			{
-				(dirSources.Any(file => File.Exists(outputPath(D_Output.Text, file))), FLogS_WARNING.MULTI_OVERWRITE),
-				(true, FLogS_WARNING.None)
-			}.First(condition => condition.Item1).Item2;
+				new[] {
+					(dirSources.Any(file => File.Exists(outputPath(D_Output.Text, file))), FLogS_WARNING.MULTI_OVERWRITE),
+					(true, FLogS_WARNING.None)
+				}.First(condition => condition.Item1).Item2,
 
-			localWarning.Item3 = new[]
-			{
-				(phraseSources.Any(file => File.Exists(outputPath(P_Output.Text, file))), FLogS_WARNING.MULTI_OVERWRITE),
-				(true, FLogS_WARNING.None)
-			}.First(condition => condition.Item1).Item2;
+				new[] {
+					(phraseSources.Any(file => File.Exists(outputPath(P_Output.Text, file))), FLogS_WARNING.MULTI_OVERWRITE),
+					(true, FLogS_WARNING.None)
+				}.First(condition => condition.Item1).Item2
+			];
 
-			F_RunButton.IsEnabled = localError.Item1 == FLogS_ERROR.None;
-			D_RunButton.IsEnabled = localError.Item2 == FLogS_ERROR.None;
-			P_RunButton.IsEnabled = localError.Item3 == FLogS_ERROR.None;
-
-			F_WarningLabel.Content = GetErrorMessage(localError.Item1, localWarning.Item1);
-			D_WarningLabel.Content = GetErrorMessage(localError.Item2, localWarning.Item2);
-			P_WarningLabel.Content = GetErrorMessage(localError.Item3, localWarning.Item3);
-
-			F_WarningLabel.Foreground = brushCombos[localError.Item1 == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
-			D_WarningLabel.Foreground = brushCombos[localError.Item2 == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
-			P_WarningLabel.Foreground = brushCombos[localError.Item3 == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
+			settings.CanRun = localError[activeMenu] == FLogS_ERROR.None;
+			settings.WarnBrush = brushCombos[settings.CanRun ? 4 : 3][brushPalette.Item1];
+			settings.WarningText = Common.GetErrorMessage(localError[activeMenu], localWarning[activeMenu]);
 		}
 
 		private void ProcessFiles(string[] args)
@@ -324,15 +275,15 @@ namespace FLogS
 			try
 			{
 				string[] files = GridObject<TextBox>("Source").Text.Split(';');
-				Common.plaintext = GridObject<CheckBox>("SaveHTML").IsChecked == false || GridObject<TextBox>("Output").Text.EndsWith(".html");
+				Common.plaintext = settings.SaveHTML == false || GridObject<TextBox>("Output").Text.EndsWith(".html");
 				pool = new()
 				{
 					destDir = GridObject<TextBox>("Output").Text,
-					divide = GridObject<CheckBox>("DivideLogs").IsChecked is true,
+					divide = settings.DivideLogs is true,
 					dtAfter = GridObject<DatePicker>("AfterDate").SelectedDate ?? Common.DTFromStamp(1),
 					dtBefore = GridObject<DatePicker>("BeforeDate").SelectedDate ?? DateTime.UtcNow,
 					phrase = bTag.Equals("P_") ? P_Search.Text : string.Empty,
-					saveTruncated = GridObject<CheckBox>("SaveTruncated").IsChecked is true,
+					saveTruncated = settings.SaveTruncated is true,
 					srcFile = GridObject<TextBox>("Source").Text,
 					totalSize = new()
 				};
@@ -374,9 +325,7 @@ namespace FLogS
 				MainGrid.Background = brushCombos[5][brushPalette.Item1];
 				RegexCheckBox.Background = brushCombos[1][brushPalette.Item1];
 
-				F_WarningLabel.Foreground = brushCombos[localError.Item1 == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
-				D_WarningLabel.Foreground = brushCombos[localError.Item2 == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
-				P_WarningLabel.Foreground = brushCombos[localError.Item3 == FLogS_ERROR.None ? 4 : 3][brushPalette.Item1];
+				ProcessErrors();
 			}
 			catch (Exception ex)
 			{
