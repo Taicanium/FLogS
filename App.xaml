@@ -4,12 +4,44 @@
 		 xmlns:local="clr-namespace:FLogS"
 		 StartupUri="MainWindow.xaml">
 	<Application.Resources>
+		<Style TargetType="{x:Type Button}">
+			<Setter Property="Background" Value="Beige"/>
+		</Style>
+		<Style TargetType="{x:Type CheckBox}">
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+			<Setter Property="Margin" Value="15,0,15,0"/>
+			<Setter Property="VerticalAlignment" Value="Center"/>
+		</Style>
 		<Style TargetType="{x:Type DatePicker}">
-			<Style.Resources>
-				<Style TargetType="{x:Type DatePickerTextBox}">
-					<Setter Property="Background" Value="Transparent"/>
-				</Style>
-			</Style.Resources>
+			<Setter Property="Background" Value="White"/>
+			<Setter Property="BorderBrush" Value="#FF333333"/>
+		</Style>
+		<Style TargetType="{x:Type DatePickerTextBox}">
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+		<Style TargetType="{x:Type Label}">
+			<Setter Property="FontFamily" Value="Arial"/>
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+		</Style>
+		<Style TargetType="{x:Type Label}" x:Key="Version">
+			<Setter Property="FontStyle" Value="Italic"/>
+			<Setter Property="FontWeight" Value="Light"/>
+			<Setter Property="Foreground" Value="Gray"/>
+			<Setter Property="HorizontalAlignment" Value="Right"/>
+			<Setter Property="Tag" Value="VersionLabel"/>
+			<Setter Property="VerticalAlignment" Value="Bottom"/>
+		</Style>
+		<Style TargetType="{x:Type ListBox}">
+			<Setter Property="BorderBrush" Value="#FF333333"/>
+			<Setter Property="IsHitTestVisible" Value="False"/>
+			<Setter Property="Padding" Value="3"/>
+		</Style>
+		<Style TargetType="{x:Type ProgressBar}">
+			<Setter Property="Height" Value="25"/>
+			<Setter Property="Width" Value="600"/>
+		</Style>
+		<Style TargetType="{x:Type TextBox}">
+			<Setter Property="BorderBrush" Value="#FF333333"/>
 		</Style>
 	</Application.Resources>
 </Application>

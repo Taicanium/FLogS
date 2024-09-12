@@ -31,6 +31,7 @@ namespace FLogS
 			[Brushes.Transparent, new(new() { A = 0xFF, R = 0x33, G = 0x33, B = 0x33 })], // DatePicker borders
 			[Brushes.DimGray, Brushes.Beige], // PanelGrids
 			[Brushes.LightBlue, Brushes.DarkBlue], // Hyperlinks
+			[Brushes.DarkGray, Brushes.Gray], // Version labels
 		];
 		private static (int, int) brushPalette = (1, 0);
 		private static FLogS_ERROR[] localError = [FLogS_ERROR.NO_SOURCE, FLogS_ERROR.NO_SOURCES, FLogS_ERROR.NO_SOURCES];
@@ -48,7 +49,6 @@ namespace FLogS
 		private void ActiveMenuChanged(object? sender, RoutedEventArgs e)
 		{
 			activeMenu = Math.Min(((TabControl?)sender)?.SelectedIndex ?? 0, 2);
-			ProcessErrors();
 		}
 
 		private static void ChangeStyle(DependencyObject? sender)
@@ -56,9 +56,14 @@ namespace FLogS
 			if (sender is null)
 				return;
 
+			string tag = (string)sender.GetValue(TagProperty) ?? string.Empty;
+
 			switch (sender?.DependencyObjectType.Name)
 			{
 				case "Button":
+					sender.SetValue(BackgroundProperty, brushCombos[1][brushPalette.Item1]);
+					break;
+				case "CheckBox":
 					sender.SetValue(BackgroundProperty, brushCombos[1][brushPalette.Item1]);
 					break;
 				case "DatePicker":
@@ -67,13 +72,23 @@ namespace FLogS
 					sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
 					break;
 				case "Grid":
-					if ((sender.GetValue(TagProperty) ?? string.Empty).Equals("PanelGrid"))
-						sender.SetValue(BackgroundProperty, brushCombos[7][brushPalette.Item1]);
+					sender.SetValue(BackgroundProperty, tag switch
+					{
+						"PanelGrid" => brushCombos[7][brushPalette.Item1],
+						"MainGrid" => brushCombos[5][brushPalette.Item1],
+						_ => Brushes.Transparent,
+					});
 					break;
 				case "Label":
+				case "ListBoxItem":
+				case "Span":
 				case "TextBlock":
-					if (!(sender.GetValue(TagProperty) ?? string.Empty).Equals("WarningLabel"))
-						sender.SetValue(ForegroundProperty, brushCombos[0][brushPalette.Item2]);
+					sender.SetValue(ForegroundProperty, tag switch
+					{
+						"VersionLabel" => brushCombos[9][brushPalette.Item1],
+						"WarningLabel" => brushCombos[settings.CanRun ? 4 : 3][brushPalette.Item1],
+						_ => brushCombos[0][brushPalette.Item2],
+					});
 					break;
 				case "ListBox":
 				case "TextBox":
@@ -154,9 +169,10 @@ namespace FLogS
 				return;
 
 			// We will rescan for errors upon user interaction, in case of e.g. a source file being deleted after its path has already been entered.
-			TextboxUpdated(sender, e);
+			ProcessErrors();
 
 			RegExLink.Foreground = brushCombos[RegExLink.IsMouseOver ? 3 : 8][brushPalette.Item1];
+			P_SearchLabel.Content = settings.Regex is true ? "Target Pattern" : "Target Word or Phrase";
 		}
 
 		private void MultiDest_Click(object sender, RoutedEventArgs e)
@@ -174,7 +190,7 @@ namespace FLogS
 			var dirSources = D_Source.Text.Equals(string.Empty) ? [] : D_Source.Text.Split(';');
 			var phraseSources = P_Source.Text.Equals(string.Empty) ? [] : P_Source.Text.Split(';');
 
-			static string outputPath(string directory, string file) => Path.Join(directory, Path.GetFileNameWithoutExtension(file)) + (Common.plaintext ? ".txt" : ".html");
+			static string outputPath(string directory, string file) => Path.Join(directory, Path.GetFileNameWithoutExtension(file)) + (settings.SaveHTML ?? false ? ".html" : ".txt");
 
 			localError = [
 				new[] {
@@ -208,7 +224,7 @@ namespace FLogS
 					(phraseSources.Any(file => file.Equals(outputPath(P_Output.Text, file))), FLogS_ERROR.SOURCE_CONFLICT),
 					(phraseSources.Any(file => Common.LogTest(outputPath(P_Output.Text, file))), FLogS_ERROR.DEST_SENSITIVE),
 					(P_Search.Text.Length == 0, FLogS_ERROR.NO_REGEX),
-					(RegexCheckBox?.IsChecked == true && !Common.IsValidPattern(P_Search.Text), FLogS_ERROR.BAD_REGEX),
+					(settings.Regex is true && !Common.IsValidPattern(P_Search.Text), FLogS_ERROR.BAD_REGEX),
 					(true, FLogS_ERROR.None)
 				}.First(condition => condition.Item1).Item2
 			];
@@ -231,7 +247,6 @@ namespace FLogS
 			];
 
 			settings.CanRun = localError[activeMenu] == FLogS_ERROR.None;
-			settings.WarnBrush = brushCombos[settings.CanRun ? 4 : 3][brushPalette.Item1];
 			settings.WarningText = Common.GetErrorMessage(localError[activeMenu], localWarning[activeMenu]);
 		}
 
@@ -263,7 +278,7 @@ namespace FLogS
 
 		private void RunButton_Click(object? sender, RoutedEventArgs e)
 		{
-			TextboxUpdated(sender, e);
+			ProcessErrors();
 
 			var senderButton = (Button?)sender;
 			if (senderButton?.IsEnabled is false)
@@ -275,7 +290,7 @@ namespace FLogS
 			try
 			{
 				string[] files = GridObject<TextBox>("Source").Text.Split(';');
-				Common.plaintext = settings.SaveHTML == false || GridObject<TextBox>("Output").Text.EndsWith(".html");
+				Common.plaintext = settings.SaveHTML == false || !GridObject<TextBox>("Output").Text.EndsWith(".html");
 				pool = new()
 				{
 					destDir = GridObject<TextBox>("Output").Text,
@@ -283,6 +298,7 @@ namespace FLogS
 					dtAfter = GridObject<DatePicker>("AfterDate").SelectedDate ?? Common.DTFromStamp(1),
 					dtBefore = GridObject<DatePicker>("BeforeDate").SelectedDate ?? DateTime.UtcNow,
 					phrase = bTag.Equals("P_") ? P_Search.Text : string.Empty,
+					regex = settings.Regex is true,
 					saveTruncated = settings.SaveTruncated is true,
 					srcFile = GridObject<TextBox>("Source").Text,
 					totalSize = new()
@@ -320,28 +336,12 @@ namespace FLogS
 				settings.ThemeLabel = brushPalette.Item1 == 0 ? "Light" : "Dark";
 
 				ChangeStyle(MainGrid);
-
-				ADLWarning.Foreground = brushCombos[3][brushPalette.Item1];
-				MainGrid.Background = brushCombos[5][brushPalette.Item1];
-				RegexCheckBox.Background = brushCombos[1][brushPalette.Item1];
-
 				ProcessErrors();
 			}
 			catch (Exception ex)
 			{
 				Common.LogException(ex);
 			}
-		}
-
-		private void TextboxUpdated(object? sender, EventArgs e)
-		{
-			if (Common.processing)
-				return;
-
-			pool.regex = (RegexCheckBox?.IsVisible ?? false) && (RegexCheckBox?.IsChecked ?? false);
-			P_SearchLabel.Content = pool.regex ? "Target Pattern" : "Target Word or Phrase";
-
-			ProcessErrors();
 		}
 
 		private static void TransitionEnableables(DependencyObject? sender, bool enabled)
