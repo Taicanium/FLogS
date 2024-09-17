@@ -322,8 +322,7 @@
 							<Bold>For advanced searching:</Bold><LineBreak/>
 							Select the <Bold>Phrase</Bold> tab at the top.<LineBreak/>
 							Follow the above procedure, and enter a word or phrase to search for in the labelled text box.<LineBreak/>
-							Check the box next to the phrase text to search using <Hyperlink x:Name="RegExLink" Foreground="DarkBlue" NavigateUri="https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference" RequestNavigate="Hyperlink_RequestNavigate">.NET regular expressions.</Hyperlink>
-							Ordinary searches are not case-sensitive, but RegEx searches are.<LineBreak/>
+							Check the box next to the phrase text to search using <Hyperlink x:Name="RegExLink" Foreground="DarkBlue" NavigateUri="https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-language-quick-reference" RequestNavigate="Hyperlink_RequestNavigate">.NET regular expressions.</Hyperlink><LineBreak/>
 							<Bold>FLogS</Bold> will output only messages containing the text (or matching the pattern) that you enter.
 							</TextBlock>
 						</StackPanel>

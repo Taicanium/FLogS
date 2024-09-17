@@ -5,11 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace FLogS
 {
-	/// <summary>
-	/// Static helper functions and variables serving purely logical purposes in either the front- or backend.
-	/// </summary>
-
-	enum FLogS_ERROR
+	enum ErrorCode
 	{
 		None,
 		BAD_REGEX,
@@ -28,13 +24,16 @@ namespace FLogS
 		SOURCES_NOT_FOUND,
 	}
 
-	enum FLogS_WARNING
+	enum WarningCode
 	{
 		None,
 		MULTI_OVERWRITE,
 		SINGLE_OVERWRITE,
 	}
 
+	/// <summary>
+	/// Static helper functions and variables serving purely logical purposes in either the front- or backend.
+	/// </summary>
 	static class Common
 	{
 		public readonly static string dateFormat = "yyyy-MM-dd HH:mm:ss"; // ISO 8601.
@@ -131,26 +130,26 @@ span { position: relative; }
 			}
 		}
 
-		public static string GetErrorMessage(FLogS_ERROR eCode, FLogS_WARNING wCode) => (eCode, wCode) switch
+		public static string GetErrorMessage(ErrorCode eCode, WarningCode wCode) => (eCode, wCode) switch
 		{
-			(FLogS_ERROR.BAD_REGEX, _) => "Search text contains an invalid RegEx pattern.",
-			(FLogS_ERROR.DEST_NOT_DIRECTORY, _) => "Destination is not a directory.",
-			(FLogS_ERROR.DEST_NOT_FILE, _) => "Destination is not a file.",
-			(FLogS_ERROR.DEST_NOT_FOUND, _) => "Destination directory does not exist.",
-			(FLogS_ERROR.DEST_SENSITIVE, _) => "Destination appears to contain source log data.",
-			(FLogS_ERROR.NO_DEST, _) => "No destination file selected.",
-			(FLogS_ERROR.NO_DEST_DIR, _) => "No destination directory selected.",
-			(FLogS_ERROR.NO_REGEX, _) => "No search text entered.",
-			(FLogS_ERROR.NO_SOURCE, _) => "No source log file selected.",
-			(FLogS_ERROR.NO_SOURCES, _) => "No source log files selected.",
-			(FLogS_ERROR.SOURCE_CONFLICT, _) => "One or more source files exist in the destination.",
-			(FLogS_ERROR.SOURCE_EQUALS_DEST, _) => "Source and destination files are identical.",
-			(FLogS_ERROR.SOURCE_NOT_FOUND, _) => "Source log file does not exist.",
-			(FLogS_ERROR.SOURCES_NOT_FOUND, _) => "One or more source files do not exist.",
+			(ErrorCode.BAD_REGEX, _) => "Search text contains an invalid RegEx pattern.",
+			(ErrorCode.DEST_NOT_DIRECTORY, _) => "Destination is not a directory.",
+			(ErrorCode.DEST_NOT_FILE, _) => "Destination is not a file.",
+			(ErrorCode.DEST_NOT_FOUND, _) => "Destination directory does not exist.",
+			(ErrorCode.DEST_SENSITIVE, _) => "Destination appears to contain source log data.",
+			(ErrorCode.NO_DEST, _) => "No destination file selected.",
+			(ErrorCode.NO_DEST_DIR, _) => "No destination directory selected.",
+			(ErrorCode.NO_REGEX, _) => "No search text entered.",
+			(ErrorCode.NO_SOURCE, _) => "No source log file selected.",
+			(ErrorCode.NO_SOURCES, _) => "No source log files selected.",
+			(ErrorCode.SOURCE_CONFLICT, _) => "One or more source files exist in the destination.",
+			(ErrorCode.SOURCE_EQUALS_DEST, _) => "Source and destination files are identical.",
+			(ErrorCode.SOURCE_NOT_FOUND, _) => "Source log file does not exist.",
+			(ErrorCode.SOURCES_NOT_FOUND, _) => "One or more source files do not exist.",
 
-			(FLogS_ERROR.None, FLogS_WARNING.MULTI_OVERWRITE) => "One or more files will be overwritten.",
-			(FLogS_ERROR.None, FLogS_WARNING.SINGLE_OVERWRITE) => "Destination file will be overwritten.",
-			(FLogS_ERROR.None, _) => string.Empty,
+			(ErrorCode.None, WarningCode.MULTI_OVERWRITE) => "One or more files will be overwritten.",
+			(ErrorCode.None, WarningCode.SINGLE_OVERWRITE) => "Destination file will be overwritten.",
+			(ErrorCode.None, _) => string.Empty,
 
 			(_, _) => "An unknown error has occurred.",
 		};

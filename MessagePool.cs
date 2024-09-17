@@ -527,7 +527,7 @@ namespace FLogS
 
 			if (phrase is null
 				|| !regex && messageOut.Contains(phrase, StringComparison.OrdinalIgnoreCase) // Either the profile name or the message body can contain our search text.
-				|| regex && Regex.IsMatch(messageOut, phrase))
+				|| regex && Regex.IsMatch(messageOut, phrase, RegexOptions.IgnoreCase))
 				matchPhrase = true;
 
 			if (matchPhrase && withinRange && (intact || saveTruncated))

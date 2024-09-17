@@ -28,7 +28,7 @@ namespace FLogS
 		private string _truncatedMessages = "Truncated Messages:";
 		private string _unreadData = "Unread Data:";
 		private readonly string _versionString = "FLogS — Version " + Assembly.GetExecutingAssembly().GetName().Version + " © Taica, " + GetBuildYear(Assembly.GetExecutingAssembly());
-		private string _warningText = Common.GetErrorMessage(FLogS_ERROR.NO_SOURCE, FLogS_WARNING.None);
+		private string _warningText = Common.GetErrorMessage(ErrorCode.NO_SOURCE, WarningCode.None);
 
 		public DateTime? AfterDate { get => _afterDate; set { _afterDate = value; OnPropertyChanged(); } }
 		public DateTime? BeforeDate { get => _beforeDate; set { _beforeDate = value; OnPropertyChanged(); } }
