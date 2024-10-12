@@ -226,7 +226,7 @@
 							</StackPanel>
 							<Label x:Name="P_SearchLabel" FontSize="14" Width="300" Height="30" HorizontalContentAlignment="Center" Margin="15,20,0,0" Content="Target Word or Phrase"/>
 							<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-								<CheckBox Width="16" Height="16" Margin="-12,0,10,0" IsChecked="{Binding Regex}"/>
+								<CheckBox Width="16" Height="16" Margin="-12,0,10,0" IsChecked="{Binding Regex}" ToolTip="Regex search?"/>
 								<TextBox x:Name="P_Search" Width="300" Height="20" Margin="2,0,0,0" BorderThickness="1"/>
 							</StackPanel>
 							<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="20,5,0,0">
