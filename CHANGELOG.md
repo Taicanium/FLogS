@@ -1,3 +1,7 @@
+# 1.1.4.1 - 12/10/2024
+- Regex searching is no longer case-sensitive
+- Efficiency changes to backend and UI
+
 # 1.1.4 - 02/09/2024
 - Migrated to .NET 8.0
 - Fixed detection of broken eicon and icon tags.
