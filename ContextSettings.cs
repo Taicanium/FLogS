@@ -3,11 +3,10 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Windows.Media;
 
 namespace FLogS
 {
-	public class ContextSettings : INotifyPropertyChanged
+	public partial class ContextSettings : INotifyPropertyChanged
 	{
 		private DateTime? _afterDate;
 		private DateTime? _beforeDate;
@@ -27,7 +26,7 @@ namespace FLogS
 		private string _themeLabel = "Dark";
 		private string _truncatedMessages = "Truncated Messages:";
 		private string _unreadData = "Unread Data:";
-		private readonly string _versionString = "FLogS — Version " + Assembly.GetExecutingAssembly().GetName().Version + " © Taica, " + GetBuildYear(Assembly.GetExecutingAssembly());
+		private readonly string _versionString = "FLogS — v. " + Assembly.GetExecutingAssembly().GetName().Version + " © Taica, " + GetBuildYear(Assembly.GetExecutingAssembly());
 		private string _warningText = Common.GetErrorMessage(ErrorCode.NO_SOURCE, WarningCode.None);
 
 		public DateTime? AfterDate { get => _afterDate; set { _afterDate = value; OnPropertyChanged(); } }

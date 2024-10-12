@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using static FLogS.Common;
 
 namespace FLogS
 {
@@ -91,7 +92,7 @@ namespace FLogS
 
 		private static void AppendError(ref ArrayList messageData, ErrorType format = ErrorType.Truncated)
 		{
-			if (!Common.plaintext)
+			if (!plaintext)
 				messageData[^1] += "<span class=\"warn\">";
 
 			switch (format)
@@ -107,7 +108,7 @@ namespace FLogS
 					break;
 			}
 
-			if (!Common.plaintext)
+			if (!plaintext)
 				messageData[^1] += "</span>";
 		}
 
@@ -125,15 +126,15 @@ namespace FLogS
 					continue;
 
 				srcFile = logfile;
-				destFile = files.Length == 1 ? destDir : Path.Join(destDir, fileName) + (Common.plaintext ? ".txt" : ".html");
+				destFile = files.Length == 1 ? destDir : Path.Join(destDir, fileName) + (plaintext ? ".txt" : ".html");
 				lastPosition = 0U;
 
 				BeginRoutine(sender, e);
 
-				bytesRead += Common.fileListing?[logfile].Length ?? 0;
+				bytesRead += fileListing?[logfile].Length ?? 0;
 				filesDone.Add(fileName);
 
-				if (!Common.lastException.Equals(string.Empty))
+				if (!lastException.Equals(string.Empty))
 					break;
 			}
 
@@ -170,7 +171,7 @@ namespace FLogS
 				if (File.Exists(destFile))
 					File.Delete(destFile);
 
-				using FileStream? srcFS = Common.fileListing?[srcFile].OpenRead();
+				using FileStream? srcFS = fileListing?[srcFile].OpenRead();
 
 				using (StreamWriter dstFS = divide ? StreamWriter.Null : new(destFile, true))
 				{
@@ -179,7 +180,7 @@ namespace FLogS
 					lastDate = 0U;
 					lastDiscrepancy = 0;
 					lastPosition = 0U;
-					Common.lastTimestamp = 0U;
+					lastTimestamp = 0U;
 					DateTime lastUpdate = DateTime.Now;
 
 					while (srcFS?.Position < srcFS?.Length - 1)
@@ -201,7 +202,7 @@ namespace FLogS
 								(sender as BackgroundWorker)?.ReportProgress(0);
 
 							lastUpdate = DateTime.Now;
-							if (!Common.lastException.Equals(string.Empty))
+							if (!lastException.Equals(string.Empty))
 								break;
 						}
 					}
@@ -214,11 +215,11 @@ namespace FLogS
 						dstSB.Clear();
 					}
 
-					if (!Common.plaintext)
+					if (!plaintext)
 					{
-						dstFS.Write(Common.htmlFooter);
+						dstFS.Write(htmlFooter);
 						if (divide)
-							File.AppendAllText(lastFile, Common.htmlFooter);
+							File.AppendAllText(lastFile, htmlFooter);
 					}
 				}
 
@@ -231,7 +232,7 @@ namespace FLogS
 			}
 			catch (Exception ex)
 			{
-				Common.LogException(ex);
+				LogException(ex);
 				(sender as BackgroundWorker)?.CancelAsync();
 			}
 		}
@@ -341,16 +342,16 @@ namespace FLogS
 
 			messageData.Add(string.Empty);
 
-			uint timestamp = Common.BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
-			if (Common.IsValidTimestamp(timestamp))
+			uint timestamp = BEInt(idBuffer); // The timestamp is Big-endian. Fix that.
+			if (IsValidTimestamp(timestamp))
 			{
-				Common.lastTimestamp = timestamp;
-				thisDT = Common.DTFromStamp(timestamp);
+				lastTimestamp = timestamp;
+				thisDT = DTFromStamp(timestamp);
 
-				if (!Common.plaintext)
+				if (!plaintext)
 					messageData[^1] += "<span class=\"ts\">";
-				messageData[^1] += "[" + thisDT.ToString(Common.dateFormat) + "]";
-				if (!Common.plaintext)
+				messageData[^1] += "[" + thisDT.ToString(dateFormat) + "]";
+				if (!plaintext)
 					messageData[^1] += "</span>";
 
 				if (thisDT.CompareTo(dtBefore) > 0 || thisDT.CompareTo(dtAfter) < 0)
@@ -364,8 +365,8 @@ namespace FLogS
 
 				// On the very off chance an otherwise-valid set of messages was made non-sequential, say, by F-Chat's client while trying to repair corruption.
 				// This should never happen, but you throw 100% of the exceptions you don't catch.
-				if (timestamp > 0 && timestamp < Common.UNIXTimestamp())
-					Common.lastTimestamp = timestamp;
+				if (timestamp > 0 && timestamp < UNIXTimestamp())
+					lastTimestamp = timestamp;
 			}
 
 			if (divide)
@@ -375,14 +376,14 @@ namespace FLogS
 				{
 					if (lastDate != 0U)
 					{
-						if (!Common.plaintext)
+						if (!plaintext)
 						{
 							if (!headerWritten)
 							{
-								dstSB?.Insert(0, Common.htmlHeader);
+								dstSB?.Insert(0, htmlHeader);
 								headerWritten = true;
 							}
-							dstSB?.Append(Common.htmlFooter);
+							dstSB?.Append(htmlFooter);
 						}
 
 						File.AppendAllText(lastFile, dstSB?.ToString());
@@ -435,7 +436,7 @@ namespace FLogS
 
 				profileName = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
 
-				if (!Common.plaintext)
+				if (!plaintext)
 				{
 					messageData.Add("<a class=\"pf\" href=\"https://f-list.net/c/"
 						+ profileName
@@ -487,7 +488,7 @@ namespace FLogS
 			{
 				idBuffer[2] = 0;
 				idBuffer[3] = 0;
-				if ((messageLength = Common.BEInt(idBuffer)) < 1)
+				if ((messageLength = BEInt(idBuffer)) < 1)
 				{
 					emptyMessages++;
 					intact = false;
@@ -506,11 +507,11 @@ namespace FLogS
 
 					string coreMessage = Encoding.UTF8.GetString(streamBuffer, 0, streamBuffer.Length);
 
-					if (!Common.plaintext)
-						foreach (KeyValuePair<string, string> entity in Common.htmlEntities)
+					if (!plaintext)
+						foreach (KeyValuePair<string, string> entity in htmlEntities)
 							coreMessage = Regex.Replace(coreMessage, entity.Key, entity.Value);
 
-					if (!Common.plaintext && (msId == MessageType.Me || msId == MessageType.DiceRoll))
+					if (!plaintext && (msId == MessageType.Me || msId == MessageType.DiceRoll))
 					{
 						coreMessage = "<i>" + coreMessage;
 						tagHistory?.Push("i");
@@ -540,31 +541,31 @@ namespace FLogS
 
 				if (lastDiscrepancy > 0)
 				{
-					if (!Common.plaintext)
+					if (!plaintext)
 						dstSB?.Append("<span class=\"warn\">");
 					dstSB?.Append(string.Format("({0:#,0} missing bytes)", lastDiscrepancy));
-					if (!Common.plaintext)
+					if (!plaintext)
 						dstSB?.Append("</span><br />");
 					dstSB?.Append(dstFS.NewLine);
 				}
 
-				if (!Common.plaintext)
+				if (!plaintext)
 					messageOut = TranslateTags(messageOut); // If we're saving to HTML, it's time to convert from BBCode to HTML-style tags.
 
 				messageOut = Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(messageOut)); // There's an odd quirk with East Asian printable characters that requires us to reformat them once.
 				messageOut = ControlCharacters().Replace(messageOut, string.Empty); // Once more, remove everything that's not a printable, newline, or format character.
 
-				if (!Common.plaintext && !opposingProfile.Equals(string.Empty) && !profileName.ToLower().Equals(opposingProfile.ToLower())) // If this is the local user, close the highlight tag from before.
+				if (!plaintext && !opposingProfile.Equals(string.Empty) && !profileName.ToLower().Equals(opposingProfile.ToLower())) // If this is the local user, close the highlight tag from before.
 					messageOut += "</span>";
 
 				dstSB?.Append(messageOut);
-				if (!Common.plaintext)
+				if (!plaintext)
 					dstSB?.Append("<br />");
 				dstSB?.Append(dstFS.NewLine);
 
-				if (!Common.plaintext && !headerWritten)
+				if (!plaintext && !headerWritten)
 				{
-					dstSB?.Insert(0, Common.htmlHeader);
+					dstSB?.Insert(0, htmlHeader);
 					headerWritten = true;
 				}
 
@@ -645,10 +646,10 @@ namespace FLogS
 			{
 				while (tagHistory?.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
 				{
-					AdjustMessageData(ref messageOut, Common.tagClosings[lastTag], index, ref indexAdj);
+					AdjustMessageData(ref messageOut, tagClosings[lastTag], index, ref indexAdj);
 					tagCounts[lastTag]++;
 				}
-				AdjustMessageData(ref messageOut, Common.tagClosings[tag], index, ref indexAdj);
+				AdjustMessageData(ref messageOut, tagClosings[tag], index, ref indexAdj);
 				return true;
 			}
 
@@ -822,14 +823,14 @@ namespace FLogS
 						{
 							while (tagHistory?.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
 							{
-								AdjustMessageData(ref messageOut, Common.tagClosings[lastTag], tags[i].Index, ref indexAdj);
+								AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
 								tagCounts[lastTag]++;
 							}
 
 							if (!messageOut[anchorIndex..(tags[i].Index + tags[i].Length + indexAdj)].Contains(URL)) // Session tags for public channels already contain their own name instead of a room code. Here we check against doubling them up.
 								AdjustMessageData(ref messageOut, " (" + URL + ")", tags[i].Index, ref indexAdj);
 
-							AdjustMessageData(ref messageOut, Common.tagClosings[tag], tags[i].Index, ref indexAdj);
+							AdjustMessageData(ref messageOut, tagClosings[tag], tags[i].Index, ref indexAdj);
 							partialParse = string.Empty;
 							break;
 						}
@@ -856,14 +857,15 @@ namespace FLogS
 						{
 							while (tagHistory?.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)
 							{
-								AdjustMessageData(ref messageOut, Common.tagClosings[lastTag], tags[i].Index, ref indexAdj);
+								AdjustMessageData(ref messageOut, tagClosings[lastTag], tags[i].Index, ref indexAdj);
 								tagCounts[lastTag]++;
 							}
 
-							if (anchorIndex + indexAdj + URL.Length + 6 == tags[i].Index + indexAdj) // If the url tag contained a link but no label text, we follow the client's practice of displaying the URL itself.
-																									 // The extra '6' here is the five '[url=' characters plus the closing bracket.
+							// If the url tag contained a link but no label text, we follow the client's practice of displaying the URL itself.
+							// The extra '6' here is the five '[url=' characters plus the closing bracket.
+							if (anchorIndex + indexAdj + URL.Length + 6 == tags[i].Index + indexAdj)
 								AdjustMessageData(ref messageOut, URL, tags[i].Index, ref indexAdj);
-							AdjustMessageData(ref messageOut, Common.tagClosings[tag], tags[i].Index, ref indexAdj);
+							AdjustMessageData(ref messageOut, tagClosings[tag], tags[i].Index, ref indexAdj);
 							partialParse = string.Empty;
 							break;
 						}
@@ -906,7 +908,7 @@ namespace FLogS
 				if (tagCounts[lastTag] % 2 == 1 && !lastTag.Equals("icon") && !lastTag.Equals("eicon"))
 				{
 					indexAdj = 0;
-					AdjustMessageData(ref messageOut, Common.tagClosings[lastTag], messageOut.Length, ref indexAdj);
+					AdjustMessageData(ref messageOut, tagClosings[lastTag], messageOut.Length, ref indexAdj);
 				}
 
 				if (partialParse.Equals(lastTag))

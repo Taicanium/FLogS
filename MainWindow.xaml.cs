@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using static FLogS.Common;
 
 namespace FLogS
 {
@@ -132,7 +133,7 @@ namespace FLogS
 				CheckFileExists = checkExists,
 				Multiselect = multi,
 				InitialDirectory = outputSelect ? Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
-				: Path.Exists(Common.defaultLogDir) ? Common.defaultLogDir
+				: Path.Exists(defaultLogDir) ? defaultLogDir
 				: Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
 			};
 
@@ -165,8 +166,8 @@ namespace FLogS
 
 		private void MainGrid_Loaded(object? sender, RoutedEventArgs e)
 		{
-			if (File.Exists(Common.errorFile))
-				File.Delete(Common.errorFile);
+			if (File.Exists(errorFile))
+				File.Delete(errorFile);
 
 			try
 			{
@@ -181,7 +182,7 @@ namespace FLogS
 
 		private void MainGrid_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
 		{
-			if (Common.processing)
+			if (processing)
 				return;
 
 			// We will rescan for errors upon user interaction, in case of e.g. a source file being deleted after its path has already been entered.
@@ -216,7 +217,7 @@ namespace FLogS
 					(Directory.Exists(F_Output.Text), ErrorCode.DEST_NOT_FILE),
 					(!Directory.Exists(Path.GetDirectoryName(F_Output.Text)), ErrorCode.DEST_NOT_FOUND),
 					(F_Source.Text.Equals(F_Output.Text), ErrorCode.SOURCE_EQUALS_DEST),
-					(Common.LogTest(F_Output.Text), ErrorCode.DEST_SENSITIVE),
+					(LogTest(F_Output.Text), ErrorCode.DEST_SENSITIVE),
 					(true, ErrorCode.None)
 				}.First(condition => condition.Item1).Item2,
 
@@ -227,7 +228,7 @@ namespace FLogS
 					(File.Exists(D_Output.Text), ErrorCode.DEST_NOT_DIRECTORY),
 					(!Directory.Exists(D_Output.Text), ErrorCode.DEST_NOT_FOUND),
 					(dirSources.Any(file => file.Equals(outputPath(D_Output.Text, file))), ErrorCode.SOURCE_CONFLICT),
-					(dirSources.Any(file => Common.LogTest(outputPath(D_Output.Text, file))), ErrorCode.DEST_SENSITIVE),
+					(dirSources.Any(file => LogTest(outputPath(D_Output.Text, file))), ErrorCode.DEST_SENSITIVE),
 					(true, ErrorCode.None)
 				}.First(condition => condition.Item1).Item2,
 
@@ -238,9 +239,9 @@ namespace FLogS
 					(File.Exists(P_Output.Text), ErrorCode.DEST_NOT_DIRECTORY),
 					(!Directory.Exists(P_Output.Text), ErrorCode.DEST_NOT_FOUND),
 					(phraseSources.Any(file => file.Equals(outputPath(P_Output.Text, file))), ErrorCode.SOURCE_CONFLICT),
-					(phraseSources.Any(file => Common.LogTest(outputPath(P_Output.Text, file))), ErrorCode.DEST_SENSITIVE),
+					(phraseSources.Any(file => LogTest(outputPath(P_Output.Text, file))), ErrorCode.DEST_SENSITIVE),
 					(P_Search.Text.Length == 0, ErrorCode.NO_REGEX),
-					(settings.Regex is true && !Common.IsValidPattern(P_Search.Text), ErrorCode.BAD_REGEX),
+					(settings.Regex is true && !IsValidPattern(P_Search.Text), ErrorCode.BAD_REGEX),
 					(true, ErrorCode.None)
 				}.First(condition => condition.Item1).Item2
 			];
@@ -263,14 +264,14 @@ namespace FLogS
 			];
 
 			settings.CanRun = localError[activeMenu] == ErrorCode.None;
-			settings.WarningText = Common.GetErrorMessage(localError[activeMenu], localWarning[activeMenu]);
+			settings.WarningText = GetErrorMessage(localError[activeMenu], localWarning[activeMenu]);
 		}
 
 		private void ProcessFiles(string[] args)
 		{
 			settings.Exception = string.Empty;
 			filesProcessed = args.Length;
-			Common.processing = true;
+			processing = true;
 
 			pool.totalSize.Simplify();
 			pool.totalSize.Magnitude(1);
@@ -306,12 +307,12 @@ namespace FLogS
 			try
 			{
 				string[] files = GridObject<TextBox>("Source").Text.Split(';');
-				Common.plaintext = settings.SaveHTML == false || !GridObject<TextBox>("Output").Text.EndsWith(".html");
+				plaintext = settings.SaveHTML == false || !GridObject<TextBox>("Output").Text.EndsWith(".html");
 				pool = new()
 				{
 					destDir = GridObject<TextBox>("Output").Text,
 					divide = settings.DivideLogs is true,
-					dtAfter = GridObject<DatePicker>("AfterDate").SelectedDate ?? Common.DTFromStamp(1),
+					dtAfter = GridObject<DatePicker>("AfterDate").SelectedDate ?? DTFromStamp(1),
 					dtBefore = GridObject<DatePicker>("BeforeDate").SelectedDate ?? DateTime.UtcNow,
 					phrase = bTag.Equals("P_") ? P_Search.Text : string.Empty,
 					regex = settings.Regex is true,
@@ -322,15 +323,15 @@ namespace FLogS
 
 				foreach (string logfile in files)
 				{
-					Common.fileListing[logfile] = new(logfile);
-					pool.totalSize += Common.fileListing[logfile].Length;
+					fileListing[logfile] = new(logfile);
+					pool.totalSize += fileListing[logfile].Length;
 				}
 
 				ProcessFiles(files);
 			}
 			catch (Exception ex)
 			{
-				Common.LogException(ex);
+				LogException(ex);
 			}
 		}
 
@@ -348,7 +349,7 @@ namespace FLogS
 		{
 			try
 			{
-				Common.Swap(ref brushPalette);
+				Swap(ref brushPalette);
 				settings.ThemeLabel = brushPalette.Item1 == 0 ? "Light" : "Dark";
 
 				ChangeStyle(MainGrid);
@@ -356,7 +357,7 @@ namespace FLogS
 			}
 			catch (Exception ex)
 			{
-				Common.LogException(ex);
+				LogException(ex);
 			}
 		}
 
@@ -365,7 +366,7 @@ namespace FLogS
 			if (sender is null)
 				return;
 
-			if ((sender.GetValue(TagProperty) ?? string.Empty).Equals("Enableable") || !Common.lastException.Equals(string.Empty))
+			if ((sender.GetValue(TagProperty) ?? string.Empty).Equals("Enableable") || !lastException.Equals(string.Empty))
 				sender.SetValue(IsEnabledProperty, enabled);
 
 			foreach (object dp in LogicalTreeHelper.GetChildren(sender))
@@ -381,21 +382,21 @@ namespace FLogS
 				settings.LogHeader = "Scanning " + (filesProcessed == 1 ? $"{Path.GetFileName(pool?.srcFile)}..." : $"{filesProcessed:N0} files...");
 				settings.RunLabel = "Scanning...";
 
-				Common.lastException = string.Empty;
-				Common.timeBegin = DateTime.Now;
+				lastException = string.Empty;
+				timeBegin = DateTime.Now;
 
 				return;
 			}
 
 			settings.RunLabel = "Run";
 
-			if (Common.lastException.Equals(string.Empty))
+			if (lastException.Equals(string.Empty))
 			{
 				string? formattedName = Path.GetFileName(pool?.srcFile);
 				if (formattedName?.Length > 16)
 					formattedName = formattedName[..14] + "...";
 
-				double timeTaken = DateTime.Now.Subtract(Common.timeBegin).TotalSeconds;
+				double timeTaken = DateTime.Now.Subtract(timeBegin).TotalSeconds;
 				settings.LogHeader = "Processed " + (filesProcessed == 1 ? $"{formattedName} in {timeTaken:N2} seconds." : $"{filesProcessed:N0} files in {timeTaken:N2} seconds.");
 			}
 		}
@@ -408,10 +409,10 @@ namespace FLogS
 			settings.EmptyMessages = $"Empty Messages: {pool?.emptyMessages:N0}";
 			settings.UnreadData = $"Unread Data: {pool?.unreadBytes:S}";
 
-			if (!Common.lastException.Equals(string.Empty))
+			if (!lastException.Equals(string.Empty))
 			{
 				settings.LogHeader = "A critical error has occurred.";
-				settings.Exception = Common.lastException;
+				settings.Exception = lastException;
 				(sender as BackgroundWorker)?.CancelAsync();
 			}
 		}
@@ -424,11 +425,11 @@ namespace FLogS
 
 				UpdateLogs(sender);
 				TransitionMenus(true);
-				Common.processing = false;
+				processing = false;
 			}
 			catch (Exception ex)
 			{
-				Common.LogException(ex);
+				LogException(ex);
 			}
 		}
 
@@ -442,7 +443,7 @@ namespace FLogS
 			}
 			catch (Exception ex)
 			{
-				Common.LogException(ex);
+				LogException(ex);
 			}
 		}
 	}
