@@ -307,7 +307,7 @@ namespace FLogS
 			try
 			{
 				string[] files = GridObject<TextBox>("Source").Text.Split(';');
-				plaintext = settings.SaveHTML == false || !GridObject<TextBox>("Output").Text.EndsWith(".html");
+				plaintext = settings.SaveHTML == false || GridObject<TextBox>("Output").Text.EndsWith(".txt");
 				pool = new()
 				{
 					destDir = GridObject<TextBox>("Output").Text,

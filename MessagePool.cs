@@ -295,7 +295,7 @@ namespace FLogS
 				if (!scanIDX) // Drop from the function once we have our name string, if we aren't batch processing.
 					return true;
 
-				destFile = Path.Join(Path.GetDirectoryName(destFile), nameString + Path.GetExtension(destFile)); // Otherwise, it's a DM. As before, preserve the name - but this time, leave out the hashtag.
+				destFile = Path.Join(Path.GetDirectoryName(destFile), nameString + Path.GetExtension(destFile)); // If there's no hashtag, it's a DM. As before, preserve the name - but this time, leave out the hashtag.
 				return true;
 			}
 
@@ -369,51 +369,48 @@ namespace FLogS
 					lastTimestamp = timestamp;
 			}
 
-			if (divide)
+			thisDate = timestamp - timestamp % 86400;
+			if (divide && intact && thisDate != lastDate)
 			{
-				thisDate = timestamp - timestamp % 86400;
-				if (thisDate != lastDate && intact)
+				if (lastDate != 0U)
 				{
-					if (lastDate != 0U)
+					if (!plaintext)
 					{
-						if (!plaintext)
+						if (!headerWritten)
 						{
-							if (!headerWritten)
-							{
-								dstSB?.Insert(0, htmlHeader);
-								headerWritten = true;
-							}
-							dstSB?.Append(htmlFooter);
+							dstSB?.Insert(0, htmlHeader);
+							headerWritten = true;
 						}
-
-						File.AppendAllText(lastFile, dstSB?.ToString());
-						dstSB?.Clear();
-
-						if (lastMessageCount == 0U)
-							File.Delete(lastFile);
+						dstSB?.Append(htmlFooter);
 					}
 
-					string destName = Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN";
-					string newDir = Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", destName);
+					File.AppendAllText(lastFile, dstSB?.ToString());
+					dstSB?.Clear();
 
-					writtenDirectories?.Add(newDir);
-
-					if (!Directory.Exists(newDir))
-						Directory.CreateDirectory(newDir);
-
-					string newName = Path.Combine(
-						Path.GetDirectoryName(destFile) ?? "C:",
-						destName,
-						destName + "_" + thisDT.ToString("yyyy-MM-dd") + Path.GetExtension(destFile) ?? ".txt");
-
-					if (File.Exists(newName))
-						File.Delete(newName);
-
-					headerWritten = false;
-					lastDate = thisDate;
-					lastFile = newName;
-					lastMessageCount = 0U;
+					if (lastMessageCount == 0U)
+						File.Delete(lastFile);
 				}
+
+				string destName = Path.GetFileNameWithoutExtension(destFile) ?? "UNKNOWN";
+				string newDir = Path.Combine(Path.GetDirectoryName(destFile) ?? "C:", destName);
+
+				writtenDirectories?.Add(newDir);
+
+				if (!Directory.Exists(newDir))
+					Directory.CreateDirectory(newDir);
+
+				string newName = Path.Combine(
+					Path.GetDirectoryName(destFile) ?? "C:",
+					destName,
+					destName + "_" + thisDT.ToString("yyyy-MM-dd") + Path.GetExtension(destFile) ?? ".txt");
+
+				if (File.Exists(newName))
+					File.Delete(newName);
+
+				headerWritten = false;
+				lastDate = thisDate;
+				lastFile = newName;
+				lastMessageCount = 0U;
 			}
 
 			MessageType msId = (MessageType)srcFS.ReadByte(); // Message delimiter.
@@ -583,8 +580,7 @@ namespace FLogS
 			bool nextID = false;
 			while (!nextID) // Search for the next message by locating its delimiter.
 			{
-				srcFS.ReadByte();
-				srcFS.Read(idBuffer, 0, 4);
+				srcFS.Seek(5, SeekOrigin.Current);
 				nextByte = srcFS.ReadByte();
 				if (nextByte == -1)
 					return true;
@@ -606,8 +602,7 @@ namespace FLogS
 				}
 				else
 				{
-					srcFS.Read(idBuffer, 0, 2);
-					srcFS.Read(idBuffer, 0, 4);
+					srcFS.Seek(6, SeekOrigin.Current);
 					nextByte = srcFS.ReadByte();
 					if (nextByte == -1)
 						return true;
