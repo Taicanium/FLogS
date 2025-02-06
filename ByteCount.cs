@@ -33,62 +33,7 @@ namespace FLogS
 				Magnitude(1);
 		}
 
-		public static ByteCount operator -(ByteCount a, ByteCount b)
-		{
-			ByteCount c, d;
-
-			if (Math.Abs(a.prefix - b.prefix) > 3) // Special accommodations must be made if the disparity in magnitude would normally result in an int overflow.
-			{
-				c = new(a.bytes, a.prefix);
-				d = new(b.bytes, b.prefix);
-				c.Adjust(Math.Abs(a.prefix - b.prefix) / 2);
-				d.Adjust(c.prefix);
-				c.bytes -= d.bytes;
-				c.Simplify();
-				return c;
-			}
-
-			c = new(a.bytes, a.prefix);
-			c.Adjust(b.prefix);
-			c.bytes -= b.bytes;
-			c.Simplify();
-			return c;
-		}
-
-		public static ByteCount operator +(ByteCount a, ByteCount b)
-		{
-			ByteCount c, d;
-
-			if (Math.Abs(a.prefix - b.prefix) > 3)
-			{
-				c = new(a.bytes, a.prefix);
-				d = new(b.bytes, b.prefix);
-				c.Adjust(Math.Abs(a.prefix - b.prefix) / 2);
-				d.Adjust(c.prefix);
-				c.bytes += d.bytes;
-				c.Simplify();
-				return c;
-			}
-
-			c = new(a.bytes, a.prefix);
-			c.Adjust(b.prefix);
-			c.bytes += b.bytes;
-			c.Simplify();
-			return c;
-		}
-
 		public static ByteCount operator +(ByteCount a, int b)
-		{
-			ByteCount c = new(a.bytes, a.prefix);
-			ByteCount d = new(b, -1);
-			c.Adjust((c.prefix + 1) / 2);
-			d.Adjust(c.prefix);
-			c.bytes += d.bytes;
-			c.Simplify();
-			return c;
-		}
-
-		public static ByteCount operator +(ByteCount a, uint b)
 		{
 			ByteCount c = new(a.bytes, a.prefix);
 			ByteCount d = new(b, -1);

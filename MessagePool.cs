@@ -186,25 +186,22 @@ namespace FLogS
 					while (srcFS?.Position < srcFS?.Length - 1)
 					{
 						TranslateMessage(srcFS, dstFS);
+						if (!lastException.Equals(string.Empty))
+							break;
 
-						if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds > 20)
-						{
-							ByteCount progress = bytesRead + srcFS.Position;
-							progress.Simplify();
-							totalSize.Simplify();
-							if (progress.prefix > totalSize.prefix - 2)
-							{
-								totalSize.Magnitude(1); // We'll look at the progress values with more precision to keep the bar from "jerking".
-								progress.Adjust(totalSize.prefix);
-								(sender as BackgroundWorker)?.ReportProgress((int)progress.bytes);
-							}
-							else
-								(sender as BackgroundWorker)?.ReportProgress(0);
+						if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds < 25)
+							continue;
+						lastUpdate = DateTime.Now;
 
-							lastUpdate = DateTime.Now;
-							if (!lastException.Equals(string.Empty))
-								break;
-						}
+						var progress = bytesRead + srcFS.Position;
+						progress.Simplify();
+						totalSize.Simplify();
+						if (progress.prefix <= totalSize.prefix - 2)
+							progress.bytes = 0;
+
+						totalSize.Magnitude(1); // We'll look at the progress values with more precision to keep the bar from "jerking".
+						progress.Adjust(totalSize.prefix);
+						(sender as BackgroundWorker)?.ReportProgress((int)progress.bytes);
 					}
 
 					if (dstSB.Length > 0)
@@ -635,8 +632,6 @@ namespace FLogS
 			MatchCollection tags = BBCodeTags().Matches(messageOut);
 			string URL = string.Empty;
 
-			// The best practice is to avoid sub-routines like these where possible.
-			// But with the number of times this code snippet is later called, it's virtually unthinkable not to better organize.
 			bool AdjustHistory(int index)
 			{
 				while (tagHistory?.Count > 0 && (lastTag = tagHistory.Pop()).Equals(tag) == false)

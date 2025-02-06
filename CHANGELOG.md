@@ -1,3 +1,7 @@
+# 1.1.4.2 - 03/02/2024
+- Fixed a bug preventing HTML output during batch processing
+- The app finally has an icon!
+
 # 1.1.4.1 - 12/10/2024
 - Regex searching is no longer case-sensitive
 - Efficiency changes to backend and UI

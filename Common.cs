@@ -212,8 +212,8 @@ span { position: relative; }
 			if (srcFS.Read(idBuffer, 0, 2) < 2)
 				return false;
 
-			// We assume a valid log file starting from here, as the header format of the message is now confirmed -
-			// and we can't assume the very first message in a file *didn't* happen to just be truncated or empty.
+			// We assume a valid log file starting from here, as the header format of the first message is now confirmed.
+			// TODO: Consider testing for two or even three messages to increase certainty. What if the first message in a log file happens to be corrupted?
 
 			return true;
 		}
