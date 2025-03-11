@@ -1,3 +1,6 @@
+# 1.1.4.3 - 10/03/2024
+- Fixed a directory issue when exporting single files
+
 # 1.1.4.2 - 03/02/2024
 - Fixed a bug preventing HTML output during batch processing
 - The app finally has an icon!
