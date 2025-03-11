@@ -15,6 +15,7 @@ namespace FLogS
 	/// </summary>
 	internal partial class MessagePool
 	{
+		public bool batch = false;
 		private ByteCount bytesRead;
 		public uint corruptTimestamps = 0U;
 		public string destDir = string.Empty;
@@ -126,7 +127,7 @@ namespace FLogS
 					continue;
 
 				srcFile = logfile;
-				destFile = files.Length == 1 ? destDir : Path.Join(destDir, fileName) + (plaintext ? ".txt" : ".html");
+				destFile = batch ? (Path.Join(destDir, fileName) + (plaintext ? ".txt" : ".html")) : destDir;
 				lastPosition = 0U;
 
 				BeginRoutine(sender, e);

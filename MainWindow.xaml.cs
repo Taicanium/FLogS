@@ -265,6 +265,8 @@ namespace FLogS
 
 			settings.CanRun = localError[activeMenu] == ErrorCode.None;
 			settings.WarningText = GetErrorMessage(localError[activeMenu], localWarning[activeMenu]);
+
+			ChangeStyle(MainGrid);
 		}
 
 		private void ProcessFiles(string[] args)
@@ -310,6 +312,7 @@ namespace FLogS
 				plaintext = settings.SaveHTML == false || GridObject<TextBox>("Output").Text.EndsWith(".txt");
 				pool = new()
 				{
+					batch = !bTag.Equals("F_"),
 					destDir = GridObject<TextBox>("Output").Text,
 					divide = settings.DivideLogs is true,
 					dtAfter = GridObject<DatePicker>("AfterDate").SelectedDate ?? DTFromStamp(1),
@@ -352,7 +355,6 @@ namespace FLogS
 				Swap(ref brushPalette);
 				settings.ThemeLabel = brushPalette.Item1 == 0 ? "Light" : "Dark";
 
-				ChangeStyle(MainGrid);
 				ProcessErrors();
 			}
 			catch (Exception ex)
