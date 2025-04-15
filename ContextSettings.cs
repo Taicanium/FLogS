@@ -16,7 +16,7 @@ namespace FLogS
 		private string _emptyMessages = "Empty Messages:";
 		private string _exception = "";
 		private string _intactMessages = "Intact Messages:";
-		private string _logHeader = "Ready to receive data.";
+		private string _logHeader = "Ready to process data.";
 		private double _progress = 0.0;
 		private double _progressMax = 100.0;
 		private bool? _regex = false;

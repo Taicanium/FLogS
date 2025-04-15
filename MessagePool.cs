@@ -190,9 +190,8 @@ namespace FLogS
 						if (!lastException.Equals(string.Empty))
 							break;
 
-						if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds < 25)
+						if (DateTime.Now.Subtract(lastUpdate).TotalMilliseconds < 35)
 							continue;
-						lastUpdate = DateTime.Now;
 
 						var progress = bytesRead + srcFS.Position;
 						progress.Simplify();
@@ -203,6 +202,7 @@ namespace FLogS
 						totalSize.Magnitude(1); // We'll look at the progress values with more precision to keep the bar from "jerking".
 						progress.Adjust(totalSize.prefix);
 						(sender as BackgroundWorker)?.ReportProgress((int)progress.bytes);
+						lastUpdate = DateTime.Now;
 					}
 
 					if (dstSB.Length > 0)

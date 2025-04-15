@@ -21,7 +21,7 @@
 						<RowDefinition Height="*"/>
 					</Grid.RowDefinitions>
 					<Grid Tag="PanelGrid" Background="Beige" Margin="2,0">
-						<StackPanel Background="LightGray" Margin="2,2">
+						<StackPanel Background="LightGray" Margin="1">
 							<ListBox Width="350" Height="430" Margin="0,21" FontSize="14" BorderThickness="1">
 								<ListBoxItem Content="{Binding LogHeader}"/>
 								<ListBoxItem Margin="10" Visibility="Hidden"/>
@@ -36,7 +36,7 @@
 						</StackPanel>
 					</Grid>
 					<Grid Tag="PanelGrid" Grid.Column="1" Background="Beige" Margin="2,0">
-						<StackPanel Tag="Enableable" Background="LightGray" Margin="2,2">
+						<StackPanel Tag="Enableable" Background="LightGray" Margin="1">
 							<Button Height="25" Width="40" HorizontalAlignment="Right" Margin="10,10" Content="{Binding ThemeLabel}" Click="ThemeSelector_Click"/>
 							<Label FontSize="14" Width="300" Height="30" HorizontalContentAlignment="Center" Margin="15,0,0,0" Content="Path to Source Log File"/>
 							<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -78,7 +78,7 @@
 						</StackPanel>
 					</Grid>
 					<Grid Tag="PanelGrid" Grid.Row="1" Grid.ColumnSpan="2" Background="Beige" Margin="2,4,2,2">
-						<StackPanel Tag="Enableable" Background="LightGray" Margin="2,2">
+						<StackPanel Tag="Enableable" Background="LightGray" Margin="1">
 							<Grid>
 								<Grid.RowDefinitions>
 									<RowDefinition Height="*"/>
@@ -109,7 +109,7 @@
 						<RowDefinition Height="*"/>
 					</Grid.RowDefinitions>
 					<Grid Tag="PanelGrid" Background="Beige" Margin="2,0">
-						<StackPanel Background="LightGray" Margin="2,2">
+						<StackPanel Background="LightGray" Margin="1">
 							<ListBox Width="350" Height="430" Margin="0,21" FontSize="14" BorderThickness="1">
 								<ListBoxItem Content="{Binding LogHeader}"/>
 								<ListBoxItem Margin="10" Visibility="Hidden"/>
@@ -124,7 +124,7 @@
 						</StackPanel>
 					</Grid>
 					<Grid Tag="PanelGrid" Grid.Column="1" Background="Beige" Margin="2,0">
-						<StackPanel Tag="Enableable" Background="LightGray" Margin="2,2">
+						<StackPanel Tag="Enableable" Background="LightGray" Margin="1">
 							<Button Height="25" Width="40" HorizontalAlignment="Right" Margin="10,10" Content="{Binding ThemeLabel}" Click="ThemeSelector_Click"/>
 							<Label FontSize="14" Width="300" Height="30" HorizontalContentAlignment="Center" Margin="15,0,0,0" Content="Path to Source Log Files"/>
 							<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -166,7 +166,7 @@
 						</StackPanel>
 					</Grid>
 					<Grid Tag="PanelGrid" Grid.Row="1" Grid.ColumnSpan="2" Background="Beige" Margin="2,4,2,2">
-						<StackPanel Tag="Enableable" Background="LightGray" Margin="2,2">
+						<StackPanel Tag="Enableable" Background="LightGray" Margin="1">
 							<Grid>
 								<Grid.RowDefinitions>
 									<RowDefinition Height="*"/>
@@ -197,7 +197,7 @@
 						<RowDefinition Height="*"/>
 					</Grid.RowDefinitions>
 					<Grid Tag="PanelGrid" Background="Beige" Margin="2,0">
-						<StackPanel Background="LightGray" Margin="2,2">
+						<StackPanel Background="LightGray" Margin="1">
 							<ListBox Width="350" Height="430" Margin="0,21" FontSize="14" BorderThickness="1">
 								<ListBoxItem Content="{Binding LogHeader}"/>
 								<ListBoxItem Margin="10" Visibility="Hidden"/>
@@ -212,7 +212,7 @@
 						</StackPanel>
 					</Grid>
 					<Grid Tag="PanelGrid" Grid.Column="1" Background="Beige" Margin="2,0">
-						<StackPanel Tag="Enableable" Background="LightGray" Margin="2,2">
+						<StackPanel Tag="Enableable" Background="LightGray" Margin="1">
 							<Button Height="25" Width="40" HorizontalAlignment="Right" Margin="10,10" Content="{Binding ThemeLabel}" Click="ThemeSelector_Click"/>
 							<Label FontSize="14" Width="300" Height="30" HorizontalContentAlignment="Center" Margin="15,0,0,0" Content="Path to Source Log Files"/>
 							<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -259,7 +259,7 @@
 						</StackPanel>
 					</Grid>
 					<Grid Tag="PanelGrid" Grid.Row="1" Grid.ColumnSpan="2" Background="Beige" Margin="2,4,2,2">
-						<StackPanel Tag="Enableable" Background="LightGray" Margin="2,2">
+						<StackPanel Tag="Enableable" Background="LightGray" Margin="1">
 							<Grid>
 								<Grid.RowDefinitions>
 									<RowDefinition Height="*"/>
@@ -290,7 +290,7 @@
 						<RowDefinition Height="*"/>
 					</Grid.RowDefinitions>
 					<Grid Tag="PanelGrid" Grid.RowSpan="2" Background="Beige" Margin="2,0,2,2">
-						<StackPanel Grid.RowSpan="2" Background="LightGray" Margin="2,2">
+						<StackPanel Grid.RowSpan="2" Background="LightGray" Margin="1">
 							<Label FontSize="24" FontFamily="Century" FontWeight="Bold" Margin="0,10" Content="What is this program for?"/>
 							<TextBlock TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" FontSize="14" FontFamily="Calibri" Margin="10,20">
 							In brief, <Bold>FLogS</Bold> is designed for the salvaging of data from F-Chat™ binary log files that have been corrupted or damaged.<LineBreak/>
@@ -307,7 +307,7 @@
 						</StackPanel>
 					</Grid>
 					<Grid Tag="PanelGrid" Grid.Column="1" Grid.RowSpan="2" Background="Beige" Margin="2,0,2,2">
-						<StackPanel Background="LightGray" Margin="2,2">
+						<StackPanel Background="LightGray" Margin="1">
 							<Label FontSize="24" FontFamily="Century" FontWeight="Bold" Margin="0,10" Content="How do I use this program?"/>
 							<TextBlock TextWrapping="WrapWithOverflow" HorizontalAlignment="Left" FontSize="14" FontFamily="Calibri" Margin="10,20">
 							It's as simple as one, two, three, four!<LineBreak/><LineBreak/>
