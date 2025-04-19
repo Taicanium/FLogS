@@ -1,3 +1,9 @@
+# 1.1.4.5 - 04/18/2025
+- Color tags inside of spoilers are now properly handled
+
+# 1.1.4.4 - 04/14/2025
+- Slight adjustment to visual border margins
+
 # 1.1.4.3 - 10/03/2024
 - Fixed a directory issue when exporting single files
 

@@ -79,6 +79,7 @@ span { position: relative; }
 .sp { background-color: #0D0D0F; color: #0D0D0F; }
 .sp * { background-color: #0D0D0F; color: #0D0D0F; }
 .sp .ec { filter: brightness(0%); }
+.sp .sc { opacity: 0; }
 .sp:hover { color: #FFFFFF; }
 .sp:hover * { color: #FFFFFF; }
 .sp:hover .ts { color: #C0C0C0; }
@@ -86,6 +87,7 @@ span { position: relative; }
 .sp:hover .pf { color: #6766AD; }
 .sp:hover .warn { color: #909090; }
 .sp:hover .ec { filter: brightness(100%); }
+.sp:hover .sc { opacity: 100%; }
 </style>
 </head>
 <body>";

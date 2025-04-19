@@ -718,7 +718,7 @@ namespace FLogS
 							"white" => "#FFFFFF",
 							_ => "#F0F0F0",
 						};
-						AdjustMessageData(ref messageOut, "<span style=\"color: " + colorData + "\">", tags[i].Index, ref indexAdj);
+						AdjustMessageData(ref messageOut, "<span class=\"sc\" style=\"color: " + colorData + "\">", tags[i].Index, ref indexAdj);
 						tagHistory?.Push(tag);
 						break;
 					case "eicon":

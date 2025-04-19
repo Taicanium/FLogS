@@ -7,7 +7,7 @@
 	<ImplicitUsings>disable</ImplicitUsings>
 	<UseWPF>true</UseWPF>
 	<Title>FLogS</Title>
-	<Version>1.1.4.4</Version>
+	<Version>1.1.4.5</Version>
 	<Authors>Taica</Authors>
   </PropertyGroup>
 
@@ -25,6 +25,8 @@
 	<NeutralLanguage>en-US</NeutralLanguage>
 	<PackageIcon>favicon.png</PackageIcon>
 	<ApplicationIcon>favicon.ico</ApplicationIcon>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<RepositoryUrl>https://github.com/Taicanium/FLogS</RepositoryUrl>
   </PropertyGroup>
   
   <ItemGroup>
@@ -47,6 +49,10 @@
 	<None Update="Properties\Settings.settings">
 	  <Generator>SettingsSingleFileGenerator</Generator>
 	  <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+	</None>
+	<None Update="README.md">
+	  <Pack>True</Pack>
+	  <PackagePath>\</PackagePath>
 	</None>
   </ItemGroup>
 
